@@ -1,9 +1,10 @@
-<Window xmlns="https://github.com/avaloniaui"
+<wnd:AppWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ae="using:AvaloniaEdit"
         xmlns:vm="using:SeriousView.ViewModels"
         xmlns:controls="using:SeriousView.Controls"
         xmlns:views="using:SeriousView.Views"
+        xmlns:wnd="using:FluentAvalonia.UI.Windowing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
@@ -14,27 +15,56 @@
         Background="Transparent"
         TransparencyLevelHint="Mica, AcrylicBlur, Blur"
         DragDrop.AllowDrop="True">
-  <!-- Background=Transparent + Mica: the OS draws the blurred backdrop; chrome uses
-       semi-transparent ChromeOverlayBrush so it shows through, the editor stays solid
-       (EditorSurfaceBrush) for readability. Solid fallback in code-behind when the OS
-       reports no transparency. -->
+  <!-- AppWindow draws our content into the title-bar area (ExtendsContentIntoTitleBar, set in
+       code-behind). The single top strip = brand + tab strip + buttons, painted with the
+       semi-transparent ChromeOverlayBrush so it picks up the app colour AND lets the OS
+       backdrop (Mica/Acrylic) show through. System min/max/close buttons are drawn on top at
+       the right; the empty Col3 reserves room for them (TitleBar.RightInset). The editor stays
+       solid (EditorSurfaceBrush) for readability; solid fallback in code-behind when no blur. -->
   <DockPanel LastChildFill="True">
 
-    <Border DockPanel.Dock="Top" Classes="chrome"
-            Background="{DynamicResource ChromeOverlayBrush}" Padding="{DynamicResource ChromePadding}"
-            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-          <Button Content="{Binding ThemeModeLabel}" AutomationProperties.AutomationId="ThemeButton"
-                  Command="{Binding ToggleThemeCommand}" Padding="10,3" MinWidth="84"/>
-          <Button Content="Открыть…" AutomationProperties.AutomationId="OpenButton"
-                  Command="{Binding OpenFileCommand}" Padding="10,3"/>
-        </StackPanel>
-        <TextBlock Text="SeriousView" FontWeight="SemiBold"
-                   Foreground="{DynamicResource ChromeForegroundBrush}"
-                   FontSize="12.5" VerticalAlignment="Center"/>
-      </DockPanel>
-    </Border>
+    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto"
+          Background="{DynamicResource ChromeOverlayBrush}" MinHeight="40">
+      <TextBlock Grid.Column="0" Text="SeriousView" FontWeight="SemiBold"
+                 Foreground="{DynamicResource ChromeForegroundBrush}"
+                 FontSize="12.5" VerticalAlignment="Center" Margin="14,0,18,0"/>
+
+      <!-- Tab strip lives in the title bar; AllowInteractionInTitleBar so clicks select tabs
+           instead of dragging the window. Bottom-aligned so the accent line meets the body. -->
+      <ListBox Grid.Column="1" wnd:AppWindow.AllowInteractionInTitleBar="True"
+               IsVisible="{Binding HasTabs}"
+               ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+               ItemContainerTheme="{StaticResource VsCodeTab}"
+               Background="Transparent" BorderThickness="0" Padding="0"
+               VerticalAlignment="Bottom"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
+                  VerticalAlignment="Center" Margin="10,0"
+                  wnd:AppWindow.AllowInteractionInTitleBar="True">
+        <Button Content="{Binding ThemeModeLabel}" AutomationProperties.AutomationId="ThemeButton"
+                Command="{Binding ToggleThemeCommand}" Padding="10,3" MinWidth="84"/>
+        <Button Content="Открыть…" AutomationProperties.AutomationId="OpenButton"
+                Command="{Binding OpenFileCommand}" Padding="10,3"/>
+      </StackPanel>
+
+      <!-- Reserve room for the system min/max/close buttons. Width is set in code-behind from
+           TitleBar.RightInset once the native title bar is initialised (the property does not
+           notify, so an XAML binding would stay at its initial 0). -->
+      <Border Grid.Column="3" x:Name="CaptionReserve"/>
+    </Grid>
 
     <Border DockPanel.Dock="Bottom" Classes="chrome"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
@@ -45,43 +75,21 @@
     <Panel>
       <!-- Welcome view shown when no tabs are open. -->
       <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
-      <DockPanel IsVisible="{Binding HasTabs}">
-        <!-- Flat tab strip (VsCodeTab ItemContainerTheme). Body switches via ContentControl. -->
-        <ListBox DockPanel.Dock="Top"
-                 ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-                 ItemContainerTheme="{StaticResource VsCodeTab}"
-                 Background="{DynamicResource ChromeOverlayBrush}"
-                 BorderThickness="0" Padding="0"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
-          <ListBox.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal"/>
-            </ItemsPanelTemplate>
-          </ListBox.ItemsPanel>
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:DocumentTabViewModel">
-              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-
-        <ContentControl Content="{Binding SelectedTab}">
-          <ContentControl.ContentTemplate>
-            <DataTemplate x:DataType="vm:DocumentTabViewModel">
-              <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
-                             controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
-                             Background="{DynamicResource EditorSurfaceBrush}"
-                             FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                             FontSize="14"
-                             ShowLineNumbers="True"
-                             HorizontalScrollBarVisibility="Auto"
-                             VerticalScrollBarVisibility="Auto"/>
-            </DataTemplate>
-          </ContentControl.ContentTemplate>
-        </ContentControl>
-      </DockPanel>
+      <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
+        <ContentControl.ContentTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
+                           controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                           Background="{DynamicResource EditorSurfaceBrush}"
+                           FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                           FontSize="14"
+                           ShowLineNumbers="True"
+                           HorizontalScrollBarVisibility="Auto"
+                           VerticalScrollBarVisibility="Auto"/>
+          </DataTemplate>
+        </ContentControl.ContentTemplate>
+      </ContentControl>
     </Panel>
 
   </DockPanel>
-</Window>
+</wnd:AppWindow>

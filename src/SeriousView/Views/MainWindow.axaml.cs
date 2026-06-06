@@ -4,16 +4,24 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using FluentAvalonia.UI.Windowing;
 using SeriousView.ViewModels;
 
 namespace SeriousView.Views;
 
-public partial class MainWindow : Window
+public partial class MainWindow : AppWindow
 {
     // Parameterless ctor for the XAML designer.
     public MainWindow()
     {
         InitializeComponent();
+
+        // Single title-bar strip: our content (brand + tabs + buttons) is drawn into the
+        // title-bar area; the system min/max/close buttons sit on top of it (Windows).
+        // Complex hit-testing lets the tabs/buttons receive clicks instead of dragging.
+        TitleBar.ExtendsContentIntoTitleBar = true;
+        TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
+
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
 #if DEBUG
@@ -50,6 +58,10 @@ public partial class MainWindow : Window
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
+
+        // Reserve room on the right for the system caption buttons so the title-bar content
+        // (the Open button) never sits under min/max/close. RightInset is valid once shown.
+        CaptionReserve.Width = TitleBar.RightInset;
 
         // No OS blur (older Windows / some Linux): Background=Transparent would show the
         // desktop, so fall back to a solid window background.
