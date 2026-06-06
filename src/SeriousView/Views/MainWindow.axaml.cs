@@ -1,11 +1,12 @@
 using System;
 using System.IO;
+using Avalonia;                 // AttachDevTools extension lives in the Avalonia namespace
 using Avalonia.Controls;
 using AvaloniaEdit;
 using AvaloniaEdit.TextMate;
 using TextMateSharp.Grammars;
 
-namespace MdViewer;
+namespace SeriousView.Views;
 
 public partial class MainWindow : Window
 {
@@ -18,10 +19,14 @@ public partial class MainWindow : Window
     public MainWindow(string[] args)
     {
         InitializeComponent();
+#if DEBUG
+        this.AttachDevTools();
+#endif
 
         // VS Code "Dark+" theme + TextMate grammars (TextMateSharp).
-        // MDVIEWER_NOTM env var disables TextMate — for RAM isolation measurement.
-        if (Environment.GetEnvironmentVariable("MDVIEWER_NOTM") is null)
+        // SERIOUSVIEW_NOTM env var disables TextMate — for RAM isolation measurement.
+        // NOTE: this TextMate wiring moves into an attached behavior in C3.
+        if (Environment.GetEnvironmentVariable("SERIOUSVIEW_NOTM") is null)
         {
             _registryOptions = new RegistryOptions(ThemeName.DarkPlus);
             _textMate = Editor.InstallTextMate(_registryOptions);
@@ -51,7 +56,7 @@ public partial class MainWindow : Window
 
         var name = Path.GetFileName(path);
         HeaderText.Text = name + "   —   " + path;
-        Title = name + " — MdViewer";
+        Title = name + " — SeriousView";
         StatusText.Text = $"Строк: {Editor.Document.LineCount}   ·   Символов: {Editor.Document.TextLength}";
     }
 
@@ -75,12 +80,12 @@ public partial class MainWindow : Window
         Editor.Document.Text = Sample;
         if (_registryOptions is not null)
             _textMate?.SetGrammar(_registryOptions.GetScopeByLanguageId("csharp"));
-        HeaderText.Text = "Встроенный пример   —   запусти как:  MdViewer <путь-к-файлу>";
+        HeaderText.Text = "Встроенный пример   —   запусти как:  SeriousView <путь-к-файлу>";
         StatusText.Text = $"Строк: {Editor.Document.LineCount}   ·   подсветка: C# (Dark+)";
     }
 
-    private const string Sample = @"// MdViewer — PoC нативного редактора класса Notepad++
-// Движок: Avalonia 12 + AvaloniaEdit (TextMate / Dark+)
+    private const string Sample = @"// SeriousView — нативный markdown/code viewer
+// Движок: Avalonia 11 + AvaloniaEdit (TextMate / Dark+)
 using System;
 using System.Collections.Generic;
 
@@ -107,6 +112,6 @@ namespace Demo
 }
 
 /* Проверь:  выделение мышью · Ctrl+F (поиск) · номера строк · скролл ·
-   открой реальный файл командой:  MdViewer C:\path\to\file.rs  */
+   открой реальный файл командой:  SeriousView C:\path\to\file.rs  */
 ";
 }

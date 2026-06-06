@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pure logic library: models, abstractions, parsers, services.
+       MUST NOT reference Avalonia or any UI controls (Core <-> UI boundary). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

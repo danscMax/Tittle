@@ -1,0 +1,28 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Single source of truth for every package version (CPM, no floating). -->
+  <ItemGroup Label="Avalonia (11.x maintenance line)">
+    <PackageVersion Include="Avalonia" Version="11.3.17" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.17" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.17" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.17" />
+  </ItemGroup>
+
+  <ItemGroup Label="Editor + syntax highlighting">
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.4.1" />
+    <PackageVersion Include="AvaloniaEdit.TextMate" Version="11.4.1" />
+    <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+</Project>

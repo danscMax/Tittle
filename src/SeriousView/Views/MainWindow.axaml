@@ -4,14 +4,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
-        x:Class="MdViewer.MainWindow"
-        Title="MdViewer"
+        x:Class="SeriousView.Views.MainWindow"
+        Title="SeriousView"
         Width="1100" Height="750"
         Background="#1E1E1E">
+  <!-- NOTE: hard-coded colors are intentional placeholders carried over from the
+       PoC. They are replaced by DynamicResource theme tokens in C5. -->
   <DockPanel LastChildFill="True">
     <Border DockPanel.Dock="Top" Background="#252526" Padding="12,7"
             BorderBrush="#333333" BorderThickness="0,0,0,1">
-      <TextBlock x:Name="HeaderText" Text="MdViewer"
+      <TextBlock x:Name="HeaderText" Text="SeriousView"
                  Foreground="#CCCCCC" FontSize="12.5" VerticalAlignment="Center"/>
     </Border>
     <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="12,3">

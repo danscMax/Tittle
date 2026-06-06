@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Shared MSBuild properties for all projects. Package versions live in
+       Directory.Packages.props (Central Package Management). -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>
