@@ -1,0 +1,26 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Slim, theme-tinted scrollbars (editor + lists). Avalonia's Fluent scrollbar already
+       auto-hides to a thin overlay; here we just tint the thumb to the app palette, round it
+       and slim it so the expanded state reads modern instead of the default chunky grey. -->
+  <Style Selector="ScrollBar /template/ Thumb">
+    <Setter Property="Background" Value="{DynamicResource ChromeBorderBrush}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="ScrollBar:vertical /template/ Thumb">
+    <Setter Property="MinWidth" Value="7" />
+  </Style>
+  <Style Selector="ScrollBar:horizontal /template/ Thumb">
+    <Setter Property="MinHeight" Value="7" />
+  </Style>
+  <Style Selector="ScrollBar /template/ Thumb:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ChromeForegroundMutedBrush}" />
+  </Style>
+
+</Styles>

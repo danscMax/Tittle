@@ -26,5 +26,7 @@
         <StyleInclude Source="avares://SeriousView/Themes/Animations.axaml" />
         <!-- Custom control styles (accent button, recent-item hover) — after FA to override it. -->
         <StyleInclude Source="avares://SeriousView/Themes/Controls.axaml" />
+        <!-- Slim, theme-tinted scrollbars. -->
+        <StyleInclude Source="avares://SeriousView/Themes/ScrollBars.axaml" />
     </Application.Styles>
 </Application>
