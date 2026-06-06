@@ -94,8 +94,20 @@ public static class EditorBehavior
 
     private static void OnThemeVariantChanged(object? sender, EventArgs e)
     {
-        if (sender is TextEditor editor && States.TryGetValue(editor, out var state))
-            state.Installation.SetTheme(state.Registry.LoadTheme(PickTheme(editor)));
+        if (sender is not TextEditor editor || !States.TryGetValue(editor, out var state))
+            return;
+
+        // AvaloniaEdit.TextMate's SetTheme refreshes token colours but leaves the editor's
+        // own background/foreground on the theme it was first installed with. Reinstall so the
+        // new theme applies fully (editor surface follows Light+/Dark+ with the app theme).
+        var grammar = GetGrammarExtension(editor);
+        state.Installation.Dispose();
+        States.Remove(editor);
+
+        var registry = new RegistryOptions(PickTheme(editor));
+        var fresh = new EditorState(registry, editor.InstallTextMate(registry));
+        States.Add(editor, fresh);
+        ApplyGrammar(fresh, grammar);
     }
 
     private static void OnDetached(object? sender, VisualTreeAttachmentEventArgs e)
