@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using SeriousView.Core.Text;
 using SeriousView.Shared;
 
-namespace SeriousView.ViewModels;
+namespace SeriousView.Features.Shell;
 
 /// <summary>One open document = one tab. Holds its content, grammar, header and
 /// per-document status metrics. Content is pushed to the editor via

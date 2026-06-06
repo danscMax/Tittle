@@ -7,8 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Services;
 using SeriousView.Services;
-using SeriousView.ViewModels;
-using SeriousView.Views;
+using SeriousView.Features.Shell;
 
 namespace SeriousView;
 

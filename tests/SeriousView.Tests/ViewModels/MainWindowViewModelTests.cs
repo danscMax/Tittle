@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Headless.XUnit;
 using SeriousView.Core.Abstractions;
-using SeriousView.ViewModels;
+using SeriousView.Features.Shell;
 using Xunit;
 
 namespace SeriousView.Tests.ViewModels;

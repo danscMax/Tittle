@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
 using SeriousView.Shared;
 
-namespace SeriousView.ViewModels;
+namespace SeriousView.Features.Shell;
 
 public partial class MainWindowViewModel : ViewModelBase
 {

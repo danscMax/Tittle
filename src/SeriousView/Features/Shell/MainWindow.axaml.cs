@@ -5,9 +5,8 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Windowing;
-using SeriousView.ViewModels;
 
-namespace SeriousView.Views;
+namespace SeriousView.Features.Shell;
 
 public partial class MainWindow : AppWindow
 {
