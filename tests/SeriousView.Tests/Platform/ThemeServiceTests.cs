@@ -6,7 +6,7 @@ using SeriousView.Core.Abstractions;
 using SeriousView.Platform;
 using Xunit;
 
-namespace SeriousView.Tests.Theme;
+namespace SeriousView.Tests.Platform;
 
 public class ThemeServiceTests
 {

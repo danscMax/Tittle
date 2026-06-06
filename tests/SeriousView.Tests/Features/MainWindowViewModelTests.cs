@@ -5,7 +5,7 @@ using SeriousView.Core.Abstractions;
 using SeriousView.Features.Shell;
 using Xunit;
 
-namespace SeriousView.Tests.ViewModels;
+namespace SeriousView.Tests.Features;
 
 public class MainWindowViewModelTests
 {
