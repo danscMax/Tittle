@@ -12,10 +12,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Avalonia.Headless.XUnit" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SeriousView.Core\SeriousView.Core.csproj" />
+    <ProjectReference Include="..\..\src\SeriousView\SeriousView.csproj" />
   </ItemGroup>
 
 </Project>
