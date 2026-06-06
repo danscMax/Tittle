@@ -36,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _theme = theme;
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
+        _theme.Changed += (_, _) => OnPropertyChanged(nameof(ThemeModeLabel));
 
         var startupPath = args.Length > 0 ? args[0] : null;
         if (startupPath is not null && _fileReader.Exists(startupPath))
@@ -80,8 +81,16 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
     }
 
+    /// <summary>Label for the theme button, reflecting the current mode.</summary>
+    public string ThemeModeLabel => _theme.Mode switch
+    {
+        ThemeMode.Light => "Светлая",
+        ThemeMode.Auto => "Авто",
+        _ => "Тёмная",
+    };
+
     [RelayCommand]
-    private void ToggleTheme() => _theme.Toggle();
+    private void ToggleTheme() => _theme.Cycle();
 
     private void AddTab(DocumentTabViewModel tab)
     {

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Avalonia.Headless.XUnit;
+using SeriousView.Core.Abstractions;
 using SeriousView.ViewModels;
 using Xunit;
 
@@ -74,15 +75,19 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public void ToggleTheme_InvokesThemeService()
+    public void ToggleTheme_CyclesThemeMode_AndUpdatesLabel()
     {
         var theme = new FakeThemeService();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), theme, Array.Empty<string>());
 
+        Assert.Equal("Тёмная", vm.ThemeModeLabel);
+
         vm.ToggleThemeCommand.Execute(null);
 
-        Assert.Equal(1, theme.ToggleCount);
+        Assert.Equal(ThemeMode.Light, theme.Mode);
+        Assert.Equal(1, theme.ChangeCount);
+        Assert.Equal("Светлая", vm.ThemeModeLabel);
     }
 
     [AvaloniaFact]

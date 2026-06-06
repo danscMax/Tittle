@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
+using SeriousView.Core.Abstractions;
 using SeriousView.Services;
 using Xunit;
 
@@ -10,17 +11,32 @@ namespace SeriousView.Tests.Theme;
 public class ThemeServiceTests
 {
     [AvaloniaFact]
-    public void Toggle_FlipsRequestedThemeVariant()
+    public void SetMode_AppliesRequestedThemeVariant()
     {
         var app = Application.Current!;
-        app.RequestedThemeVariant = ThemeVariant.Dark;
         var service = new ThemeService();
 
-        service.Toggle();
+        service.SetMode(ThemeMode.Light);
         Assert.Equal(ThemeVariant.Light, app.RequestedThemeVariant);
 
-        service.Toggle();
+        service.SetMode(ThemeMode.Dark);
         Assert.Equal(ThemeVariant.Dark, app.RequestedThemeVariant);
+
+        service.SetMode(ThemeMode.Auto);
+        Assert.Equal(ThemeVariant.Default, app.RequestedThemeVariant);
+    }
+
+    [AvaloniaFact]
+    public void Cycle_GoesDarkLightAutoDark()
+    {
+        var service = new ThemeService(); // starts Dark
+
+        service.Cycle();
+        Assert.Equal(ThemeMode.Light, service.Mode);
+        service.Cycle();
+        Assert.Equal(ThemeMode.Auto, service.Mode);
+        service.Cycle();
+        Assert.Equal(ThemeMode.Dark, service.Mode);
     }
 
     [AvaloniaFact]

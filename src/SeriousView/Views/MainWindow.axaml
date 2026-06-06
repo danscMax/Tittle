@@ -18,8 +18,8 @@
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-          <Button Content="Тема" AutomationProperties.AutomationId="ThemeButton"
-                  Command="{Binding ToggleThemeCommand}" Padding="10,3"/>
+          <Button Content="{Binding ThemeModeLabel}" AutomationProperties.AutomationId="ThemeButton"
+                  Command="{Binding ToggleThemeCommand}" Padding="10,3" MinWidth="84"/>
           <Button Content="Открыть…" AutomationProperties.AutomationId="OpenButton"
                   Command="{Binding OpenFileCommand}" Padding="10,3"/>
         </StackPanel>

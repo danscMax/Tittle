@@ -46,7 +46,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     public static DocumentTabViewModel CreateSample()
     {
         var tab = new DocumentTabViewModel("Пример", Sample) { GrammarExtension = ".cs" };
-        tab.StatusText = $"Строк: {TextMetrics.LineCount(Sample)}   ·   подсветка: C# (Dark+)";
+        tab.StatusText = $"Строк: {TextMetrics.LineCount(Sample)}   ·   подсветка: C#";
         return tab;
     }
 

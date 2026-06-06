@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SeriousView.Core.Abstractions;
@@ -21,7 +22,21 @@ internal sealed class FakeFileDialogService(string? path) : IFileDialogService
 
 internal sealed class FakeThemeService : IThemeService
 {
-    public int ToggleCount { get; private set; }
+    public ThemeMode Mode { get; private set; } = ThemeMode.Dark;
+    public int ChangeCount { get; private set; }
+    public event EventHandler? Changed;
 
-    public void Toggle() => ToggleCount++;
+    public void SetMode(ThemeMode mode)
+    {
+        Mode = mode;
+        ChangeCount++;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Cycle() => SetMode(Mode switch
+    {
+        ThemeMode.Dark => ThemeMode.Light,
+        ThemeMode.Light => ThemeMode.Auto,
+        _ => ThemeMode.Dark,
+    });
 }

@@ -1,7 +1,24 @@
+using System;
+
 namespace SeriousView.Core.Abstractions;
 
-/// <summary>Toggles the application between light and dark theme variants.</summary>
+/// <summary>Light, dark, or follow the OS.</summary>
+public enum ThemeMode
+{
+    Dark,
+    Light,
+    Auto,
+}
+
+/// <summary>Controls the application theme variant.</summary>
 public interface IThemeService
 {
-    void Toggle();
+    ThemeMode Mode { get; }
+
+    void SetMode(ThemeMode mode);
+
+    /// <summary>Cycles Dark → Light → Auto → Dark.</summary>
+    void Cycle();
+
+    event EventHandler? Changed;
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Avalonia;
+using Avalonia.Styling;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.TextMate;
@@ -78,12 +79,23 @@ public static class EditorBehavior
         if (States.TryGetValue(editor, out var existing))
             return existing;
 
-        var registry = new RegistryOptions(ThemeName.DarkPlus);
+        var registry = new RegistryOptions(PickTheme(editor));
         var installation = editor.InstallTextMate(registry);
         var state = new EditorState(registry, installation);
         States.Add(editor, state);
         editor.DetachedFromVisualTree += OnDetached;
+        editor.ActualThemeVariantChanged += OnThemeVariantChanged;
         return state;
+    }
+
+    // VS Code "Light+"/"Dark+" to match the app theme.
+    private static ThemeName PickTheme(TextEditor editor)
+        => editor.ActualThemeVariant == ThemeVariant.Light ? ThemeName.LightPlus : ThemeName.DarkPlus;
+
+    private static void OnThemeVariantChanged(object? sender, EventArgs e)
+    {
+        if (sender is TextEditor editor && States.TryGetValue(editor, out var state))
+            state.Installation.SetTheme(state.Registry.LoadTheme(PickTheme(editor)));
     }
 
     private static void OnDetached(object? sender, VisualTreeAttachmentEventArgs e)
@@ -92,6 +104,7 @@ public static class EditorBehavior
             return;
 
         editor.DetachedFromVisualTree -= OnDetached;
+        editor.ActualThemeVariantChanged -= OnThemeVariantChanged;
         state.Installation.Dispose();
         States.Remove(editor);
     }
