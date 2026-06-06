@@ -10,11 +10,16 @@
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"
         Width="1100" Height="750"
-        Background="{DynamicResource WindowBackgroundBrush}">
+        Background="Transparent"
+        TransparencyLevelHint="Mica, AcrylicBlur, Blur">
+  <!-- Background=Transparent + Mica: the OS draws the blurred backdrop; chrome uses
+       semi-transparent ChromeOverlayBrush so it shows through, the editor stays solid
+       (EditorSurfaceBrush) for readability. Solid fallback in code-behind when the OS
+       reports no transparency. -->
   <DockPanel LastChildFill="True">
 
     <Border DockPanel.Dock="Top" Classes="chrome"
-            Background="{DynamicResource ChromeBackgroundBrush}" Padding="{DynamicResource ChromePadding}"
+            Background="{DynamicResource ChromeOverlayBrush}" Padding="{DynamicResource ChromePadding}"
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
