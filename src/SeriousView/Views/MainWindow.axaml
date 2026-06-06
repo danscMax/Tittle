@@ -25,7 +25,10 @@
        solid (EditorSurfaceBrush) for readability; solid fallback in code-behind when no blur. -->
   <DockPanel LastChildFill="True">
 
-    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto"
+    <!-- Title strip wrapped in a Border so it casts a soft shadow onto the body below
+         (ZIndex keeps the shadow above the editor/welcome content). -->
+    <Border DockPanel.Dock="Top" ZIndex="1" BoxShadow="{DynamicResource ChromeShadow}">
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto"
           Background="{DynamicResource ChromeOverlayBrush}" MinHeight="40">
       <TextBlock Grid.Column="0" Text="SeriousView" FontWeight="SemiBold"
                  Foreground="{DynamicResource ChromeForegroundBrush}"
@@ -71,6 +74,7 @@
            notify, so an XAML binding would stay at its initial 0). -->
       <Border Grid.Column="3" x:Name="CaptionReserve"/>
     </Grid>
+    </Border>
 
     <Border DockPanel.Dock="Bottom" Classes="chrome"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
