@@ -1,0 +1,49 @@
+# ---- .NET build output ----
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+publish/
+[Pp]ublish/
+*.binlog
+
+# ---- Test results ----
+[Tt]est[Rr]esult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# ---- Visual Studio / Rider / VS Code ----
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.DotSettings.user
+
+# ---- NuGet ----
+*.nupkg
+*.snupkg
+.nuget/
+**/packages/*
+!**/packages/build/
+
+# ---- Avalonia / generated ----
+*.received.*
+
+# ---- Rider/ReSharper caches ----
+_ReSharper.Caches/
+
+# ---- OS noise ----
+.DS_Store
+Thumbs.db
+
+# ---- Misc ----
+*.log
