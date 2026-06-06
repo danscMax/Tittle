@@ -25,4 +25,20 @@
         </Style.Animations>
     </Style>
 
+    <!-- Entrance for the welcome content: gentle fade-in on launch. (Avalonia KeyFrame
+         animation has no animator for the composite RenderTransform, so the slide variant
+         would need a TranslateTransform target; a clean fade is enough and crash-free.) -->
+    <Style Selector="StackPanel.welcome-enter">
+        <Style.Animations>
+            <Animation Duration="0:0:0.34" FillMode="Forward" Easing="CubicEaseOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="0" />
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1" />
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
 </Styles>

@@ -38,4 +38,18 @@
     <Setter Property="RenderTransform" Value="scale(0.97)" />
   </Style>
 
+  <!-- Recent-file entries on the welcome screen: rounded hover highlight so they read as
+       clickable (they are otherwise transparent and borderless). -->
+  <Style Selector="Button.recent /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.recent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}" />
+  </Style>
+
 </Styles>

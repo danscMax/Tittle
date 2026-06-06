@@ -34,7 +34,8 @@
     </Border>
 
     <ScrollViewer>
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+    <StackPanel Classes="welcome-enter"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
                 Spacing="14" MaxWidth="460" Margin="24,40">
 
       <TextBlock Text="SeriousView" FontSize="34" FontWeight="Bold"
@@ -56,7 +57,7 @@
         <ItemsControl ItemsSource="{Binding RecentFiles}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="x:String">
-              <Button Content="{Binding}" ToolTip.Tip="{Binding}"
+              <Button Content="{Binding}" ToolTip.Tip="{Binding}" Classes="recent"
                       Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).OpenRecentCommand}"
                       CommandParameter="{Binding}"
                       Background="Transparent" BorderThickness="0"
