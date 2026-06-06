@@ -19,6 +19,11 @@
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
   </ItemGroup>
 
+  <ItemGroup Label="MVVM + DI">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />

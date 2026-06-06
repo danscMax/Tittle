@@ -4,20 +4,25 @@ using Avalonia;                 // AttachDevTools extension lives in the Avaloni
 using Avalonia.Controls;
 using AvaloniaEdit;
 using AvaloniaEdit.TextMate;
+using SeriousView.ViewModels;
 using TextMateSharp.Grammars;
 
 namespace SeriousView.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly MainWindowViewModel _vm;
     private readonly RegistryOptions? _registryOptions;
     private readonly TextMate.Installation? _textMate;
 
     // Parameterless ctor for the XAML designer.
-    public MainWindow() : this(Array.Empty<string>()) { }
+    public MainWindow() : this(new MainWindowViewModel(), Array.Empty<string>()) { }
 
-    public MainWindow(string[] args)
+    public MainWindow(MainWindowViewModel viewModel, string[] args)
     {
+        _vm = viewModel;
+        DataContext = viewModel;
+
         InitializeComponent();
 #if DEBUG
         this.AttachDevTools();
@@ -48,16 +53,16 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Editor.Document.Text = "// Не удалось открыть файл:\n// " + ex.Message;
-            StatusText.Text = "Ошибка чтения";
+            _vm.StatusText = "Ошибка чтения";
             return;
         }
 
         SetGrammarForExtension(Path.GetExtension(path));
 
         var name = Path.GetFileName(path);
-        HeaderText.Text = name + "   —   " + path;
-        Title = name + " — SeriousView";
-        StatusText.Text = $"Строк: {Editor.Document.LineCount}   ·   Символов: {Editor.Document.TextLength}";
+        _vm.HeaderText = name + "   —   " + path;
+        _vm.Title = name + " — SeriousView";
+        _vm.StatusText = $"Строк: {Editor.Document.LineCount}   ·   Символов: {Editor.Document.TextLength}";
     }
 
     private void SetGrammarForExtension(string ext)
@@ -80,8 +85,8 @@ public partial class MainWindow : Window
         Editor.Document.Text = Sample;
         if (_registryOptions is not null)
             _textMate?.SetGrammar(_registryOptions.GetScopeByLanguageId("csharp"));
-        HeaderText.Text = "Встроенный пример   —   запусти как:  SeriousView <путь-к-файлу>";
-        StatusText.Text = $"Строк: {Editor.Document.LineCount}   ·   подсветка: C# (Dark+)";
+        _vm.HeaderText = "Встроенный пример   —   запусти как:  SeriousView <путь-к-файлу>";
+        _vm.StatusText = $"Строк: {Editor.Document.LineCount}   ·   подсветка: C# (Dark+)";
     }
 
     private const string Sample = @"// SeriousView — нативный markdown/code viewer
