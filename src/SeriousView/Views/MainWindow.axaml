@@ -47,30 +47,30 @@
                  Foreground="{DynamicResource ChromeForegroundMutedBrush}" FontSize="15"/>
       <TabControl IsVisible="{Binding HasTabs}"
                   ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
-      <TabControl.ItemTemplate>
-        <DataTemplate x:DataType="vm:DocumentTabViewModel">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
-            <Button Content="✕" FontSize="10" Padding="5,1"
-                    AutomationProperties.AutomationId="CloseTabButton"
-                    Background="Transparent" BorderThickness="0"
-                    Command="{Binding $parent[TabControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
-                    CommandParameter="{Binding}"/>
-          </StackPanel>
-        </DataTemplate>
-      </TabControl.ItemTemplate>
-      <TabControl.ContentTemplate>
-        <DataTemplate x:DataType="vm:DocumentTabViewModel">
-          <ae:TextEditor controls:EditorBehavior.Text="{Binding Content}"
-                         controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
-                         Background="{DynamicResource EditorSurfaceBrush}"
-                         FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                         FontSize="14"
-                         ShowLineNumbers="True"
-                         HorizontalScrollBarVisibility="Auto"
-                         VerticalScrollBarVisibility="Auto"/>
-        </DataTemplate>
-      </TabControl.ContentTemplate>
+        <TabControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+              <Button Content="✕" FontSize="10" Padding="5,1"
+                      AutomationProperties.AutomationId="CloseTabButton"
+                      Background="Transparent" BorderThickness="0"
+                      Command="{Binding $parent[TabControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
+                      CommandParameter="{Binding}"/>
+            </StackPanel>
+          </DataTemplate>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
+                           controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                           Background="{DynamicResource EditorSurfaceBrush}"
+                           FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                           FontSize="14"
+                           ShowLineNumbers="True"
+                           HorizontalScrollBarVisibility="Auto"
+                           VerticalScrollBarVisibility="Auto"/>
+          </DataTemplate>
+        </TabControl.ContentTemplate>
       </TabControl>
     </Panel>
 

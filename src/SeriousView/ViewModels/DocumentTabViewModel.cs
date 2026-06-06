@@ -23,13 +23,14 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "";
 
-    /// <summary>Document content, bound one-way into the editor.</summary>
-    public string Content { get; }
+    /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
+    /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
+    public string DocumentText { get; }
 
     private DocumentTabViewModel(string header, string content)
     {
         _header = header;
-        Content = content;
+        DocumentText = content;
     }
 
     public static DocumentTabViewModel FromFile(string text, string path)

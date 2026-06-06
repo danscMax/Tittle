@@ -34,7 +34,7 @@ public class MainWindowViewModelTests
         Assert.Single(vm.Tabs);
         Assert.Equal("sample.cs", vm.SelectedTab!.Header);
         Assert.Equal(".cs", vm.SelectedTab.GrammarExtension);
-        Assert.Equal("x\ny", vm.SelectedTab.Content);
+        Assert.Equal("x\ny", vm.SelectedTab.DocumentText);
     }
 
     [AvaloniaFact]
@@ -101,5 +101,20 @@ public class MainWindowViewModelTests
         Assert.False(vm.HasTabs);
         Assert.Null(vm.SelectedTab);
         Assert.Empty(vm.Tabs);
+    }
+
+    [AvaloniaFact]
+    public async Task ReorderingTabs_PreservesSelectionAndContent()
+    {
+        var vm = CreateVm(dialogPath: "/path/doc.md", content: "hello world");
+        await vm.OpenFileCommand.ExecuteAsync(null); // 2 tabs; doc.md selected at index 1
+        var selected = vm.SelectedTab!;
+        var content = selected.DocumentText;
+
+        vm.Tabs.Move(1, 0); // drag the selected tab to the front
+
+        Assert.Same(selected, vm.SelectedTab);              // same instance still selected
+        Assert.Equal(content, vm.SelectedTab.DocumentText); // text (and its editor/TextMate) intact
+        Assert.Equal(0, vm.Tabs.IndexOf(selected));
     }
 }
