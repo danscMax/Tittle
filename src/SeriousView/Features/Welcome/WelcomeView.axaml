@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:SeriousView.Features.Shell"
-             x:Class="SeriousView.Views.WelcomeView"
+             x:Class="SeriousView.Features.Welcome.WelcomeView"
              x:DataType="vm:MainWindowViewModel">
   <Panel>
     <!-- Acrylic backdrop: the blurred desktop shows through behind the welcome content,

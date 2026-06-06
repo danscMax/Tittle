@@ -7,7 +7,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.TextMate;
 using TextMateSharp.Grammars;
 
-namespace SeriousView.Controls;
+namespace SeriousView.Features.Viewer;
 
 /// <summary>
 /// Bridges a <see cref="TextEditor"/> to a view model via attached properties:

@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SeriousView.Views;
+namespace SeriousView.Features.Welcome;
 
 public partial class WelcomeView : UserControl
 {
