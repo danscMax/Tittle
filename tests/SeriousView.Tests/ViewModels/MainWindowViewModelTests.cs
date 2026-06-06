@@ -19,9 +19,21 @@ public class MainWindowViewModelTests
             args ?? Array.Empty<string>());
 
     [AvaloniaFact]
-    public void Startup_WithoutArgs_OpensSampleTab()
+    public void Startup_WithoutArgs_ShowsWelcome_NoTabs()
     {
         var vm = CreateVm();
+
+        Assert.Empty(vm.Tabs);
+        Assert.False(vm.HasTabs);
+        Assert.Null(vm.SelectedTab);
+    }
+
+    [AvaloniaFact]
+    public void OpenSample_AddsSampleTab_AndActivatesIt()
+    {
+        var vm = CreateVm();
+
+        vm.OpenSampleCommand.Execute(null);
 
         Assert.Single(vm.Tabs);
         Assert.Equal("Пример", vm.SelectedTab!.Header);
@@ -45,7 +57,7 @@ public class MainWindowViewModelTests
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
-        Assert.Equal(2, vm.Tabs.Count);
+        Assert.Single(vm.Tabs);
         Assert.Equal("doc.md", vm.SelectedTab!.Header);
         Assert.Equal(".md", vm.SelectedTab.GrammarExtension);
         Assert.Contains("Строк", vm.StatusText);
@@ -58,14 +70,15 @@ public class MainWindowViewModelTests
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
-        Assert.Single(vm.Tabs);
+        Assert.Empty(vm.Tabs);
     }
 
     [AvaloniaFact]
     public async Task CloseTab_RemovesTab_AndSelectsNeighbour()
     {
         var vm = CreateVm(dialogPath: "/path/doc.md");
-        await vm.OpenFileCommand.ExecuteAsync(null); // now 2 tabs, doc.md active
+        vm.OpenSampleCommand.Execute(null);          // tab 0: sample
+        await vm.OpenFileCommand.ExecuteAsync(null); // tab 1: doc.md (active)
         var closing = vm.SelectedTab!;
 
         vm.CloseTabCommand.Execute(closing);
@@ -96,6 +109,7 @@ public class MainWindowViewModelTests
     public void HasTabs_BecomesFalse_AfterClosingLastTab()
     {
         var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
         Assert.True(vm.HasTabs);
 
         vm.CloseTabCommand.Execute(vm.SelectedTab);
@@ -109,7 +123,8 @@ public class MainWindowViewModelTests
     public async Task ReorderingTabs_PreservesSelectionAndContent()
     {
         var vm = CreateVm(dialogPath: "/path/doc.md", content: "hello world");
-        await vm.OpenFileCommand.ExecuteAsync(null); // 2 tabs; doc.md selected at index 1
+        vm.OpenSampleCommand.Execute(null);          // tab 0: sample
+        await vm.OpenFileCommand.ExecuteAsync(null); // tab 1: doc.md selected
         var selected = vm.SelectedTab!;
         var content = selected.DocumentText;
 

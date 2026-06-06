@@ -58,10 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase
             AddTab(DocumentTabViewModel.FromFile(_fileReader.ReadAllText(startupPath), startupPath));
             _recent.Add(startupPath);
         }
-        else
-        {
-            AddTab(DocumentTabViewModel.CreateSample());
-        }
+        // Otherwise no tab is opened — the welcome view is shown while HasTabs is false.
     }
 
     [RelayCommand]
@@ -74,6 +71,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private Task OpenRecent(string path) => OpenPathAsync(path);
+
+    /// <summary>Opens the built-in sample document (offered on the welcome screen).</summary>
+    [RelayCommand]
+    private void OpenSample() => AddTab(DocumentTabViewModel.CreateSample());
 
     /// <summary>Reads <paramref name="path"/> into a new active tab and records it as recent.</summary>
     public async Task OpenPathAsync(string path)
