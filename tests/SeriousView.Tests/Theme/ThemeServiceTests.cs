@@ -35,7 +35,7 @@ public class ThemeServiceTests
         var lightColor = ((ISolidColorBrush)light!).Color;
 
         Assert.NotEqual(darkColor, lightColor);
-        Assert.Equal(Color.Parse("#1E1E1E"), darkColor);
-        Assert.Equal(Color.Parse("#FFFFFF"), lightColor);
+        Assert.Equal(Color.Parse("#15151A"), darkColor);
+        Assert.Equal(Color.Parse("#F7F7FB"), lightColor);
     }
 }

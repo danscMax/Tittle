@@ -13,7 +13,8 @@
         Background="{DynamicResource WindowBackgroundBrush}">
   <DockPanel LastChildFill="True">
 
-    <Border DockPanel.Dock="Top" Background="{DynamicResource ChromeBackgroundBrush}" Padding="12,7"
+    <Border DockPanel.Dock="Top" Classes="chrome"
+            Background="{DynamicResource ChromeBackgroundBrush}" Padding="{DynamicResource ChromePadding}"
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
@@ -28,16 +29,17 @@
       </DockPanel>
     </Border>
 
-    <Border DockPanel.Dock="Bottom" Background="{DynamicResource StatusBarBackgroundBrush}" Padding="12,3">
+    <Border DockPanel.Dock="Bottom" Classes="chrome"
+            Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
       <TextBlock Text="{Binding StatusText}"
                  Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
     </Border>
 
     <Panel>
       <!-- Placeholder shown when no tabs are open (replaced by a richer Welcome view in a later step). -->
-      <TextBlock Text="Нет открытых файлов" IsVisible="{Binding !HasTabs}"
+      <TextBlock Text="Нет открытых файлов" Classes="fade-in" IsVisible="{Binding !HasTabs}"
                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                 Foreground="{DynamicResource ChromeForegroundBrush}" Opacity="0.55" FontSize="15"/>
+                 Foreground="{DynamicResource ChromeForegroundMutedBrush}" FontSize="15"/>
       <TabControl IsVisible="{Binding HasTabs}"
                   ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
       <TabControl.ItemTemplate>
@@ -56,6 +58,7 @@
         <DataTemplate x:DataType="vm:DocumentTabViewModel">
           <ae:TextEditor controls:EditorBehavior.Text="{Binding Content}"
                          controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                         Background="{DynamicResource EditorSurfaceBrush}"
                          FontFamily="Cascadia Code,Consolas,Courier New,monospace"
                          FontSize="14"
                          ShowLineNumbers="True"

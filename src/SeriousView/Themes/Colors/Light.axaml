@@ -1,12 +1,31 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Light theme chrome tokens (same keys as Dark.axaml). -->
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="ChromeBackgroundBrush" Color="#F3F3F3" />
-    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#D6D6D6" />
-    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#1F1F1F" />
-    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#007ACC" />
+    <!-- ============ Light theme — premium palette (same keys as Dark.axaml) ============ -->
+
+    <!-- Base surfaces -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7F7FB" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#FFFFFF" />
+
+    <!-- Chrome (subtle vertical gradient for depth) -->
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#EDEDF3" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#F4F4F9" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#D9D9E2" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#1B1B24" />
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#6B6B78" />
+
+    <!-- Accent -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#2D6CF6" />
+    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
+
+    <!-- Status bar (accent gradient) -->
+    <LinearGradientBrush x:Key="StatusBarBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Color="#2D6CF6" Offset="0" />
+        <GradientStop Color="#2257D6" Offset="1" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#FFFFFF" />
 
 </ResourceDictionary>

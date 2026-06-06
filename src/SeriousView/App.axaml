@@ -21,5 +21,7 @@
         <fa:FluentAvaloniaTheme PreferSystemTheme="False" PreferUserAccentColor="True" />
         <!-- AvaloniaEdit control theme — required for TextEditor to render; must come AFTER. -->
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <!-- App animations (theme recolor transitions, fade-in). -->
+        <StyleInclude Source="avares://SeriousView/Themes/Animations.axaml" />
     </Application.Styles>
 </Application>
