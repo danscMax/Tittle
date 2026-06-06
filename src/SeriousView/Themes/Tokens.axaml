@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Theme-agnostic design tokens (radii, spacing, durations).
+         Color tokens live in Themes/Colors/{Light,Dark}.axaml. -->
+    <x:Double x:Key="ChromeFontSize">12.5</x:Double>
+    <Thickness x:Key="ChromePadding">12,7</Thickness>
+    <Thickness x:Key="StatusBarPadding">12,3</Thickness>
+
+</ResourceDictionary>

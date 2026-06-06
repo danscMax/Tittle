@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light theme chrome tokens (same keys as Dark.axaml). -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ChromeBackgroundBrush" Color="#F3F3F3" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#D6D6D6" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#1F1F1F" />
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#007ACC" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#FFFFFF" />
+
+</ResourceDictionary>

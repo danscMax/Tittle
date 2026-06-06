@@ -11,6 +11,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IFileDialogService _fileDialog;
     private readonly IFileReader _fileReader;
+    private readonly IThemeService _theme;
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
@@ -24,10 +25,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "Готово";
 
-    public MainWindowViewModel(IFileDialogService fileDialog, IFileReader fileReader, string[] args)
+    public MainWindowViewModel(
+        IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme, string[] args)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
+        _theme = theme;
 
         var startupPath = args.Length > 0 ? args[0] : null;
         if (startupPath is not null && _fileReader.Exists(startupPath))
@@ -71,6 +74,9 @@ public partial class MainWindowViewModel : ViewModelBase
         else if (ReferenceEquals(SelectedTab, tab) || SelectedTab is null)
             SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
     }
+
+    [RelayCommand]
+    private void ToggleTheme() => _theme.Toggle();
 
     private void AddTab(DocumentTabViewModel tab)
     {

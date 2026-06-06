@@ -45,6 +45,7 @@ public partial class App : Application
         services.AddSingleton<Func<TopLevel?>>(_ => static () =>
             (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IThemeService, ThemeService>();
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();

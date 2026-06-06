@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Dark theme chrome tokens. Referenced via {DynamicResource} so they swap
+         instantly when RequestedThemeVariant changes. -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="ChromeBackgroundBrush" Color="#252526" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#333333" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#007ACC" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#FFFFFF" />
+
+</ResourceDictionary>

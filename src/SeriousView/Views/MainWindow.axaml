@@ -10,24 +10,25 @@
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"
         Width="1100" Height="750"
-        Background="#1E1E1E">
-  <!-- NOTE: hard-coded colors are intentional placeholders carried over from the
-       PoC. They are replaced by DynamicResource theme tokens in C5. -->
+        Background="{DynamicResource WindowBackgroundBrush}">
   <DockPanel LastChildFill="True">
 
-    <Border DockPanel.Dock="Top" Background="#252526" Padding="12,7"
-            BorderBrush="#333333" BorderThickness="0,0,0,1">
+    <Border DockPanel.Dock="Top" Background="{DynamicResource ChromeBackgroundBrush}" Padding="12,7"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
       <DockPanel>
-        <Button DockPanel.Dock="Right" Content="Открыть…"
-                Command="{Binding OpenFileCommand}" Padding="10,3"/>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+          <Button Content="Тема" Command="{Binding ToggleThemeCommand}" Padding="10,3"/>
+          <Button Content="Открыть…" Command="{Binding OpenFileCommand}" Padding="10,3"/>
+        </StackPanel>
         <TextBlock Text="SeriousView" FontWeight="SemiBold"
-                   Foreground="#CCCCCC" FontSize="12.5" VerticalAlignment="Center"/>
+                   Foreground="{DynamicResource ChromeForegroundBrush}"
+                   FontSize="12.5" VerticalAlignment="Center"/>
       </DockPanel>
     </Border>
 
-    <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="12,3">
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource StatusBarBackgroundBrush}" Padding="12,3">
       <TextBlock Text="{Binding StatusText}"
-                 Foreground="White" FontSize="11.5"/>
+                 Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
     </Border>
 
     <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
