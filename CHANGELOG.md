@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — M2.1 "Premium top bar"
+
+- Unified VS Code-style title bar: the brand, document tabs, theme/open buttons and the
+  system min/max/close buttons now share a single strip painted in the app colour
+  (FluentAvalonia `AppWindow` + `ExtendsContentIntoTitleBar`).
+- Flat, compact document tabs (close ✕ on hover, accent underline on the active tab),
+  replacing the oversized default tab headers.
+- The welcome screen is shown on startup; the demo document moved to an "Open sample"
+  button on it.
+- Premium frosted-glass welcome: AcrylicBlur backdrop plus soft accent glows for depth.
+
+### Fixed
+
+- The editor surface now follows the app theme at runtime (Light+/Dark+); it previously
+  stayed on the theme it was first installed with (dark editor on the light theme).
+
 ### Added — M2 "Visual/UX foundation"
 
 - FluentAvaloniaUI (Fluent v2 theme + system accent).

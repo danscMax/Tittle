@@ -43,8 +43,12 @@
                  Foreground="{DynamicResource ChromeForegroundMutedBrush}"
                  FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,8"/>
 
-      <Button Content="Открыть файл…" Command="{Binding OpenFileCommand}"
-              Classes="accent" HorizontalAlignment="Center" Padding="18,9"/>
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+        <Button Content="Открыть файл…" Command="{Binding OpenFileCommand}"
+                Classes="accent" Padding="18,9"/>
+        <Button Content="Открыть пример" Command="{Binding OpenSampleCommand}"
+                AutomationProperties.AutomationId="OpenSampleButton" Padding="18,9"/>
+      </StackPanel>
 
       <StackPanel IsVisible="{Binding HasRecent}" Spacing="2" Margin="0,18,0,0">
         <TextBlock Text="Недавние" FontWeight="SemiBold" FontSize="12"
