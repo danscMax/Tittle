@@ -25,6 +25,7 @@
 
     <!-- Accent -->
     <SolidColorBrush x:Key="AccentBrush" Color="#5A8DFF" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#74A0FF" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
     <!-- Status bar (accent gradient) -->
