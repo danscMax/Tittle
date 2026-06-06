@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — M2 "Visual/UX foundation"
+
+- FluentAvaloniaUI (Fluent v2 theme + system accent).
+- Premium Dark/Light palettes (gradient chrome, accent status bar, design tokens).
+- Theme modes: Dark / Light / Auto (follow OS); editor syntax theme follows the app
+  theme (Light+/Dark+).
+- Mica/Acrylic window backdrop on Windows 11 with a solid fallback elsewhere.
+- Animations: smooth chrome recolor on theme change, fade-in.
+- Recent files (MRU, persisted under %AppData%) + a premium welcome screen.
+- Drag-and-drop files into the window to open them.
+- Empty-state welcome view when no tabs are open.
+
 ### Added — M1 "Skeleton"
 
 - MVVM + DI application skeleton (CommunityToolkit.Mvvm,
