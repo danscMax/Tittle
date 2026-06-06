@@ -4,6 +4,8 @@
         xmlns:vm="using:SeriousView.ViewModels"
         xmlns:controls="using:SeriousView.Controls"
         xmlns:views="using:SeriousView.Views"
+        xmlns:conv="using:SeriousView.Converters"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:wnd="using:FluentAvalonia.UI.Windowing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -46,7 +48,11 @@
         </ListBox.ItemsPanel>
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
+                             Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
+              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+            </StackPanel>
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>

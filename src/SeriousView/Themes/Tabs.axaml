@@ -19,6 +19,12 @@
       <ControlTemplate>
         <Border x:Name="PART_Bg" Background="{TemplateBinding Background}"
                 BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
+          <Border.Transitions>
+            <!-- Smooth hover/select recolor (= DurFast token). -->
+            <Transitions>
+              <BrushTransition Property="Background" Duration="0:0:0.12" />
+            </Transitions>
+          </Border.Transitions>
           <Grid ColumnDefinitions="*,Auto" Height="34" MinWidth="92">
             <ContentPresenter Grid.Column="0"
                               Content="{TemplateBinding Content}"
@@ -31,7 +37,14 @@
                     AutomationProperties.AutomationId="CloseTabButton"
                     Background="Transparent" BorderThickness="0"
                     Command="{Binding $parent[ListBox].DataContext.CloseTabCommand}"
-                    CommandParameter="{Binding}" />
+                    CommandParameter="{Binding}">
+              <Button.Transitions>
+                <!-- Fade the ✕ in/out on hover (= DurFast token). -->
+                <Transitions>
+                  <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+                </Transitions>
+              </Button.Transitions>
+            </Button>
             <!-- Thin accent line under the active tab. -->
             <Border x:Name="PART_Accent" Grid.ColumnSpan="2" Height="2"
                     VerticalAlignment="Bottom" IsVisible="False"
