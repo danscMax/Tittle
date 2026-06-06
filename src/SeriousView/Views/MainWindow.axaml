@@ -3,6 +3,7 @@
         xmlns:ae="using:AvaloniaEdit"
         xmlns:vm="using:SeriousView.ViewModels"
         xmlns:controls="using:SeriousView.Controls"
+        xmlns:views="using:SeriousView.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
@@ -11,7 +12,8 @@
         Title="{Binding Title}"
         Width="1100" Height="750"
         Background="Transparent"
-        TransparencyLevelHint="Mica, AcrylicBlur, Blur">
+        TransparencyLevelHint="Mica, AcrylicBlur, Blur"
+        DragDrop.AllowDrop="True">
   <!-- Background=Transparent + Mica: the OS draws the blurred backdrop; chrome uses
        semi-transparent ChromeOverlayBrush so it shows through, the editor stays solid
        (EditorSurfaceBrush) for readability. Solid fallback in code-behind when the OS
@@ -41,10 +43,8 @@
     </Border>
 
     <Panel>
-      <!-- Placeholder shown when no tabs are open (replaced by a richer Welcome view in a later step). -->
-      <TextBlock Text="Нет открытых файлов" Classes="fade-in" IsVisible="{Binding !HasTabs}"
-                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                 Foreground="{DynamicResource ChromeForegroundMutedBrush}" FontSize="15"/>
+      <!-- Welcome view shown when no tabs are open. -->
+      <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
       <TabControl IsVisible="{Binding HasTabs}"
                   ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
         <TabControl.ItemTemplate>

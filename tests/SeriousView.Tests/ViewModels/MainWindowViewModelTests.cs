@@ -15,6 +15,7 @@ public class MainWindowViewModelTests
             new FakeFileDialogService(dialogPath),
             new FakeFileReader(content),
             new FakeThemeService(),
+            new FakeRecentFilesStore(),
             args ?? Array.Empty<string>());
 
     [AvaloniaFact]
@@ -79,7 +80,8 @@ public class MainWindowViewModelTests
     {
         var theme = new FakeThemeService();
         var vm = new MainWindowViewModel(
-            new FakeFileDialogService(null), new FakeFileReader("x"), theme, Array.Empty<string>());
+            new FakeFileDialogService(null), new FakeFileReader("x"), theme,
+            new FakeRecentFilesStore(), Array.Empty<string>());
 
         Assert.Equal("Тёмная", vm.ThemeModeLabel);
 
@@ -113,8 +115,22 @@ public class MainWindowViewModelTests
 
         vm.Tabs.Move(1, 0); // drag the selected tab to the front
 
-        Assert.Same(selected, vm.SelectedTab);              // same instance still selected
-        Assert.Equal(content, vm.SelectedTab.DocumentText); // text (and its editor/TextMate) intact
+        Assert.Same(selected, vm.SelectedTab);               // same instance still selected
+        Assert.Equal(content, vm.SelectedTab!.DocumentText); // text (and its editor/TextMate) intact
         Assert.Equal(0, vm.Tabs.IndexOf(selected));
+    }
+
+    [AvaloniaFact]
+    public async Task OpenFile_RecordsRecentFile()
+    {
+        var recent = new FakeRecentFilesStore();
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService("/path/doc.md"), new FakeFileReader("x"),
+            new FakeThemeService(), recent, Array.Empty<string>());
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Contains("/path/doc.md", recent.Items);
+        Assert.Contains("/path/doc.md", vm.RecentFiles);
     }
 }

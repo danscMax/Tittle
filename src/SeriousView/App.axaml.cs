@@ -46,6 +46,8 @@ public partial class App : Application
             (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ISettingsStore, JsonSettingsStore>();
+        services.AddSingleton<IRecentFilesStore, RecentFilesStore>();
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();

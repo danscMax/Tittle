@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SeriousView.Core.Abstractions;
@@ -39,4 +40,18 @@ internal sealed class FakeThemeService : IThemeService
         ThemeMode.Light => ThemeMode.Auto,
         _ => ThemeMode.Dark,
     });
+}
+
+internal sealed class FakeRecentFilesStore : IRecentFilesStore
+{
+    private readonly List<string> _items = new();
+    public IReadOnlyList<string> Items => _items;
+    public event EventHandler? Changed;
+
+    public void Add(string path)
+    {
+        _items.Remove(path);
+        _items.Insert(0, path);
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
 }
