@@ -8,6 +8,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://SeriousView/Themes/Tokens.axaml" />
+                <ResourceInclude Source="avares://SeriousView/Themes/Tabs.axaml" />
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceInclude x:Key="Light" Source="avares://SeriousView/Themes/Colors/Light.axaml" />

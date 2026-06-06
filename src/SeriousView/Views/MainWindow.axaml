@@ -45,33 +45,42 @@
     <Panel>
       <!-- Welcome view shown when no tabs are open. -->
       <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
-      <TabControl IsVisible="{Binding HasTabs}"
-                  ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
-        <TabControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <StackPanel Orientation="Horizontal" Spacing="8">
+      <DockPanel IsVisible="{Binding HasTabs}">
+        <!-- Flat tab strip (VsCodeTab ItemContainerTheme). Body switches via ContentControl. -->
+        <ListBox DockPanel.Dock="Top"
+                 ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+                 ItemContainerTheme="{StaticResource VsCodeTab}"
+                 Background="{DynamicResource ChromeOverlayBrush}"
+                 BorderThickness="0" Padding="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:DocumentTabViewModel">
               <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
-              <Button Content="✕" FontSize="10" Padding="5,1"
-                      AutomationProperties.AutomationId="CloseTabButton"
-                      Background="Transparent" BorderThickness="0"
-                      Command="{Binding $parent[TabControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
-                      CommandParameter="{Binding}"/>
-            </StackPanel>
-          </DataTemplate>
-        </TabControl.ItemTemplate>
-        <TabControl.ContentTemplate>
-          <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
-                           controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
-                           Background="{DynamicResource EditorSurfaceBrush}"
-                           FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                           FontSize="14"
-                           ShowLineNumbers="True"
-                           HorizontalScrollBarVisibility="Auto"
-                           VerticalScrollBarVisibility="Auto"/>
-          </DataTemplate>
-        </TabControl.ContentTemplate>
-      </TabControl>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <ContentControl Content="{Binding SelectedTab}">
+          <ContentControl.ContentTemplate>
+            <DataTemplate x:DataType="vm:DocumentTabViewModel">
+              <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
+                             controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                             Background="{DynamicResource EditorSurfaceBrush}"
+                             FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                             FontSize="14"
+                             ShowLineNumbers="True"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto"/>
+            </DataTemplate>
+          </ContentControl.ContentTemplate>
+        </ContentControl>
+      </DockPanel>
     </Panel>
 
   </DockPanel>
