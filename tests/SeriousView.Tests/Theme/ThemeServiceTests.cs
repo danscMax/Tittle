@@ -39,6 +39,15 @@ public class ThemeServiceTests
         Assert.Equal(ThemeMode.Dark, service.Mode);
     }
 
+    [Fact]
+    public void Next_CyclesDarkLightAutoDark()
+    {
+        // The shared cycle helper reused by ThemeService and FakeThemeService.
+        Assert.Equal(ThemeMode.Light, ThemeMode.Dark.Next());
+        Assert.Equal(ThemeMode.Auto, ThemeMode.Light.Next());
+        Assert.Equal(ThemeMode.Dark, ThemeMode.Auto.Next());
+    }
+
     [AvaloniaFact]
     public void ColorTokens_ResolveDifferentlyPerVariant()
     {

@@ -10,6 +10,18 @@ public enum ThemeMode
     Auto,
 }
 
+/// <summary>Helpers for <see cref="ThemeMode"/>.</summary>
+public static class ThemeModeExtensions
+{
+    /// <summary>The next mode in the Dark → Light → Auto → Dark cycle.</summary>
+    public static ThemeMode Next(this ThemeMode mode) => mode switch
+    {
+        ThemeMode.Dark => ThemeMode.Light,
+        ThemeMode.Light => ThemeMode.Auto,
+        _ => ThemeMode.Dark,
+    };
+}
+
 /// <summary>Controls the application theme variant.</summary>
 public interface IThemeService
 {

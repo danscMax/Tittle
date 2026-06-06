@@ -34,12 +34,7 @@ internal sealed class FakeThemeService : IThemeService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public void Cycle() => SetMode(Mode switch
-    {
-        ThemeMode.Dark => ThemeMode.Light,
-        ThemeMode.Light => ThemeMode.Auto,
-        _ => ThemeMode.Dark,
-    });
+    public void Cycle() => SetMode(Mode.Next());
 }
 
 internal sealed class FakeRecentFilesStore : IRecentFilesStore

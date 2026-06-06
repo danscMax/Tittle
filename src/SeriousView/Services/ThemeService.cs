@@ -23,12 +23,7 @@ public sealed class ThemeService : IThemeService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public void Cycle() => SetMode(Mode switch
-    {
-        ThemeMode.Dark => ThemeMode.Light,
-        ThemeMode.Light => ThemeMode.Auto,
-        _ => ThemeMode.Dark,
-    });
+    public void Cycle() => SetMode(Mode.Next());
 
     private void Apply()
     {
