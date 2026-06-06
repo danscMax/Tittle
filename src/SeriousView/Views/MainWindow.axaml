@@ -14,25 +14,46 @@
   <!-- NOTE: hard-coded colors are intentional placeholders carried over from the
        PoC. They are replaced by DynamicResource theme tokens in C5. -->
   <DockPanel LastChildFill="True">
+
     <Border DockPanel.Dock="Top" Background="#252526" Padding="12,7"
             BorderBrush="#333333" BorderThickness="0,0,0,1">
       <DockPanel>
         <Button DockPanel.Dock="Right" Content="Открыть…"
                 Command="{Binding OpenFileCommand}" Padding="10,3"/>
-        <TextBlock Text="{Binding HeaderText}"
+        <TextBlock Text="SeriousView" FontWeight="SemiBold"
                    Foreground="#CCCCCC" FontSize="12.5" VerticalAlignment="Center"/>
       </DockPanel>
     </Border>
+
     <Border DockPanel.Dock="Bottom" Background="#007ACC" Padding="12,3">
       <TextBlock Text="{Binding StatusText}"
                  Foreground="White" FontSize="11.5"/>
     </Border>
-    <ae:TextEditor Document="{Binding Document}"
-                   controls:TextMateBehavior.GrammarExtension="{Binding GrammarExtension}"
-                   FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                   FontSize="14"
-                   ShowLineNumbers="True"
-                   HorizontalScrollBarVisibility="Auto"
-                   VerticalScrollBarVisibility="Auto"/>
+
+    <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
+      <TabControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:DocumentTabViewModel">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+            <Button Content="✕" FontSize="10" Padding="5,1"
+                    Background="Transparent" BorderThickness="0"
+                    Command="{Binding $parent[TabControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
+                    CommandParameter="{Binding}"/>
+          </StackPanel>
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+      <TabControl.ContentTemplate>
+        <DataTemplate x:DataType="vm:DocumentTabViewModel">
+          <ae:TextEditor Document="{Binding Document}"
+                         controls:TextMateBehavior.GrammarExtension="{Binding GrammarExtension}"
+                         FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                         FontSize="14"
+                         ShowLineNumbers="True"
+                         HorizontalScrollBarVisibility="Auto"
+                         VerticalScrollBarVisibility="Auto"/>
+        </DataTemplate>
+      </TabControl.ContentTemplate>
+    </TabControl>
+
   </DockPanel>
 </Window>

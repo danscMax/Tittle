@@ -1,7 +1,6 @@
 using System;
-using System.IO;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
@@ -13,21 +12,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialog;
     private readonly IFileReader _fileReader;
 
+    public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
+
+    [ObservableProperty]
+    private DocumentTabViewModel? _selectedTab;
+
     [ObservableProperty]
     private string _title = "SeriousView";
 
-    [ObservableProperty]
-    private string _headerText = "SeriousView";
-
+    /// <summary>Status bar text — mirrors the active tab.</summary>
     [ObservableProperty]
     private string _statusText = "Готово";
-
-    /// <summary>Extension (e.g. ".cs") driving TextMate grammar selection in the View.</summary>
-    [ObservableProperty]
-    private string? _grammarExtension;
-
-    /// <summary>The editor document, bound to <c>TextEditor.Document</c> in the View.</summary>
-    public TextDocument Document { get; } = new();
 
     public MainWindowViewModel(IFileDialogService fileDialog, IFileReader fileReader, string[] args)
     {
@@ -36,9 +31,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var startupPath = args.Length > 0 ? args[0] : null;
         if (startupPath is not null && _fileReader.Exists(startupPath))
-            LoadFromText(_fileReader.ReadAllText(startupPath), startupPath);
+            AddTab(DocumentTabViewModel.FromFile(_fileReader.ReadAllText(startupPath), startupPath));
         else
-            LoadSample();
+            AddTab(DocumentTabViewModel.CreateSample());
     }
 
     [RelayCommand]
@@ -51,7 +46,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var text = await _fileReader.ReadAllTextAsync(path);
-            LoadFromText(text, path);
+            AddTab(DocumentTabViewModel.FromFile(text, path));
         }
         catch (Exception ex)
         {
@@ -59,53 +54,33 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private void LoadFromText(string text, string path)
+    [RelayCommand]
+    private void CloseTab(DocumentTabViewModel? tab)
     {
-        Document.Text = text;
-        GrammarExtension = Path.GetExtension(path);
+        if (tab is null)
+            return;
 
-        var name = Path.GetFileName(path);
-        HeaderText = name + "   —   " + path;
-        Title = name + " — SeriousView";
-        StatusText = $"Строк: {Document.LineCount}   ·   Символов: {Document.TextLength}";
+        var index = Tabs.IndexOf(tab);
+        if (index < 0)
+            return;
+
+        Tabs.Remove(tab);
+
+        if (Tabs.Count == 0)
+            SelectedTab = null;
+        else if (ReferenceEquals(SelectedTab, tab) || SelectedTab is null)
+            SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
     }
 
-    private void LoadSample()
+    private void AddTab(DocumentTabViewModel tab)
     {
-        Document.Text = Sample;
-        GrammarExtension = ".cs"; // C# highlighting for the built-in sample
-        HeaderText = "Встроенный пример   —   запусти как:  SeriousView <путь-к-файлу>";
-        StatusText = $"Строк: {Document.LineCount}   ·   подсветка: C# (Dark+)";
+        Tabs.Add(tab);
+        SelectedTab = tab;
     }
 
-    private const string Sample = @"// SeriousView — нативный markdown/code viewer
-// Движок: Avalonia 11 + AvaloniaEdit (TextMate / Dark+)
-using System;
-using System.Collections.Generic;
-
-namespace Demo
-{
-    /// <summary>Демонстрация подсветки синтаксиса.</summary>
-    public sealed class Greeter
+    partial void OnSelectedTabChanged(DocumentTabViewModel? value)
     {
-        private readonly string _name;
-        public Greeter(string name) => _name = name;
-
-        public IEnumerable<int> Fibonacci(int n)
-        {
-            int a = 0, b = 1;
-            for (var i = 0; i < n; i++)
-            {
-                yield return a;
-                (a, b) = (b, a + b);   // деконструкция кортежа
-            }
-        }
-
-        public void Run() => Console.WriteLine($""Привет, {_name}! 3.14 == {Math.PI:F2}"");
+        Title = value is null ? "SeriousView" : value.Header + " — SeriousView";
+        StatusText = value?.StatusText ?? "Готово";
     }
-}
-
-/* Проверь:  выделение мышью · Ctrl+F (поиск) · номера строк · скролл ·
-   открой реальный файл командой:  SeriousView C:\path\to\file.rs  */
-";
 }
