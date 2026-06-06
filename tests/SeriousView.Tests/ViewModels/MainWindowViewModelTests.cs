@@ -84,4 +84,17 @@ public class MainWindowViewModelTests
 
         Assert.Equal(1, theme.ToggleCount);
     }
+
+    [AvaloniaFact]
+    public void HasTabs_BecomesFalse_AfterClosingLastTab()
+    {
+        var vm = CreateVm();
+        Assert.True(vm.HasTabs);
+
+        vm.CloseTabCommand.Execute(vm.SelectedTab);
+
+        Assert.False(vm.HasTabs);
+        Assert.Null(vm.SelectedTab);
+        Assert.Empty(vm.Tabs);
+    }
 }

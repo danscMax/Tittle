@@ -17,8 +17,10 @@
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
       <DockPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-          <Button Content="Тема" Command="{Binding ToggleThemeCommand}" Padding="10,3"/>
-          <Button Content="Открыть…" Command="{Binding OpenFileCommand}" Padding="10,3"/>
+          <Button Content="Тема" AutomationProperties.AutomationId="ThemeButton"
+                  Command="{Binding ToggleThemeCommand}" Padding="10,3"/>
+          <Button Content="Открыть…" AutomationProperties.AutomationId="OpenButton"
+                  Command="{Binding OpenFileCommand}" Padding="10,3"/>
         </StackPanel>
         <TextBlock Text="SeriousView" FontWeight="SemiBold"
                    Foreground="{DynamicResource ChromeForegroundBrush}"
@@ -31,12 +33,19 @@
                  Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
     </Border>
 
-    <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
+    <Panel>
+      <!-- Placeholder shown when no tabs are open (replaced by a richer Welcome view in a later step). -->
+      <TextBlock Text="Нет открытых файлов" IsVisible="{Binding !HasTabs}"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource ChromeForegroundBrush}" Opacity="0.55" FontSize="15"/>
+      <TabControl IsVisible="{Binding HasTabs}"
+                  ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}" Padding="0">
       <TabControl.ItemTemplate>
         <DataTemplate x:DataType="vm:DocumentTabViewModel">
           <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
             <Button Content="✕" FontSize="10" Padding="5,1"
+                    AutomationProperties.AutomationId="CloseTabButton"
                     Background="Transparent" BorderThickness="0"
                     Command="{Binding $parent[TabControl].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
                     CommandParameter="{Binding}"/>
@@ -54,7 +63,8 @@
                          VerticalScrollBarVisibility="Auto"/>
         </DataTemplate>
       </TabControl.ContentTemplate>
-    </TabControl>
+      </TabControl>
+    </Panel>
 
   </DockPanel>
 </Window>

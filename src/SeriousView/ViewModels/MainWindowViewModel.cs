@@ -15,6 +15,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
+    /// <summary>True when at least one document tab is open (drives the empty placeholder).</summary>
+    public bool HasTabs => Tabs.Count > 0;
+
     [ObservableProperty]
     private DocumentTabViewModel? _selectedTab;
 
@@ -31,6 +34,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _fileDialog = fileDialog;
         _fileReader = fileReader;
         _theme = theme;
+
+        Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
 
         var startupPath = args.Length > 0 ? args[0] : null;
         if (startupPath is not null && _fileReader.Exists(startupPath))
