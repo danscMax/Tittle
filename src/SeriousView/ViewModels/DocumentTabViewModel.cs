@@ -1,6 +1,7 @@
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SeriousView.Core.Text;
+using SeriousView.Shared;
 
 namespace SeriousView.ViewModels;
 

@@ -4,7 +4,7 @@
         xmlns:vm="using:SeriousView.ViewModels"
         xmlns:controls="using:SeriousView.Controls"
         xmlns:views="using:SeriousView.Views"
-        xmlns:conv="using:SeriousView.Converters"
+        xmlns:conv="using:SeriousView.Shared"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:wnd="using:FluentAvalonia.UI.Windowing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"

@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SeriousView.ViewModels;
+namespace SeriousView.Shared;
 
 /// <summary>
 /// Base for all view models. <see cref="ObservableObject"/> supplies

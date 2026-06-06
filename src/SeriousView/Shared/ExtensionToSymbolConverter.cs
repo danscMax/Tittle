@@ -3,7 +3,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using FluentAvalonia.UI.Controls;
 
-namespace SeriousView.Converters;
+namespace SeriousView.Shared;
 
 /// <summary>
 /// Maps a file extension (".cs", ".md", ".json", …) to a FluentAvalonia <see cref="Symbol"/>
