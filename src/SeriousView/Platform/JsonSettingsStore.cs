@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using SeriousView.Core.Abstractions;
 
-namespace SeriousView.Services;
+namespace SeriousView.Platform;
 
 /// <summary>
 /// <see cref="ISettingsStore"/> backed by JSON files under the per-user app-data folder

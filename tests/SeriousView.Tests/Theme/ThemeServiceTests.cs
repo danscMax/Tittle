@@ -3,7 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
 using SeriousView.Core.Abstractions;
-using SeriousView.Services;
+using SeriousView.Platform;
 using Xunit;
 
 namespace SeriousView.Tests.Theme;

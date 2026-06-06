@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Styling;
 using SeriousView.Core.Abstractions;
 
-namespace SeriousView.Services;
+namespace SeriousView.Platform;
 
 /// <summary>
 /// Maps <see cref="ThemeMode"/> to <see cref="Application.RequestedThemeVariant"/>.

@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using SeriousView.Core.Abstractions;
 
-namespace SeriousView.Services;
+namespace SeriousView.Platform;
 
 /// <summary>
 /// <see cref="IFileDialogService"/> implemented with the Avalonia 11 StorageProvider

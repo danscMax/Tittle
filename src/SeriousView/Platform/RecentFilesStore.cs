@@ -4,7 +4,7 @@ using System.Linq;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Services;
 
-namespace SeriousView.Services;
+namespace SeriousView.Platform;
 
 /// <summary>MRU recent-files list persisted through <see cref="ISettingsStore"/>.</summary>
 public sealed class RecentFilesStore : IRecentFilesStore

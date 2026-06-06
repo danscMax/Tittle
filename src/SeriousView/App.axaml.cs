@@ -6,7 +6,7 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Services;
-using SeriousView.Services;
+using SeriousView.Platform;
 using SeriousView.Features.Shell;
 
 namespace SeriousView;
