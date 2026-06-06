@@ -10,6 +10,9 @@
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#15151A" />
     <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#1B1B22" />
 
+    <!-- Acrylic tint for the welcome backdrop (lets the blurred desktop show through). -->
+    <Color x:Key="AcrylicTintColor">#1B1B26</Color>
+
     <!-- Chrome (subtle vertical gradient for depth) -->
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#2B2B36" Offset="0" />

@@ -13,7 +13,7 @@
         Title="{Binding Title}"
         Width="1100" Height="750"
         Background="Transparent"
-        TransparencyLevelHint="Mica, AcrylicBlur, Blur"
+        TransparencyLevelHint="AcrylicBlur, Mica, Blur"
         DragDrop.AllowDrop="True">
   <!-- AppWindow draws our content into the title-bar area (ExtendsContentIntoTitleBar, set in
        code-behind). The single top strip = brand + tab strip + buttons, painted with the

@@ -3,7 +3,37 @@
              xmlns:vm="using:SeriousView.ViewModels"
              x:Class="SeriousView.Views.WelcomeView"
              x:DataType="vm:MainWindowViewModel">
-  <ScrollViewer>
+  <Panel>
+    <!-- Acrylic backdrop: the blurred desktop shows through behind the welcome content,
+         giving the empty state a premium frosted-glass look (tint follows the theme). -->
+    <ExperimentalAcrylicBorder IsHitTestVisible="False">
+      <ExperimentalAcrylicBorder.Material>
+        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                     TintColor="{DynamicResource AcrylicTintColor}"
+                                     TintOpacity="0.5" MaterialOpacity="0.5" />
+      </ExperimentalAcrylicBorder.Material>
+    </ExperimentalAcrylicBorder>
+
+    <!-- Soft accent glows for depth — visible regardless of what is behind the window,
+         so the empty state always reads as premium (the acrylic adds the desktop blur). -->
+    <Border IsHitTestVisible="False">
+      <Border.Background>
+        <RadialGradientBrush Center="28%,22%" GradientOrigin="28%,22%" RadiusX="55%" RadiusY="55%">
+          <GradientStop Color="#552D6CF6" Offset="0" />
+          <GradientStop Color="#002D6CF6" Offset="1" />
+        </RadialGradientBrush>
+      </Border.Background>
+    </Border>
+    <Border IsHitTestVisible="False">
+      <Border.Background>
+        <RadialGradientBrush Center="78%,82%" GradientOrigin="78%,82%" RadiusX="55%" RadiusY="55%">
+          <GradientStop Color="#4422D3C5" Offset="0" />
+          <GradientStop Color="#0022D3C5" Offset="1" />
+        </RadialGradientBrush>
+      </Border.Background>
+    </Border>
+
+    <ScrollViewer>
     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                 Spacing="14" MaxWidth="460" Margin="24,40">
 
@@ -34,5 +64,6 @@
       </StackPanel>
 
     </StackPanel>
-  </ScrollViewer>
+    </ScrollViewer>
+  </Panel>
 </UserControl>
