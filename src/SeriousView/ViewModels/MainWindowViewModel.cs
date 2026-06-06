@@ -129,6 +129,10 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnSelectedTabChanged(DocumentTabViewModel? value)
     {
         Title = value is null ? "SeriousView" : value.Header + " — SeriousView";
-        StatusText = value?.StatusText ?? "Готово";
+        // Status bar is segmented: the left segment shows messages (reset to idle when no
+        // tab is open), the right segment binds the active tab's metrics
+        // (DocumentTabViewModel.StatusText) directly in the view.
+        if (value is null)
+            StatusText = "Готово";
     }
 }

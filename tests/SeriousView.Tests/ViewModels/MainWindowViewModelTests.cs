@@ -60,7 +60,9 @@ public class MainWindowViewModelTests
         Assert.Single(vm.Tabs);
         Assert.Equal("doc.md", vm.SelectedTab!.Header);
         Assert.Equal(".md", vm.SelectedTab.GrammarExtension);
-        Assert.Contains("Строк", vm.StatusText);
+        // Metrics live on the active tab (right status-bar segment); the window's StatusText
+        // is the left "messages" segment.
+        Assert.Contains("Строк", vm.SelectedTab.StatusText);
     }
 
     [AvaloniaFact]

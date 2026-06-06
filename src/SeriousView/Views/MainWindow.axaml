@@ -76,10 +76,20 @@
     </Grid>
     </Border>
 
+    <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
+         (lines · chars · language), divided by a thin separator. -->
     <Border DockPanel.Dock="Bottom" Classes="chrome"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
-      <TextBlock Text="{Binding StatusText}"
-                 Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.StatusText}"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   Opacity="0.92" VerticalAlignment="Center"/>
+        <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
+                Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
+        <TextBlock Text="{Binding StatusText}"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   VerticalAlignment="Center"/>
+      </DockPanel>
     </Border>
 
     <Panel>
