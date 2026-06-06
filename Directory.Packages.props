@@ -13,6 +13,12 @@
     <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.17" />
   </ItemGroup>
 
+  <ItemGroup Label="UI toolkit (WinUI controls, Fluent v2 theme, TabView)">
+    <!-- 2.4.1 is the last 2.x targeting netstandard2.0/net6.0 (works on net9.0);
+         2.5.x dropped to net10.0-only. Avalonia floor 11.2.5 ≤ our 11.3.17. -->
+    <PackageVersion Include="FluentAvaloniaUI" Version="2.4.1" />
+  </ItemGroup>
+
   <ItemGroup Label="Editor + syntax highlighting">
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="11.4.1" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="11.4.1" />

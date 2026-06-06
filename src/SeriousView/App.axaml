@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="using:FluentAvalonia.Styling"
              x:Class="SeriousView.App"
              RequestedThemeVariant="Dark">
 
@@ -16,8 +17,9 @@
     </Application.Resources>
 
     <Application.Styles>
-        <FluentTheme />
-        <!-- AvaloniaEdit control theme — required for TextEditor to render. -->
+        <!-- Fluent v2 theme (replaces FluentTheme): WinUI controls + system accent. -->
+        <fa:FluentAvaloniaTheme PreferSystemTheme="False" PreferUserAccentColor="True" />
+        <!-- AvaloniaEdit control theme — required for TextEditor to render; must come AFTER. -->
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
     </Application.Styles>
 </Application>
