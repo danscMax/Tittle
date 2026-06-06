@@ -2,27 +2,38 @@ using System;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using AvaloniaEdit;
+using AvaloniaEdit.Document;
 using AvaloniaEdit.TextMate;
 using TextMateSharp.Grammars;
 
 namespace SeriousView.Controls;
 
 /// <summary>
-/// Attaches TextMate syntax highlighting to a <see cref="TextEditor"/> and switches
-/// grammar by file extension — driven from a view model via the
-/// <c>GrammarExtension</c> attached property.
+/// Bridges a <see cref="TextEditor"/> to a view model via attached properties:
+/// <c>Text</c> (document content) and <c>GrammarExtension</c> (TextMate highlighting).
 ///
-/// TextMate is a per-control concern (not VM-bindable), so each editor owns its own
-/// <see cref="TextMate.Installation"/>. The installation is <see cref="IDisposable"/>
-/// and is released on <see cref="Visual.DetachedFromVisualTree"/> to avoid leaking
-/// native TextMateSharp state when tabs close.
+/// <para><b>Why not bind <c>TextEditor.Document</c> directly?</b> AvaloniaEdit manages
+/// its document internally, so declarative <c>Document="{Binding}"</c> does not render
+/// content. We instead set <see cref="TextEditor.Text"/> imperatively when the bound
+/// <c>Text</c> attached property changes (one-way VM → editor; two-way editing arrives
+/// with M5).</para>
+///
+/// <para>TextMate is a per-control concern: each editor owns its
+/// <see cref="TextMate.Installation"/>, disposed on
+/// <see cref="Visual.DetachedFromVisualTree"/> to avoid leaking native state.</para>
 /// </summary>
-public static class TextMateBehavior
+public static class EditorBehavior
 {
+    /// <summary>Document content, pushed into the editor one-way.</summary>
+    public static readonly AttachedProperty<string?> TextProperty =
+        AvaloniaProperty.RegisterAttached<TextEditor, string?>("Text", typeof(EditorBehavior));
+
+    public static void SetText(TextEditor editor, string? value) => editor.SetValue(TextProperty, value);
+    public static string? GetText(TextEditor editor) => editor.GetValue(TextProperty);
+
     /// <summary>File extension (e.g. ".cs", ".md") whose grammar should be applied.</summary>
     public static readonly AttachedProperty<string?> GrammarExtensionProperty =
-        AvaloniaProperty.RegisterAttached<TextEditor, string?>(
-            "GrammarExtension", typeof(TextMateBehavior));
+        AvaloniaProperty.RegisterAttached<TextEditor, string?>("GrammarExtension", typeof(EditorBehavior));
 
     public static void SetGrammarExtension(TextEditor editor, string? value)
         => editor.SetValue(GrammarExtensionProperty, value);
@@ -34,17 +45,28 @@ public static class TextMateBehavior
     private static readonly ConditionalWeakTable<TextEditor, EditorState> States = new();
 
     // SERIOUSVIEW_NOTM disables TextMate entirely (RAM isolation measurement).
-    private static readonly bool Disabled =
+    private static readonly bool TextMateDisabled =
         Environment.GetEnvironmentVariable("SERIOUSVIEW_NOTM") is not null;
 
-    static TextMateBehavior()
+    static EditorBehavior()
     {
+        TextProperty.Changed.AddClassHandler<TextEditor>(OnTextChanged);
         GrammarExtensionProperty.Changed.AddClassHandler<TextEditor>(OnGrammarExtensionChanged);
+    }
+
+    private static void OnTextChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
+    {
+        var text = e.GetNewValue<string?>() ?? string.Empty;
+        // Drive the Document directly (the editor's Text setter throws if Document is null).
+        if (editor.Document is null)
+            editor.Document = new TextDocument(text);
+        else if (editor.Document.Text != text)
+            editor.Document.Text = text;
     }
 
     private static void OnGrammarExtensionChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
     {
-        if (Disabled)
+        if (TextMateDisabled)
             return;
 
         var state = EnsureInstalled(editor);

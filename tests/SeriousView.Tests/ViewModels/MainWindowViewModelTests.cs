@@ -33,7 +33,7 @@ public class MainWindowViewModelTests
         Assert.Single(vm.Tabs);
         Assert.Equal("sample.cs", vm.SelectedTab!.Header);
         Assert.Equal(".cs", vm.SelectedTab.GrammarExtension);
-        Assert.Equal("x\ny", vm.SelectedTab.Document.Text);
+        Assert.Equal("x\ny", vm.SelectedTab.Content);
     }
 
     [AvaloniaFact]

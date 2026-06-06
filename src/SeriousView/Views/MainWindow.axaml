@@ -45,8 +45,8 @@
       </TabControl.ItemTemplate>
       <TabControl.ContentTemplate>
         <DataTemplate x:DataType="vm:DocumentTabViewModel">
-          <ae:TextEditor Document="{Binding Document}"
-                         controls:TextMateBehavior.GrammarExtension="{Binding GrammarExtension}"
+          <ae:TextEditor controls:EditorBehavior.Text="{Binding Content}"
+                         controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
                          FontFamily="Cascadia Code,Consolas,Courier New,monospace"
                          FontSize="14"
                          ShowLineNumbers="True"

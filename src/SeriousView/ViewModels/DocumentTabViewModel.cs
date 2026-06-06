@@ -1,11 +1,12 @@
 using System.IO;
-using AvaloniaEdit.Document;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SeriousView.Core.Text;
 
 namespace SeriousView.ViewModels;
 
-/// <summary>One open document = one tab. Owns its <see cref="TextDocument"/>,
-/// grammar, and per-document status metrics.</summary>
+/// <summary>One open document = one tab. Holds its content, grammar, header and
+/// per-document status metrics. Content is pushed to the editor via
+/// <c>EditorBehavior.Text</c> (AvaloniaEdit can't bind Document directly).</summary>
 public partial class DocumentTabViewModel : ViewModelBase
 {
     [ObservableProperty]
@@ -22,27 +23,30 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "";
 
-    public TextDocument Document { get; } = new();
+    /// <summary>Document content, bound one-way into the editor.</summary>
+    public string Content { get; }
 
-    private DocumentTabViewModel(string header) => _header = header;
+    private DocumentTabViewModel(string header, string content)
+    {
+        _header = header;
+        Content = content;
+    }
 
     public static DocumentTabViewModel FromFile(string text, string path)
     {
-        var tab = new DocumentTabViewModel(Path.GetFileName(path))
+        var tab = new DocumentTabViewModel(Path.GetFileName(path), text)
         {
             FilePath = path,
             GrammarExtension = Path.GetExtension(path),
         };
-        tab.Document.Text = text;
-        tab.StatusText = $"Строк: {tab.Document.LineCount}   ·   Символов: {tab.Document.TextLength}";
+        tab.StatusText = $"Строк: {TextMetrics.LineCount(text)}   ·   Символов: {TextMetrics.CharCount(text)}";
         return tab;
     }
 
     public static DocumentTabViewModel CreateSample()
     {
-        var tab = new DocumentTabViewModel("Пример") { GrammarExtension = ".cs" };
-        tab.Document.Text = Sample;
-        tab.StatusText = $"Строк: {tab.Document.LineCount}   ·   подсветка: C# (Dark+)";
+        var tab = new DocumentTabViewModel("Пример", Sample) { GrammarExtension = ".cs" };
+        tab.StatusText = $"Строк: {TextMetrics.LineCount(Sample)}   ·   подсветка: C# (Dark+)";
         return tab;
     }
 
