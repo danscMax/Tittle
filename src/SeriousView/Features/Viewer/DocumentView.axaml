@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ae="using:AvaloniaEdit"
+             xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:vm="using:SeriousView.Features.Shell"
+             xmlns:viewer="using:SeriousView.Features.Viewer"
+             x:Class="SeriousView.Features.Viewer.DocumentView"
+             x:DataType="vm:DocumentTabViewModel">
+  <!-- One tab's body: source editor and rendered preview occupy the same area,
+       toggled by IsVisible (ShowSource / ShowPreview are mutually exclusive). -->
+  <Panel>
+    <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
+    <ae:TextEditor IsVisible="{Binding ShowSource}"
+                   viewer:EditorBehavior.Text="{Binding DocumentText}"
+                   viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                   Background="{DynamicResource EditorSurfaceBrush}"
+                   FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                   FontSize="14"
+                   ShowLineNumbers="True"
+                   HorizontalScrollBarVisibility="Auto"
+                   VerticalScrollBarVisibility="Auto"/>
+
+    <!-- Rendered markdown preview, on a solid editor surface (MarkdownScrollViewer
+         itself has no Background). MarkdownStyleName is deliberately NOT set: the
+         auto-detected FluentAvalonia style is theme-variant aware (follows Light/Dark);
+         GithubLike/Standard use fixed colours and render invisible text in dark mode.
+         The hyperlink command is hardened in code-behind. -->
+    <Border IsVisible="{Binding ShowPreview}" Background="{DynamicResource EditorSurfaceBrush}">
+      <md:MarkdownScrollViewer x:Name="Preview"
+                               Markdown="{Binding PreviewMarkdown}"
+                               AssetPathRoot="{Binding AssetPathRoot}"
+                               SelectionEnabled="True"/>
+    </Border>
+  </Panel>
+</UserControl>

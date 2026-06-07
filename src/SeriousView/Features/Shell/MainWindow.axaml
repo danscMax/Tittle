@@ -1,6 +1,5 @@
 <wnd:AppWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:ae="using:AvaloniaEdit"
         xmlns:vm="using:SeriousView.Features.Shell"
         xmlns:controls="using:SeriousView.Features.Viewer"
         xmlns:views="using:SeriousView.Features.Welcome"
@@ -63,6 +62,10 @@
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
+        <!-- Preview/source toggle — shown only for markdown tabs. -->
+        <Button Content="{Binding SelectedTab.ViewModeLabel}" AutomationProperties.AutomationId="ViewModeButton"
+                IsVisible="{Binding SelectedTab.IsMarkdown}"
+                Command="{Binding SelectedTab.ToggleViewModeCommand}" Padding="10,3" MinWidth="104"/>
         <Button Content="{Binding ThemeModeLabel}" AutomationProperties.AutomationId="ThemeButton"
                 Command="{Binding ToggleThemeCommand}" Padding="10,3" MinWidth="84"/>
         <Button Content="Открыть…" AutomationProperties.AutomationId="OpenButton"
@@ -98,14 +101,7 @@
       <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
         <ContentControl.ContentTemplate>
           <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <ae:TextEditor controls:EditorBehavior.Text="{Binding DocumentText}"
-                           controls:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
-                           Background="{DynamicResource EditorSurfaceBrush}"
-                           FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                           FontSize="14"
-                           ShowLineNumbers="True"
-                           HorizontalScrollBarVisibility="Auto"
-                           VerticalScrollBarVisibility="Auto"/>
+            <controls:DocumentView/>
           </DataTemplate>
         </ContentControl.ContentTemplate>
       </ContentControl>

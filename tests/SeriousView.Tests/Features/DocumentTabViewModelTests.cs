@@ -73,4 +73,12 @@ public class DocumentTabViewModelTests
 
         Assert.Equal(text, vm.PreviewMarkdown);
     }
+
+    [Fact]
+    public void PreviewMarkdown_Empty_ForNonMarkdown()
+    {
+        var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
+
+        Assert.Equal("", vm.PreviewMarkdown);
+    }
 }
