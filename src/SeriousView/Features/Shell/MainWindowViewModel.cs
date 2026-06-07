@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,12 +65,11 @@ public partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasRecent));
         };
 
+        // Open a file passed on the command line — asynchronously and guarded, so a
+        // missing/locked/unreadable file can't crash the app on startup.
         var startupPath = args.Length > 0 ? args[0] : null;
-        if (startupPath is not null && _fileReader.Exists(startupPath))
-        {
-            AddTab(DocumentTabViewModel.FromFile(_fileReader.ReadAllText(startupPath), startupPath));
-            _recent.Add(startupPath);
-        }
+        if (startupPath is not null)
+            _ = OpenPathAsync(startupPath);
         // Otherwise no tab is opened — the welcome view is shown while HasTabs is false.
     }
 
@@ -88,19 +88,33 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSample() => AddTab(DocumentTabViewModel.CreateSample());
 
-    /// <summary>Reads <paramref name="path"/> into a new active tab and records it as recent.</summary>
+    /// <summary>Loads <paramref name="path"/> into a new active tab and records it as recent.
+    /// Real I/O failures become a friendly status message instead of a crash.</summary>
     public async Task OpenPathAsync(string path)
     {
         try
         {
-            var text = await _fileReader.ReadAllTextAsync(path);
-            AddTab(DocumentTabViewModel.FromFile(text, path));
+            var result = await _fileReader.LoadAsync(path);
+            AddTab(DocumentTabViewModel.FromLoad(result, path));
             _recent.Add(path);
         }
         catch (Exception ex)
         {
-            StatusText = "Ошибка чтения: " + ex.Message;
+            StatusText = DescribeError(ex, path);
         }
+    }
+
+    /// <summary>Maps a load failure to a friendly Russian message by exception type.</summary>
+    private static string DescribeError(Exception ex, string path)
+    {
+        var name = Path.GetFileName(path);
+        return ex switch
+        {
+            FileNotFoundException or DirectoryNotFoundException => $"Файл не найден: {name}",
+            UnauthorizedAccessException => $"Нет доступа к файлу: {name}",
+            IOException => $"Файл занят или ошибка чтения: {name}",
+            _ => $"Не удалось открыть файл: {name}",
+        };
     }
 
     [RelayCommand]

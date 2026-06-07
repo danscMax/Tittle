@@ -3,17 +3,27 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Documents;
+using SeriousView.Core.Text;
 
 namespace SeriousView.Tests;
 
-internal sealed class FakeFileReader(string content, bool exists = true) : IFileReader
+internal sealed class FakeFileReader : IFileReader
 {
-    public bool Exists(string path) => exists;
+    private readonly FileLoadResult? _result;
+    private readonly Exception? _error;
 
-    public string ReadAllText(string path) => content;
+    public FakeFileReader(string content)
+        => _result = FileLoadResult.ForText(content, "UTF-8", LineEndings.Detect(content), content.Length);
 
-    public Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default)
-        => Task.FromResult(content);
+    public FakeFileReader(FileLoadResult result) => _result = result;
+
+    public FakeFileReader(Exception error) => _error = error;
+
+    public Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default)
+        => _error is not null
+            ? Task.FromException<FileLoadResult>(_error)
+            : Task.FromResult(_result!);
 }
 
 internal sealed class FakeFileDialogService(string? path) : IFileDialogService

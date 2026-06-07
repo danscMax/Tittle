@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Headless.XUnit;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Documents;
 using SeriousView.Features.Shell;
 using Xunit;
 
@@ -181,5 +183,34 @@ public class MainWindowViewModelTests
 
         Assert.True(vm.IsOutlineVisible);              // enabled by default…
         Assert.False(vm.IsOutlinePaneVisible);         // …but no headings → hidden
+    }
+
+    [AvaloniaFact]
+    public async Task OpenFile_OnReadError_ShowsFriendlyMessage_NoTab()
+    {
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService("/path/missing.txt"),
+            new FakeFileReader(new FileNotFoundException()),
+            new FakeThemeService(), new FakeRecentFilesStore(), Array.Empty<string>());
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Equal("Файл не найден: missing.txt", vm.StatusText);
+        Assert.Empty(vm.Tabs);
+    }
+
+    [AvaloniaFact]
+    public async Task OpenFile_BinaryFile_OpensNoticeTab()
+    {
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService("/path/image.png"),
+            new FakeFileReader(FileLoadResult.Binary(2048)),
+            new FakeThemeService(), new FakeRecentFilesStore(), Array.Empty<string>());
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Single(vm.Tabs);
+        Assert.True(vm.SelectedTab!.ShowNotice);
+        Assert.False(vm.SelectedTab.ShowSource);
     }
 }

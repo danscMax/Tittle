@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SeriousView.Core.Documents;
 using SeriousView.Core.Text;
 using SeriousView.Shared;
 
@@ -50,11 +51,40 @@ public partial class DocumentTabViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ViewModeLabel))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
-    /// <summary>Show the rendered markdown preview (markdown file in Preview mode).</summary>
-    public bool ShowPreview => IsMarkdown && ViewMode == DocumentViewMode.Preview;
+    /// <summary>Show the rendered markdown preview (markdown file in Preview mode, has content).</summary>
+    public bool ShowPreview => !ShowNotice && IsMarkdown && ViewMode == DocumentViewMode.Preview;
 
     /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode).</summary>
-    public bool ShowSource => !IsMarkdown || ViewMode == DocumentViewMode.Source;
+    public bool ShowSource => !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source);
+
+    /// <summary>Content classification from the loader (Text / Binary / TooLarge).</summary>
+    public FileLoadKind Kind { get; }
+
+    /// <summary>Detected text encoding (e.g. "UTF-8", "Windows-1251"); "" for non-text.</summary>
+    public string EncodingName { get; }
+
+    /// <summary>Dominant line ending ("LF"/"CRLF"/"CR"/"Mixed"); "" when none / non-text.</summary>
+    public string LineEnding { get; }
+
+    /// <summary>True when the file is too big to syntax-highlight (shown as plain text).</summary>
+    public bool HighlightSuppressed { get; }
+
+    private readonly long _sizeBytes;
+
+    /// <summary>A binary / too-large / empty document shows a notice instead of editor + preview.</summary>
+    public bool ShowNotice => Kind != FileLoadKind.Text || DocumentText.Length == 0;
+
+    /// <summary>Message for the notice overlay (only meaningful when <see cref="ShowNotice"/>).</summary>
+    public string NoticeText => Kind switch
+    {
+        FileLoadKind.Binary => "Бинарный файл — просмотр недоступен",
+        FileLoadKind.TooLarge => $"Файл слишком большой для просмотра ({SizeText})",
+        _ => "Файл пуст",
+    };
+
+    private string SizeText => _sizeBytes >= 1024 * 1024
+        ? $"{_sizeBytes / (1024.0 * 1024):0.#} МБ"
+        : $"{_sizeBytes / 1024.0:0.#} КБ";
 
     /// <summary>Base directory for resolving relative image/asset paths in the preview.</summary>
     public string? AssetPathRoot => FilePath is null ? null : Path.GetDirectoryName(FilePath);
@@ -96,29 +126,54 @@ public partial class DocumentTabViewModel : ViewModelBase
             NavigationRequested?.Invoke(heading);
     }
 
-    private DocumentTabViewModel(string header, string content)
+    private DocumentTabViewModel(string header, FileLoadResult load)
     {
         _header = header;
-        DocumentText = content;
+        DocumentText = load.Text;
+        Kind = load.Kind;
+        EncodingName = load.EncodingName;
+        LineEnding = load.LineEnding;
+        HighlightSuppressed = load.HighlightSuppressed;
+        _sizeBytes = load.SizeBytes;
     }
 
-    public static DocumentTabViewModel FromFile(string text, string path)
+    /// <summary>Build a tab from a loaded file (the main entry point).</summary>
+    public static DocumentTabViewModel FromLoad(FileLoadResult load, string path)
     {
-        var tab = new DocumentTabViewModel(Path.GetFileName(path), text)
+        var tab = new DocumentTabViewModel(Path.GetFileName(path), load)
         {
             FilePath = path,
             GrammarExtension = Path.GetExtension(path),
         };
-        tab.StatusText = $"Строк: {TextMetrics.LineCount(text)}   ·   Символов: {TextMetrics.CharCount(text)}";
+        tab.StatusText = tab.BuildStatus();
         return tab;
     }
 
+    /// <summary>Convenience for in-memory text (tests, fixtures): a UTF-8 text document.</summary>
+    public static DocumentTabViewModel FromFile(string text, string path)
+        => FromLoad(FileLoadResult.ForText(text, "UTF-8", LineEndings.Detect(text), text.Length), path);
+
     public static DocumentTabViewModel CreateSample()
     {
-        var tab = new DocumentTabViewModel("Пример", Sample) { GrammarExtension = ".cs" };
+        var tab = new DocumentTabViewModel(
+            "Пример", FileLoadResult.ForText(Sample, "UTF-8", LineEndings.Detect(Sample), Sample.Length))
+        {
+            GrammarExtension = ".cs",
+        };
         tab.StatusText = $"Строк: {TextMetrics.LineCount(Sample)}   ·   подсветка: C#";
         return tab;
     }
+
+    private string BuildStatus() => Kind switch
+    {
+        FileLoadKind.Binary => $"Бинарный файл · {SizeText}",
+        FileLoadKind.TooLarge => $"Слишком большой · {SizeText}",
+        _ when DocumentText.Length == 0 => "Пустой файл",
+        _ => $"Строк: {TextMetrics.LineCount(DocumentText)}   ·   Символов: {TextMetrics.CharCount(DocumentText)}"
+           + $"   ·   {EncodingName}"
+           + (LineEnding.Length > 0 ? $"   ·   {LineEnding}" : "")
+           + (HighlightSuppressed ? "   ·   без подсветки" : ""),
+    };
 
     private const string Sample = @"// SeriousView — нативный markdown/code viewer
 // Движок: Avalonia 11 + AvaloniaEdit (TextMate / Dark+)

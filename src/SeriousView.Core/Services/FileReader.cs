@@ -1,14 +1,28 @@
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Documents;
+using SeriousView.Core.Text;
 
 namespace SeriousView.Core.Services;
 
-/// <summary>Default <see cref="IFileReader"/> backed by <see cref="File"/>.</summary>
+/// <summary>Default <see cref="IFileReader"/>: reads bytes once, then classifies (too-large /
+/// binary), detects the encoding, and normalizes line endings to LF.</summary>
 public sealed class FileReader : IFileReader
 {
-    public bool Exists(string path) => File.Exists(path);
+    public async Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var size = new FileInfo(path).Length;          // throws if missing — caller reports it
+        if (FileLimits.IsTooLarge(size))
+            return FileLoadResult.TooLarge(size);
 
-    public string ReadAllText(string path) => File.ReadAllText(path);
+        var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
+        if (BinaryContent.IsProbablyBinary(bytes))
+            return FileLoadResult.Binary(size);
 
-    public Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default)
-        => File.ReadAllTextAsync(path, cancellationToken);
+        var (decoded, encodingName) = TextEncodingDetector.Decode(bytes);
+        var lineEnding = LineEndings.Detect(decoded);
+        return FileLoadResult.ForText(LineEndings.NormalizeToLf(decoded), encodingName, lineEnding, size);
+    }
 }

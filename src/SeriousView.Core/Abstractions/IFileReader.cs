@@ -1,14 +1,16 @@
+using System.Threading;
+using System.Threading.Tasks;
+using SeriousView.Core.Documents;
+
 namespace SeriousView.Core.Abstractions;
 
 /// <summary>
-/// Reads file contents. Abstracted so view models stay testable without touching
-/// the real filesystem.
+/// Loads a file for viewing: detects encoding/binary/size and returns a
+/// <see cref="FileLoadResult"/>. Abstracted so view models stay testable without the
+/// real filesystem. Throws on genuine I/O errors (missing, locked, no access) — callers
+/// translate those into user-facing messages.
 /// </summary>
 public interface IFileReader
 {
-    bool Exists(string path);
-
-    string ReadAllText(string path);
-
-    Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default);
+    Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default);
 }

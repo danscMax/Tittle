@@ -1,4 +1,5 @@
 using System.IO;
+using SeriousView.Core.Documents;
 using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using Xunit;
@@ -115,5 +116,55 @@ public class DocumentTabViewModelTests
         vm.NavigateToHeadingCommand.Execute(target);
 
         Assert.Same(target, received);
+    }
+
+    [Fact]
+    public void FromLoad_Binary_ShowsNotice_HidesEditorAndPreview()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Binary(2048), "/img/pic.png");
+
+        Assert.True(vm.ShowNotice);
+        Assert.False(vm.ShowSource);
+        Assert.False(vm.ShowPreview);
+        Assert.Contains("Бинарный", vm.NoticeText);
+    }
+
+    [Fact]
+    public void FromLoad_TooLarge_ShowsNotice()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.TooLarge(60L * 1024 * 1024), "/big.txt");
+
+        Assert.True(vm.ShowNotice);
+        Assert.Contains("слишком большой", vm.NoticeText);
+    }
+
+    [Fact]
+    public void FromLoad_EmptyFile_ShowsNotice()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.ForText("", "UTF-8", "", 0), "/empty.md");
+
+        Assert.True(vm.ShowNotice);
+        Assert.Equal("Файл пуст", vm.NoticeText);
+    }
+
+    [Fact]
+    public void FromLoad_Text_StatusShowsEncodingAndEol()
+    {
+        var vm = DocumentTabViewModel.FromLoad(
+            FileLoadResult.ForText("a\nb", "Windows-1251", "LF", 3), "/doc.txt");
+
+        Assert.False(vm.ShowNotice);
+        Assert.Contains("Windows-1251", vm.StatusText);
+        Assert.Contains("LF", vm.StatusText);
+    }
+
+    [Fact]
+    public void FromLoad_BigText_SuppressesHighlight()
+    {
+        var vm = DocumentTabViewModel.FromLoad(
+            FileLoadResult.ForText("x", "UTF-8", "LF", 10L * 1024 * 1024), "/big.cs");
+
+        Assert.True(vm.HighlightSuppressed);
+        Assert.Contains("без подсветки", vm.StatusText);
     }
 }
