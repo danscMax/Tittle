@@ -82,9 +82,12 @@ public partial class DocumentTabViewModel : ViewModelBase
         _ => "Файл пуст",
     };
 
-    private string SizeText => _sizeBytes >= 1024 * 1024
-        ? $"{_sizeBytes / (1024.0 * 1024):0.#} МБ"
-        : $"{_sizeBytes / 1024.0:0.#} КБ";
+    private string SizeText => _sizeBytes switch
+    {
+        >= 1024 * 1024 => $"{_sizeBytes / (1024.0 * 1024):0.#} МБ",
+        >= 1024 => $"{_sizeBytes / 1024.0:0.#} КБ",
+        _ => $"{_sizeBytes} Б",
+    };
 
     /// <summary>Base directory for resolving relative image/asset paths in the preview.</summary>
     public string? AssetPathRoot => FilePath is null ? null : Path.GetDirectoryName(FilePath);

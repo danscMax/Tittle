@@ -92,18 +92,9 @@ public static class EditorBehavior
     private static void OnSuppressHighlightChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
     {
         if (e.GetNewValue<bool>())
-        {
-            if (States.TryGetValue(editor, out var state))
-            {
-                state.Installation.Dispose();
-                States.Remove(editor);
-            }
-        }
+            Teardown(editor);
         else if (!TextMateDisabled)
-        {
-            var state = EnsureInstalled(editor);
-            ApplyGrammar(state, GetGrammarExtension(editor));
-        }
+            ApplyGrammar(EnsureInstalled(editor), GetGrammarExtension(editor));
     }
 
     private static EditorState EnsureInstalled(TextEditor editor)
@@ -144,7 +135,14 @@ public static class EditorBehavior
 
     private static void OnDetached(object? sender, VisualTreeAttachmentEventArgs e)
     {
-        if (sender is not TextEditor editor || !States.TryGetValue(editor, out var state))
+        if (sender is TextEditor editor)
+            Teardown(editor);
+    }
+
+    // Full teardown: stop listening, dispose the TextMate installation, forget the editor.
+    private static void Teardown(TextEditor editor)
+    {
+        if (!States.TryGetValue(editor, out var state))
             return;
 
         editor.DetachedFromVisualTree -= OnDetached;
