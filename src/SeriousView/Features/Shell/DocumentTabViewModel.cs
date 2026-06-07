@@ -57,10 +57,13 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>Base directory for resolving relative image/asset paths in the preview.</summary>
     public string? AssetPathRoot => FilePath is null ? null : Path.GetDirectoryName(FilePath);
 
+    private string? _previewMarkdown;
+
     /// <summary>Markdown handed to the renderer — empty for non-markdown files so the
-    /// (hidden) preview never parses code as markdown. Currently the raw text; a Core
-    /// preprocessing pass (admonitions, footnotes) is layered in later milestones.</summary>
-    public string PreviewMarkdown => IsMarkdown ? DocumentText : "";
+    /// (hidden) preview never parses code as markdown. Run through the Core preprocessor
+    /// (admonitions, task lists). Cached: the document text is immutable.</summary>
+    public string PreviewMarkdown =>
+        _previewMarkdown ??= IsMarkdown ? MarkdownPreprocessor.Transform(DocumentText) : "";
 
     /// <summary>Label for the preview/source toggle, reflecting the current mode.</summary>
     public string ViewModeLabel => ViewMode == DocumentViewMode.Preview ? "Предпросмотр" : "Исходник";

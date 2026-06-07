@@ -32,4 +32,16 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#FFFFFF" />
 
+    <!-- Admonitions / GitHub alerts (light): accent stripe (full colour) + subtle tint. -->
+    <SolidColorBrush x:Key="AdmonitionNoteBrush" Color="#0969DA" />
+    <SolidColorBrush x:Key="AdmonitionNoteBgBrush" Color="#0969DA" Opacity="0.10" />
+    <SolidColorBrush x:Key="AdmonitionTipBrush" Color="#1A7F37" />
+    <SolidColorBrush x:Key="AdmonitionTipBgBrush" Color="#1A7F37" Opacity="0.10" />
+    <SolidColorBrush x:Key="AdmonitionImportantBrush" Color="#8250DF" />
+    <SolidColorBrush x:Key="AdmonitionImportantBgBrush" Color="#8250DF" Opacity="0.10" />
+    <SolidColorBrush x:Key="AdmonitionWarningBrush" Color="#9A6700" />
+    <SolidColorBrush x:Key="AdmonitionWarningBgBrush" Color="#9A6700" Opacity="0.10" />
+    <SolidColorBrush x:Key="AdmonitionCautionBrush" Color="#CF222E" />
+    <SolidColorBrush x:Key="AdmonitionCautionBgBrush" Color="#CF222E" Opacity="0.10" />
+
 </ResourceDictionary>

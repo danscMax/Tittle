@@ -1,0 +1,60 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- GitHub-style alert callouts. AdmonitionBlockHandler builds a Border with classes
+       `admonition` + `admonition-<type>`; colours come from theme tokens so the boxes
+       follow Light/Dark. Look: a full-colour left stripe over a subtle tint. -->
+
+  <Style Selector="Border.admonition">
+    <Setter Property="BorderThickness" Value="4,0,0,0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="Margin" Value="0,8" />
+  </Style>
+
+  <Style Selector="Border.admonition > StackPanel > TextBlock.admonition-title">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+  </Style>
+
+  <Style Selector="Border.admonition-note">
+    <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionNoteBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AdmonitionNoteBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-note > StackPanel > TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionNoteBrush}" />
+  </Style>
+
+  <Style Selector="Border.admonition-tip">
+    <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionTipBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AdmonitionTipBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-tip > StackPanel > TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionTipBrush}" />
+  </Style>
+
+  <Style Selector="Border.admonition-important">
+    <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionImportantBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AdmonitionImportantBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-important > StackPanel > TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionImportantBrush}" />
+  </Style>
+
+  <Style Selector="Border.admonition-warning">
+    <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionWarningBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AdmonitionWarningBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-warning > StackPanel > TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionWarningBrush}" />
+  </Style>
+
+  <Style Selector="Border.admonition-caution">
+    <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionCautionBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AdmonitionCautionBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-caution > StackPanel > TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}" />
+  </Style>
+
+</Styles>
