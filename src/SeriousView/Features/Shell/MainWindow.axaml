@@ -62,6 +62,21 @@
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
+        <!-- Editor controls (wrap · line numbers · zoom) — shown only when the source editor is
+             visible. They drive the shared EditorOptions, same as the keyboard shortcuts. -->
+        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding SelectedTab.ShowSource}">
+          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                  Content="↵" FontSize="14" Padding="9,3"/>
+          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                  Content="#" FontSize="13" Padding="9,3"/>
+          <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
+                  Content="A−" Padding="8,3"/>
+          <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
+                  Content="{Binding Editor.FontSize}" MinWidth="34" Padding="6,3"/>
+          <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
+                  Content="A+" Padding="8,3"/>
+          <Border Width="1" Margin="4,8" Background="{DynamicResource ChromeForegroundBrush}" Opacity="0.18"/>
+        </StackPanel>
         <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
         <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
                 IsVisible="{Binding SelectedTab.IsMarkdown}"
