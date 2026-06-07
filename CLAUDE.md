@@ -62,9 +62,13 @@ preview/source toggle per markdown tab, code blocks via our AvaloniaEdit, links
 hardened to http/https/mailto, and a pure `Core/Text/MarkdownPreprocessor` that
 adds GitHub admonitions (`> [!NOTE]` → themed callouts via `AdmonitionBlockHandler`),
 GFM task-list glyphs and footnotes. Renderer follows Light/Dark (auto FluentAvalonia
-style — never set `MarkdownStyleName`). Known gaps (deferred): `_underscore_` emphasis
-(use `*asterisks*`), Math/KaTeX, Mermaid/diagrams, TOC, in-doc search, export.
-Next: M4. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+style — never set `MarkdownStyleName`). **M4 (TOC/outline) done**: collapsible left
+sidebar (`Features/Viewer/OutlinePanel`) listing headings from pure
+`Core/Text/MarkdownOutline`; clicking scrolls the source editor by line, or the preview
+in place (visual-tree `BringIntoView` on `Heading1..6` controls — no public API exists).
+Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
+Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
+Next: M5. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
 
 ## Conventions
 
