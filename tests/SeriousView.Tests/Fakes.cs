@@ -12,6 +12,7 @@ internal sealed class FakeFileReader : IFileReader
 {
     private readonly FileLoadResult? _result;
     private readonly Exception? _error;
+    private readonly IReadOnlyDictionary<string, string>? _byPath;
 
     public FakeFileReader(string content)
         => _result = FileLoadResult.ForText(content, "UTF-8", LineEndings.Detect(content), content.Length);
@@ -20,10 +21,21 @@ internal sealed class FakeFileReader : IFileReader
 
     public FakeFileReader(Exception error) => _error = error;
 
+    /// <summary>Per-path content; any path not in the map throws <see cref="FileNotFoundException"/>
+    /// (used to exercise session restore skipping missing files).</summary>
+    public FakeFileReader(IReadOnlyDictionary<string, string> byPath) => _byPath = byPath;
+
     public Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default)
-        => _error is not null
+    {
+        if (_byPath is not null)
+            return _byPath.TryGetValue(path, out var content)
+                ? Task.FromResult(FileLoadResult.ForText(content, "UTF-8", LineEndings.Detect(content), content.Length))
+                : Task.FromException<FileLoadResult>(new FileNotFoundException("missing", path));
+
+        return _error is not null
             ? Task.FromException<FileLoadResult>(_error)
             : Task.FromResult(_result!);
+    }
 }
 
 internal sealed class FakeFileDialogService(string? path) : IFileDialogService

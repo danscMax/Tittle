@@ -107,7 +107,7 @@ public partial class MainWindow : AppWindow
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
-        SaveWindowState();
+        SaveOnClose();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -191,7 +191,8 @@ public partial class MainWindow : AppWindow
         _haveNormal = true;
     }
 
-    private void SaveWindowState()
+    // Persist window placement and the open-tab session together in one atomic write on close.
+    private void SaveOnClose()
     {
         if (_settings is null)
             return;
@@ -205,9 +206,11 @@ public partial class MainWindow : AppWindow
         var w = Math.Max(1, size.Width - _chromeOffset.Width);
         var h = Math.Max(1, size.Height - _chromeOffset.Height);
 
+        var session = (DataContext as MainWindowViewModel)?.GetSession();
         _settings.Update(_settings.Current with
         {
             Window = new WindowPlacement(w, h, pos.X, pos.Y, maximized),
+            Session = session,
         });
     }
 

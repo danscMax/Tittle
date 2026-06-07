@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Headless.XUnit;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
+using SeriousView.Core.Services;
+using SeriousView.Core.Settings;
 using SeriousView.Features.Shell;
 using Xunit;
 
@@ -11,13 +14,24 @@ namespace SeriousView.Tests.Features;
 
 public class MainWindowViewModelTests
 {
+    private static IAppSettingsService Holder(AppSettings? seed = null)
+    {
+        var store = new FakeSettingsStore();
+        var holder = new AppSettingsService(store);
+        if (seed is not null)
+            holder.Update(seed);
+        return holder;
+    }
+
     private static MainWindowViewModel CreateVm(
-        string? dialogPath = null, string content = "a\nb\nc", string[]? args = null)
+        string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
+        IFileReader? fileReader = null, IAppSettingsService? settings = null)
         => new(
             new FakeFileDialogService(dialogPath),
-            new FakeFileReader(content),
+            fileReader ?? new FakeFileReader(content),
             new FakeThemeService(),
             new FakeRecentFilesStore(),
+            settings ?? Holder(),
             args ?? Array.Empty<string>());
 
     [AvaloniaFact]
@@ -98,7 +112,7 @@ public class MainWindowViewModelTests
         var theme = new FakeThemeService();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), theme,
-            new FakeRecentFilesStore(), Array.Empty<string>());
+            new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
 
         Assert.Equal("Тёмная", vm.ThemeModeLabel);
 
@@ -145,7 +159,7 @@ public class MainWindowViewModelTests
         var recent = new FakeRecentFilesStore();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/doc.md"), new FakeFileReader("x"),
-            new FakeThemeService(), recent, Array.Empty<string>());
+            new FakeThemeService(), recent, Holder(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
@@ -191,7 +205,7 @@ public class MainWindowViewModelTests
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/missing.txt"),
             new FakeFileReader(new FileNotFoundException()),
-            new FakeThemeService(), new FakeRecentFilesStore(), Array.Empty<string>());
+            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
@@ -205,12 +219,63 @@ public class MainWindowViewModelTests
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/image.png"),
             new FakeFileReader(FileLoadResult.Binary(2048)),
-            new FakeThemeService(), new FakeRecentFilesStore(), Array.Empty<string>());
+            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
         Assert.Single(vm.Tabs);
         Assert.True(vm.SelectedTab!.ShowNotice);
         Assert.False(vm.SelectedTab.ShowSource);
+    }
+
+    [AvaloniaFact]
+    public void Startup_WithSession_RestoresTabs_AndSelectsSavedActive()
+    {
+        var files = new Dictionary<string, string> { ["/a.md"] = "# A", ["/b.md"] = "# B" };
+        var settings = Holder(new AppSettings { Session = new SessionState(new() { "/a.md", "/b.md" }, 1) });
+
+        var vm = CreateVm(fileReader: new FakeFileReader(files), settings: settings);
+
+        Assert.Equal(2, vm.Tabs.Count);
+        Assert.Equal("b.md", vm.SelectedTab!.Header); // ActiveIndex 1
+    }
+
+    [AvaloniaFact]
+    public void Startup_Session_SkipsMissingFiles()
+    {
+        var files = new Dictionary<string, string> { ["/a.md"] = "# A", ["/b.md"] = "# B" };
+        var settings = Holder(new AppSettings
+        {
+            Session = new SessionState(new() { "/a.md", "/gone.md", "/b.md" }, 0),
+        });
+
+        var vm = CreateVm(fileReader: new FakeFileReader(files), settings: settings);
+
+        Assert.Equal(2, vm.Tabs.Count); // the missing file is silently skipped
+        Assert.Equal("a.md", vm.SelectedTab!.Header);
+    }
+
+    [AvaloniaFact]
+    public void Startup_FileArg_BeatsSession()
+    {
+        var settings = Holder(new AppSettings { Session = new SessionState(new() { "/a.md", "/b.md" }, 0) });
+
+        var vm = CreateVm(content: "x", args: new[] { "/arg.cs" }, settings: settings);
+
+        Assert.Single(vm.Tabs);                       // the session is ignored when a file arg is given
+        Assert.Equal("arg.cs", vm.SelectedTab!.Header);
+    }
+
+    [AvaloniaFact]
+    public async Task GetSession_SnapshotsOpenFilePaths_AndActiveIndex()
+    {
+        var vm = CreateVm(dialogPath: "/path/doc.md", content: "x");
+        vm.OpenSampleCommand.Execute(null);          // sample tab (no FilePath) — excluded
+        await vm.OpenFileCommand.ExecuteAsync(null); // /path/doc.md, active
+
+        var session = vm.GetSession();
+
+        Assert.Equal(new[] { "/path/doc.md" }, session.OpenFiles); // only file-backed tabs
+        Assert.Equal(0, session.ActiveIndex);                      // doc.md is index 0 among them
     }
 }

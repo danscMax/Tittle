@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Settings;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
@@ -16,6 +18,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IFileReader _fileReader;
     private readonly IThemeService _theme;
     private readonly IRecentFilesStore _recent;
+    private readonly IAppSettingsService _settings;
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
@@ -50,12 +53,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
-        IRecentFilesStore recent, string[] args)
+        IRecentFilesStore recent, IAppSettingsService settings, string[] args)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
         _theme = theme;
         _recent = recent;
+        _settings = settings;
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
         _theme.Changed += (_, _) => OnPropertyChanged(nameof(ThemeModeLabel));
@@ -65,12 +69,43 @@ public partial class MainWindowViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasRecent));
         };
 
-        // Open a file passed on the command line — asynchronously and guarded, so a
-        // missing/locked/unreadable file can't crash the app on startup.
-        var startupPath = args.Length > 0 ? args[0] : null;
-        if (startupPath is not null)
-            _ = OpenPathAsync(startupPath);
+        // Startup precedence: an explicit file argument wins, then the last session, else welcome.
+        // All paths are async and guarded so a missing/locked/unreadable file can't crash startup.
+        if (args.Length > 0)
+            _ = OpenPathAsync(args[0]);
+        else if (_settings.Current.Session is { OpenFiles.Count: > 0 } session)
+            _ = RestoreSessionAsync(session);
         // Otherwise no tab is opened — the welcome view is shown while HasTabs is false.
+    }
+
+    /// <summary>Reopens the documents from the saved session, silently skipping any that are
+    /// gone/unreadable (no error is surfaced for a restore), then selects the saved tab.</summary>
+    private async Task RestoreSessionAsync(SessionState session)
+    {
+        foreach (var path in session.OpenFiles)
+        {
+            try
+            {
+                var result = await _fileReader.LoadAsync(path);
+                AddTab(DocumentTabViewModel.FromLoad(result, path));
+            }
+            catch
+            {
+                // Skip files that no longer exist or can't be read — restore is best-effort.
+            }
+        }
+
+        if (Tabs.Count > 0)
+            SelectedTab = Tabs[Math.Clamp(session.ActiveIndex, 0, Tabs.Count - 1)];
+    }
+
+    /// <summary>Snapshot of the open file-backed tabs and the active one, for session persistence.</summary>
+    public SessionState GetSession()
+    {
+        var withPath = Tabs.Where(t => t.FilePath is not null).ToList();
+        var paths = withPath.Select(t => t.FilePath!).ToList();
+        var active = SelectedTab is not null ? withPath.IndexOf(SelectedTab) : -1;
+        return new SessionState(paths, active < 0 ? 0 : active);
     }
 
     [RelayCommand]
