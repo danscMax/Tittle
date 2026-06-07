@@ -61,7 +61,7 @@ public partial class DocumentTabViewModel : ViewModelBase
 
     /// <summary>Markdown handed to the renderer — empty for non-markdown files so the
     /// (hidden) preview never parses code as markdown. Run through the Core preprocessor
-    /// (admonitions, task lists). Cached: the document text is immutable.</summary>
+    /// (admonitions, task lists, footnotes). Cached: the document text is immutable.</summary>
     public string PreviewMarkdown =>
         _previewMarkdown ??= IsMarkdown ? MarkdownPreprocessor.Transform(DocumentText) : "";
 

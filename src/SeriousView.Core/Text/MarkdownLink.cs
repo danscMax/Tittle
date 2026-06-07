@@ -9,15 +9,12 @@ namespace SeriousView.Core.Text;
 public static class MarkdownLink
 {
     /// <summary>True only for an absolute URL with a scheme safe to open from a viewer:
-    /// <c>http</c>, <c>https</c> or <c>mailto</c>. Null/empty/relative/other → false.</summary>
+    /// <c>http</c>, <c>https</c> or <c>mailto</c> (<see cref="Uri.Scheme"/> is lower-cased).
+    /// Null/empty/relative/other → false.</summary>
     public static bool IsSafe(string? url)
         => !string.IsNullOrWhiteSpace(url)
         && Uri.TryCreate(url, UriKind.Absolute, out var uri)
-        && IsSafeScheme(uri);
-
-    /// <summary>Scheme allow-list (http/https/mailto). <see cref="Uri.Scheme"/> is lower-cased.</summary>
-    public static bool IsSafeScheme(Uri uri)
-        => uri.Scheme == Uri.UriSchemeHttp
-        || uri.Scheme == Uri.UriSchemeHttps
-        || uri.Scheme == Uri.UriSchemeMailto;
+        && (uri.Scheme == Uri.UriSchemeHttp
+            || uri.Scheme == Uri.UriSchemeHttps
+            || uri.Scheme == Uri.UriSchemeMailto);
 }

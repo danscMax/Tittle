@@ -1,13 +1,11 @@
-using System;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Markdown.Avalonia.Utils;
 using MdEngine = Markdown.Avalonia.Markdown;
 
 namespace SeriousView.Features.Viewer;
 
 /// <summary>
-/// Renders <c>::: admonition-&lt;type&gt;</c> container blocks (produced by the Core
+/// Renders <c>::: &lt;type&gt;</c> container blocks (produced by the Core
 /// <c>MarkdownPreprocessor</c> from GitHub <c>&gt; [!NOTE]</c> alerts) as themed callout
 /// boxes. Colours come entirely from <c>Themes/Admonitions.axaml</c> via style classes
 /// (<c>Border.admonition</c> + <c>Border.admonition-&lt;type&gt;</c>), so the boxes follow
@@ -37,19 +35,12 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         return border;
     }
 
-    // From the preprocessor the name is "admonition-<type>"; accept a bare "<type>" too.
+    // The preprocessor emits the bare alert type as the container name ("note", "tip", …).
+    // Unknown containers fall back to neutral "note" styling.
     private static string NormalizeType(string blockName)
     {
-        var name = blockName.StartsWith("admonition-", StringComparison.OrdinalIgnoreCase)
-            ? blockName["admonition-".Length..]
-            : blockName;
-        name = name.Trim().ToLowerInvariant();
-
-        return name switch
-        {
-            "note" or "tip" or "important" or "warning" or "caution" => name,
-            _ => "note", // unknown container → neutral note styling
-        };
+        var name = blockName.Trim().ToLowerInvariant();
+        return name is "tip" or "important" or "warning" or "caution" ? name : "note";
     }
 
     private static string TitleFor(string type) => type switch

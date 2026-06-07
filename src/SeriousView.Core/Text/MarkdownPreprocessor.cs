@@ -8,10 +8,12 @@ namespace SeriousView.Core.Text;
 /// <summary>Pure markdown text passes that bridge GitHub-flavoured syntax the renderer
 /// (Markdown.Avalonia) does not handle natively into forms it does, UI-free and testable:
 /// <list type="bullet">
-/// <item>GitHub alerts (<c>&gt; [!NOTE]</c> …) → <c>::: admonition-&lt;type&gt;</c> container
-///   blocks, rendered as themed callouts by <c>AdmonitionBlockHandler</c>.</item>
+/// <item>GitHub alerts (<c>&gt; [!NOTE]</c> …) → <c>::: &lt;type&gt;</c> container blocks,
+///   rendered as themed callouts by <c>AdmonitionBlockHandler</c>.</item>
 /// <item>GFM task lists (<c>- [x]</c> / <c>- [ ]</c>) → checkbox glyphs (the engine renders
 ///   the markers literally otherwise).</item>
+/// <item>Footnotes (<c>[^id]</c> refs + <c>[^id]:</c> defs) → superscript markers + an
+///   appended «Сноски» section.</item>
 /// </list></summary>
 public static partial class MarkdownPreprocessor
 {
@@ -37,7 +39,7 @@ public static partial class MarkdownPreprocessor
     // navigation isn't attempted — the superscript ties the marker to the numbered list.
     private static List<string> ConvertFootnotes(List<string> lines)
     {
-        var defs = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        var defs = new Dictionary<string, string>(); // default string comparer is ordinal
         var body = new List<string>(lines.Count);
         foreach (var line in lines)
         {
@@ -52,7 +54,7 @@ public static partial class MarkdownPreprocessor
             return lines; // no definitions → leave any [^id] as authored
 
         var order = new List<string>();
-        var numberOf = new Dictionary<string, int>(System.StringComparer.Ordinal);
+        var numberOf = new Dictionary<string, int>();
 
         for (var i = 0; i < body.Count; i++)
         {
