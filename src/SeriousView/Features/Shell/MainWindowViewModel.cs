@@ -51,6 +51,25 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ToggleOutline() => IsOutlineVisible = !IsOutlineVisible;
 
+    /// <summary>Editor display options shared by every tab's source editor (font zoom, wrap,
+    /// line numbers). Bound by <c>DocumentView</c>; persisted whenever it changes.</summary>
+    public EditorOptions Editor { get; }
+
+    [RelayCommand]
+    private void ZoomIn() => Editor.ZoomIn();
+
+    [RelayCommand]
+    private void ZoomOut() => Editor.ZoomOut();
+
+    [RelayCommand]
+    private void ZoomReset() => Editor.ResetZoom();
+
+    [RelayCommand]
+    private void ToggleWordWrap() => Editor.ToggleWordWrap();
+
+    [RelayCommand]
+    private void ToggleLineNumbers() => Editor.ToggleLineNumbers();
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, string[] args)
@@ -60,6 +79,11 @@ public partial class MainWindowViewModel : ViewModelBase
         _theme = theme;
         _recent = recent;
         _settings = settings;
+
+        // Shared editor options, restored from settings and persisted on every change.
+        Editor = EditorOptions.FromSettings(_settings.Current.Editor);
+        Editor.PropertyChanged += (_, _) =>
+            _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
         _theme.Changed += (_, _) => OnPropertyChanged(nameof(ThemeModeLabel));
@@ -183,6 +207,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void AddTab(DocumentTabViewModel tab)
     {
+        tab.Editor = Editor; // share one editor-options instance across all tabs
         Tabs.Add(tab);
         SelectedTab = tab;
     }

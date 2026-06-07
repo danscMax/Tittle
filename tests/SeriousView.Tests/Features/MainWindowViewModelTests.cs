@@ -8,6 +8,7 @@ using SeriousView.Core.Documents;
 using SeriousView.Core.Services;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Shell;
+using SeriousView.Shared;
 using Xunit;
 
 namespace SeriousView.Tests.Features;
@@ -277,5 +278,39 @@ public class MainWindowViewModelTests
 
         Assert.Equal(new[] { "/path/doc.md" }, session.OpenFiles); // only file-backed tabs
         Assert.Equal(0, session.ActiveIndex);                      // doc.md is index 0 among them
+    }
+
+    [AvaloniaFact]
+    public void ZoomIn_ChangesEditorFont_AndPersists()
+    {
+        var holder = Holder();
+        var vm = CreateVm(settings: holder);
+
+        vm.ZoomInCommand.Execute(null);
+
+        Assert.Equal(EditorOptions.DefaultFontSize + 1, vm.Editor.FontSize);
+        Assert.Equal(EditorOptions.DefaultFontSize + 1, holder.Current.Editor!.FontSize); // persisted
+    }
+
+    [AvaloniaFact]
+    public void Editor_IsRestoredFromSettings()
+    {
+        var holder = Holder(new AppSettings { Editor = new EditorSettings(20, WordWrap: true, ShowLineNumbers: false) });
+        var vm = CreateVm(settings: holder);
+
+        Assert.Equal(20, vm.Editor.FontSize);
+        Assert.True(vm.Editor.WordWrap);
+        Assert.False(vm.Editor.ShowLineNumbers);
+    }
+
+    [AvaloniaFact]
+    public void AllTabs_ShareTheSameEditorOptions()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
+        vm.OpenSampleCommand.Execute(null);
+
+        Assert.Same(vm.Editor, vm.Tabs[0].Editor);
+        Assert.Same(vm.Editor, vm.Tabs[1].Editor);
     }
 }

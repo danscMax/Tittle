@@ -40,6 +40,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
     public string DocumentText { get; }
 
+    /// <summary>Shared editor display options (font/wrap/line-numbers), assigned by the shell when
+    /// the tab is added. The source editor binds to it; null in unit fixtures.</summary>
+    public EditorOptions? Editor { get; set; }
+
     /// <summary>True for markdown files — drives whether a rendered preview is offered.</summary>
     public bool IsMarkdown => MarkdownFile.IsMarkdownExtension(GrammarExtension);
 

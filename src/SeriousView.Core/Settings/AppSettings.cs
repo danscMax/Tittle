@@ -18,6 +18,9 @@ public sealed record AppSettings
 
     /// <summary>Open tabs to reopen at startup, or null/empty for the welcome screen.</summary>
     public SessionState? Session { get; init; }
+
+    /// <summary>Editor view options (font zoom, wrap, line numbers), or null for defaults.</summary>
+    public EditorSettings? Editor { get; init; }
 }
 
 /// <summary>Window geometry in screen pixels plus whether it was maximized. When maximized, the
@@ -26,3 +29,6 @@ public sealed record WindowPlacement(double Width, double Height, int X, int Y, 
 
 /// <summary>The set of documents open at the last clean exit and which one was active.</summary>
 public sealed record SessionState(List<string> OpenFiles, int ActiveIndex);
+
+/// <summary>Editor display options shared across tabs (source view only).</summary>
+public sealed record EditorSettings(double FontSize, bool WordWrap, bool ShowLineNumbers);

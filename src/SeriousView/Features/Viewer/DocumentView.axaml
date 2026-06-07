@@ -17,8 +17,9 @@
                    viewer:EditorBehavior.SuppressHighlight="{Binding HighlightSuppressed}"
                    Background="{DynamicResource EditorSurfaceBrush}"
                    FontFamily="Cascadia Code,Consolas,Courier New,monospace"
-                   FontSize="14"
-                   ShowLineNumbers="True"
+                   FontSize="{Binding Editor.FontSize, FallbackValue=14}"
+                   ShowLineNumbers="{Binding Editor.ShowLineNumbers, FallbackValue=True}"
+                   WordWrap="{Binding Editor.WordWrap, FallbackValue=False}"
                    HorizontalScrollBarVisibility="Auto"
                    VerticalScrollBarVisibility="Auto"/>
 
