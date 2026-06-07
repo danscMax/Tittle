@@ -150,4 +150,36 @@ public class MainWindowViewModelTests
         Assert.Contains("/path/doc.md", recent.Items);
         Assert.Contains("/path/doc.md", vm.RecentFiles);
     }
+
+    [AvaloniaFact]
+    public void ToggleOutline_FlipsVisibility()
+    {
+        var vm = CreateVm();
+
+        Assert.True(vm.IsOutlineVisible);
+        vm.ToggleOutlineCommand.Execute(null);
+        Assert.False(vm.IsOutlineVisible);
+        vm.ToggleOutlineCommand.Execute(null);
+        Assert.True(vm.IsOutlineVisible);
+    }
+
+    [AvaloniaFact]
+    public void IsOutlinePaneVisible_RequiresEnabledAndHeadings()
+    {
+        var vm = CreateVm(content: "# Heading\n\nbody", args: new[] { "/doc.md" });
+
+        Assert.True(vm.IsOutlinePaneVisible);          // markdown + heading + enabled
+
+        vm.ToggleOutlineCommand.Execute(null);
+        Assert.False(vm.IsOutlinePaneVisible);         // disabled → hidden
+    }
+
+    [AvaloniaFact]
+    public void IsOutlinePaneVisible_False_ForCodeFile()
+    {
+        var vm = CreateVm(content: "var x = 1;", args: new[] { "/a.cs" });
+
+        Assert.True(vm.IsOutlineVisible);              // enabled by default…
+        Assert.False(vm.IsOutlinePaneVisible);         // …but no headings → hidden
+    }
 }

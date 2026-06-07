@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -72,6 +74,27 @@ public partial class DocumentTabViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(IsMarkdown))]
     private void ToggleViewMode()
         => ViewMode = ViewMode == DocumentViewMode.Preview ? DocumentViewMode.Source : DocumentViewMode.Preview;
+
+    private IReadOnlyList<HeadingOutline>? _outline;
+
+    /// <summary>Heading outline (table of contents). Empty for non-markdown files.
+    /// Cached: the document text is immutable.</summary>
+    public IReadOnlyList<HeadingOutline> Outline =>
+        IsMarkdown ? _outline ??= MarkdownOutline.Parse(DocumentText) : [];
+
+    /// <summary>True when the document has at least one heading (drives the outline pane).</summary>
+    public bool HasOutline => Outline.Count > 0;
+
+    /// <summary>Raised when the user picks a heading; the view scrolls preview/source to it.</summary>
+    public event Action<HeadingOutline>? NavigationRequested;
+
+    /// <summary>Ask the view to navigate to <paramref name="heading"/> (bound from the outline).</summary>
+    [RelayCommand]
+    private void NavigateToHeading(HeadingOutline? heading)
+    {
+        if (heading is not null)
+            NavigationRequested?.Invoke(heading);
+    }
 
     private DocumentTabViewModel(string header, string content)
     {

@@ -36,6 +36,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "Готово";
 
+    /// <summary>Whether the user has the outline pane turned on (per-window, persists across tabs).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsOutlinePaneVisible))]
+    private bool _isOutlineVisible = true;
+
+    /// <summary>The outline pane is shown only when enabled AND the active tab has headings.</summary>
+    public bool IsOutlinePaneVisible => IsOutlineVisible && (SelectedTab?.HasOutline ?? false);
+
+    [RelayCommand]
+    private void ToggleOutline() => IsOutlineVisible = !IsOutlineVisible;
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, string[] args)
@@ -135,5 +146,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // (DocumentTabViewModel.StatusText) directly in the view.
         if (value is null)
             StatusText = "Готово";
+        // The outline pane depends on the active tab's headings.
+        OnPropertyChanged(nameof(IsOutlinePaneVisible));
     }
 }

@@ -1,4 +1,5 @@
 using System.IO;
+using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using Xunit;
 
@@ -80,5 +81,39 @@ public class DocumentTabViewModelTests
         var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
 
         Assert.Equal("", vm.PreviewMarkdown);
+    }
+
+    [Fact]
+    public void Outline_ForMarkdownWithHeadings_IsPopulated()
+    {
+        var vm = DocumentTabViewModel.FromFile("# First\n\ntext\n\n## Second", "/docs/readme.md");
+
+        Assert.True(vm.HasOutline);
+        Assert.Equal(2, vm.Outline.Count);
+        Assert.Equal("First", vm.Outline[0].Text);
+        Assert.Equal("Second", vm.Outline[1].Text);
+    }
+
+    [Fact]
+    public void Outline_ForCodeFile_IsEmpty()
+    {
+        // A '#'-prefixed line in a non-markdown file must not produce an outline.
+        var vm = DocumentTabViewModel.FromFile("# not markdown", "/src/a.cs");
+
+        Assert.False(vm.HasOutline);
+        Assert.Empty(vm.Outline);
+    }
+
+    [Fact]
+    public void NavigateToHeading_RaisesNavigationRequested_WithTheHeading()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n## B", "/docs/readme.md");
+        HeadingOutline? received = null;
+        vm.NavigationRequested += h => received = h;
+
+        var target = vm.Outline[1];
+        vm.NavigateToHeadingCommand.Execute(target);
+
+        Assert.Same(target, received);
     }
 }
