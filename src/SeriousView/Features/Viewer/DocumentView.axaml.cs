@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using MdEngine = Markdown.Avalonia.Markdown;
@@ -50,14 +52,37 @@ public partial class DocumentView : UserControl
 
     private void OnNavigationRequested(HeadingOutline heading)
     {
-        // Source-mode navigation is reliable (line-based). In preview mode we currently
-        // fall back to source; C4 replaces this with in-place preview scrolling.
+        // In preview, scroll the rendered document in place; if the heading control can't be
+        // located, fall back to the reliable line-based source scroll (switching mode first).
+        if (_vm is { ShowPreview: true } && TryScrollPreviewToHeading(heading.Ordinal))
+            return;
+
         if (_vm is { ShowPreview: true })
             _vm.ViewMode = DocumentViewMode.Source;
 
         // Defer so the editor is laid out (and visible after a mode switch) before scrolling.
         Dispatcher.UIThread.Post(() => ScrollSourceToLine(heading.Line));
     }
+
+    /// <summary>Scroll the preview to the <paramref name="ordinal"/>-th heading by walking the
+    /// visual tree (Markdown.Avalonia exposes no scroll API). Returns false if not found.</summary>
+    private bool TryScrollPreviewToHeading(int ordinal)
+    {
+        var headings = Preview.GetVisualDescendants().OfType<Control>().Where(IsTopLevelHeading).ToList();
+        if (ordinal < 0 || ordinal >= headings.Count)
+            return false;
+
+        headings[ordinal].BringIntoView();
+        return true;
+    }
+
+    // Markdown.Avalonia renders headings as controls with a "Heading1".."Heading6" style class.
+    // Headings inside an admonition callout are excluded so the order matches the Core outline
+    // (which skips blockquoted headings). NB: depends on that class naming — recheck on upgrade.
+    private static bool IsTopLevelHeading(Control control)
+        => control.Classes.Any(c => c is "Heading1" or "Heading2" or "Heading3"
+                                      or "Heading4" or "Heading5" or "Heading6")
+        && !control.GetVisualAncestors().OfType<Border>().Any(b => b.Classes.Contains("admonition"));
 
     private void ScrollSourceToLine(int line1Based)
     {

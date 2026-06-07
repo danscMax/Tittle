@@ -56,18 +56,18 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
-    public void DocumentView_NavigateToHeading_ScrollsWithoutThrowing()
+    public void DocumentView_NavigateToHeading_DoesNotThrow()
     {
         var vm = DocumentTabViewModel.FromFile("# A\n\ntext\n\n## B", "/docs/readme.md");
         var window = new Window { Content = new DocumentView { DataContext = vm } };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        // Starts in Preview (markdown default) → navigation falls back to source + scroll.
+        // Preview in-place scroll if the heading control is found, else source fallback —
+        // either path must complete without throwing.
         vm.NavigateToHeadingCommand.Execute(vm.Outline[1]);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(DocumentViewMode.Source, vm.ViewMode);
         window.Close();
     }
 }
