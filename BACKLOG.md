@@ -32,24 +32,13 @@ heavy rendering extras (high effort/risk)**. `★` = audit priority. Effort: S/M
   with off-screen re-centring + title-bar chrome-offset compensation (no drift); session reopens
   last tabs (arg > session > welcome), no `ISessionStore` port; crash log to `%AppData%/SeriousView`.
   **Deferred: window icon #9** (needs a brand asset — own visual-polish step).
+- **M7** keyboard & editor controls (items 12 13 14 15 16 19 20 29): tunnelling KeyDown dispatcher
+  (Ctrl+O/W, Ctrl+Tab nav, Ctrl+±/0 + wheel zoom, Ctrl+L, Alt+Z, Ctrl+G); shared `EditorOptions`
+  (font/wrap/line-numbers) persisted in `AppSettings.Editor` + title-strip control cluster; caret
+  position in the status bar; auto-focus the editor; go-to-line input in the status bar (an overlay
+  over AvaloniaEdit won't repaint).
 
 ---
-
-## M7 — Keyboard & editor controls · effort M
-
-A keyboard-driven viewer. Introduce a `KeyBindings` seam, then the commands. #16 reuses M4's
-scroll-to-line infra.
-
-| # | Item |
-|---|---|
-| 12 | Ctrl+O open, Ctrl+W close tab |
-| 19 | Ctrl+Tab / Ctrl+Shift+Tab tab navigation |
-| 16 | Go-to-line (Ctrl+G) — reuses M4 `ScrollToLine` |
-| 13 | Word-wrap toggle (Alt+Z) — `TextEditor.WordWrap` |
-| 14 | Font zoom (Ctrl + / − / 0, Ctrl+wheel) — size is hard-coded 14 now |
-| 20 | Toggle line numbers (Ctrl+L) |
-| 15 | Caret position (line:col) in the status bar |
-| 29 | Auto-focus the editor on the active tab (scroll/Ctrl+F work immediately) |
 
 ## M8 — Tabs & shell ergonomics (UX) · effort M
 
@@ -117,10 +106,12 @@ CSV/TSV-as-table · JSON pretty-print toggle.
 - **Done (1–8, 10):** visual quick-wins + press effect.
 - **Done — M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
 - **Done — M6 persistence:** 21★ 22★ 39 40 (+ session restore). **#9 window icon deferred.**
-- **M7 keyboard:** 12 13 14 15 16 19 20 29.
+- **Done — M7 keyboard:** 12 13 14 15 16 19 20 29.
 - **M8 tabs/UX:** 11 17 18 23 24 25 26 27 28 30.
 - Improvements 1–40 are fully placed; ported-only features (search, math, diagrams, export,
   sync-scroll, live-reload) are M9–M14.
 
-**Suggested next:** **M7** (keyboard & editor controls) — Ctrl+O/W, Ctrl+Tab, go-to-line (reuses M4),
-font zoom, word-wrap, line numbers, caret position. Everyday ergonomics on top of the now-persistent shell.
+**Suggested next:** **M8** (tabs & shell ergonomics) — reuse-tab-on-reopen, tab drag-reorder, tab
+context menu + tooltips, copy path, reveal in explorer, multi-file open. Everyday tab/shell UX. (Or pull
+**M9 in-document search** forward — high value, and its find-bar input can reuse the status-bar pattern
+from M7's go-to-line, sidestepping the over-editor overlay problem.)

@@ -83,9 +83,19 @@ compensate on save to avoid per-launch drift; session (open files + active tab) 
 when launched with no file arg (arg > session > welcome), **no `ISessionStore` port** (the holder is
 the seam). Unhandled exceptions logged to `%AppData%/SeriousView/crash.log` (`Platform/CrashLogger`
 + pure `Core/Diagnostics/CrashLog`). Window icon (#9) deferred to a visual-polish pass.
+**M7 (keyboard & editor controls) done**: a central tunnelling `KeyDown` dispatcher in `MainWindow`
+maps shortcuts to VM commands and runs *before* the focused AvaloniaEdit (which otherwise swallows
+letter-gestures via bubbling `KeyBindings`) — Ctrl+O/W, Ctrl+Tab/Shift+Tab tab nav, Ctrl+±/0 (+ NumPad)
+& Ctrl+wheel font zoom, Ctrl+L line numbers, Alt+Z word-wrap, Ctrl+G go-to-line. Shared
+`Shared/EditorOptions` (font/wrap/line-numbers, one instance across all tabs) drives the editor and
+persists in `AppSettings.Editor`; a title-strip control cluster + the keyboard both mutate it. Caret
+position shows in the status bar (relayed from `Caret.PositionChanged`); the source editor auto-focuses
+on tab activation (must focus `Source.TextArea`, not the `TextEditor` wrapper). Go-to-line input lives
+in the **status bar** (chrome): an overlay floated over the editor won't repaint over AvaloniaEdit's GPU
+surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-Next: M7 (keyboard & editor controls). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+Next: M8 (tabs & shell ergonomics). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
 
 ## Conventions
 
