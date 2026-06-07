@@ -30,11 +30,12 @@ public static partial class MarkdownOutline
             var fenceMatch = Fence().Match(lines[i]);
             if (fenceMatch.Success)
             {
-                var marker = fenceMatch.Groups[1].Value;
+                var run = fenceMatch.Groups[1];
                 if (fence is null)
-                    fence = marker;                                  // open
-                else if (marker[0] == fence[0] && marker.Length >= fence.Length)
-                    fence = null;                                    // close (same char, ≥ length)
+                    fence = run.Value;                               // open (info string allowed)
+                else if (run.Value[0] == fence[0] && run.Length >= fence.Length
+                         && lines[i].AsSpan(run.Index + run.Length).Trim().IsEmpty)
+                    fence = null;                                    // close: same char, ≥ length, nothing after
                 continue;
             }
 

@@ -95,6 +95,29 @@ public class MarkdownOutlineTests
     }
 
     [Fact]
+    public void Parse_FenceWithInfoStringInsideBlock_DoesNotFalselyClose()
+    {
+        // A ```lang line inside an open block is not a closing fence (close takes no info
+        // string), so headings after it stay inside the code block and out of the outline.
+        const string md = """
+            # A
+
+            ```
+            sample:
+            ```text
+            # still inside the code block
+            ```
+
+            # B
+            """;
+        var result = MarkdownOutline.Parse(md);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal("A", result[0].Text);
+        Assert.Equal("B", result[1].Text);
+    }
+
+    [Fact]
     public void Parse_BlockquotedHeading_IsNotTopLevel()
     {
         // '> # H' is a heading inside a blockquote — excluded so the outline stays aligned

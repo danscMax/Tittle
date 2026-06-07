@@ -52,13 +52,17 @@ public partial class DocumentView : UserControl
 
     private void OnNavigationRequested(HeadingOutline heading)
     {
-        // In preview, scroll the rendered document in place; if the heading control can't be
-        // located, fall back to the reliable line-based source scroll (switching mode first).
-        if (_vm is { ShowPreview: true } && TryScrollPreviewToHeading(heading.Ordinal))
+        if (_vm is null)
             return;
 
-        if (_vm is { ShowPreview: true })
+        // In preview, scroll the rendered document in place; if the heading control can't be
+        // located, fall back to the reliable line-based source scroll (switching mode first).
+        if (_vm.ShowPreview)
+        {
+            if (TryScrollPreviewToHeading(heading.Ordinal))
+                return;
             _vm.ViewMode = DocumentViewMode.Source;
+        }
 
         // Defer so the editor is laid out (and visible after a mode switch) before scrolling.
         Dispatcher.UIThread.Post(() => ScrollSourceToLine(heading.Line));
