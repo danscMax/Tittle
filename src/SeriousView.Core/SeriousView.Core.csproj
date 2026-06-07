@@ -6,4 +6,9 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Legacy code pages (Windows-1251 etc.) for encoding detection. -->
+    <PackageReference Include="System.Text.Encoding.CodePages" />
+  </ItemGroup>
+
 </Project>

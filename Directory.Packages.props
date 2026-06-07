@@ -41,6 +41,12 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="BCL (legacy code pages for encoding detection)">
+    <!-- Enables Encoding.GetEncoding(1251) etc. via CodePagesEncodingProvider. Works under
+         InvariantGlobalization (that affects cultures, not encodings). -->
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
