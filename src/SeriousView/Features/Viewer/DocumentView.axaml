@@ -6,14 +6,15 @@
              xmlns:viewer="using:SeriousView.Features.Viewer"
              x:Class="SeriousView.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
-  <!-- One tab's body: source editor and rendered preview occupy the same area,
-       toggled by IsVisible (ShowSource / ShowPreview are mutually exclusive). -->
+  <!-- One tab's body: source editor, rendered preview, and a notice overlay occupy the same
+       area, toggled by IsVisible (ShowSource / ShowPreview / ShowNotice are mutually exclusive). -->
   <Panel>
     <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
     <ae:TextEditor x:Name="Source"
                    IsVisible="{Binding ShowSource}"
                    viewer:EditorBehavior.Text="{Binding DocumentText}"
                    viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                   viewer:EditorBehavior.SuppressHighlight="{Binding HighlightSuppressed}"
                    Background="{DynamicResource EditorSurfaceBrush}"
                    FontFamily="Cascadia Code,Consolas,Courier New,monospace"
                    FontSize="14"
@@ -31,6 +32,15 @@
                                Markdown="{Binding PreviewMarkdown}"
                                AssetPathRoot="{Binding AssetPathRoot}"
                                SelectionEnabled="True"/>
+    </Border>
+
+    <!-- Notice overlay: binary / too-large / empty files (no editor, no preview).
+         Text-only (no SymbolIcon) so it renders without the FluentAvalonia Symbols font. -->
+    <Border IsVisible="{Binding ShowNotice}" Background="{DynamicResource EditorSurfaceBrush}">
+      <TextBlock Text="{Binding NoticeText}" TextWrapping="Wrap" TextAlignment="Center"
+                 MaxWidth="420" FontSize="15"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
     </Border>
   </Panel>
 </UserControl>

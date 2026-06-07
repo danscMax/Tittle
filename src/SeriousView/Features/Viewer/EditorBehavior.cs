@@ -42,6 +42,17 @@ public static class EditorBehavior
     public static string? GetGrammarExtension(TextEditor editor)
         => editor.GetValue(GrammarExtensionProperty);
 
+    /// <summary>When true, TextMate highlighting is not installed (used for very large files,
+    /// where tokenization would stall — the file is shown as plain text).</summary>
+    public static readonly AttachedProperty<bool> SuppressHighlightProperty =
+        AvaloniaProperty.RegisterAttached<TextEditor, bool>("SuppressHighlight", typeof(EditorBehavior));
+
+    public static void SetSuppressHighlight(TextEditor editor, bool value)
+        => editor.SetValue(SuppressHighlightProperty, value);
+
+    public static bool GetSuppressHighlight(TextEditor editor)
+        => editor.GetValue(SuppressHighlightProperty);
+
     // Per-editor TextMate state; weak keys so editors can be GC'd.
     private static readonly ConditionalWeakTable<TextEditor, EditorState> States = new();
 
@@ -53,6 +64,7 @@ public static class EditorBehavior
     {
         TextProperty.Changed.AddClassHandler<TextEditor>(OnTextChanged);
         GrammarExtensionProperty.Changed.AddClassHandler<TextEditor>(OnGrammarExtensionChanged);
+        SuppressHighlightProperty.Changed.AddClassHandler<TextEditor>(OnSuppressHighlightChanged);
     }
 
     private static void OnTextChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
@@ -67,11 +79,31 @@ public static class EditorBehavior
 
     private static void OnGrammarExtensionChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
     {
-        if (TextMateDisabled)
+        if (TextMateDisabled || GetSuppressHighlight(editor))
             return;
 
         var state = EnsureInstalled(editor);
         ApplyGrammar(state, e.GetNewValue<string?>());
+    }
+
+    // Highlighting can be suppressed (large files) independently of the grammar binding, and the
+    // two attached properties can apply in either order — handle both: tear down when turned on,
+    // (re)install when turned off.
+    private static void OnSuppressHighlightChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.GetNewValue<bool>())
+        {
+            if (States.TryGetValue(editor, out var state))
+            {
+                state.Installation.Dispose();
+                States.Remove(editor);
+            }
+        }
+        else if (!TextMateDisabled)
+        {
+            var state = EnsureInstalled(editor);
+            ApplyGrammar(state, GetGrammarExtension(editor));
+        }
     }
 
     private static EditorState EnsureInstalled(TextEditor editor)
