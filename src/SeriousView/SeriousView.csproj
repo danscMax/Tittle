@@ -20,6 +20,8 @@
     <PackageReference Include="Avalonia.AvaloniaEdit" />
     <PackageReference Include="AvaloniaEdit.TextMate" />
     <PackageReference Include="TextMateSharp.Grammars" />
+    <!-- Native markdown rendering (MarkdownScrollViewer). ColorText/ColorDocument come transitively. -->
+    <PackageReference Include="Markdown.Avalonia" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <!-- DevTools (F12) only in Debug builds -->

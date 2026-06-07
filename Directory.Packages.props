@@ -25,6 +25,17 @@
     <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.4" />
   </ItemGroup>
 
+  <ItemGroup Label="Markdown rendering (native; code blocks reuse our AvaloniaEdit)">
+    <!-- Full package = Tight + SyntaxHigh(+AvaloniaEdit) + Html + Svg. All transitive deps use
+         open floors [x,) so CPM keeps OUR pinned versions; SyntaxHigh references the same
+         `Avalonia.AvaloniaEdit` id we pin (11.4.1) → no version clash. 12.0.0-a* targets
+         Avalonia 12 (alpha) — we stay on the 11 line. ColorText/ColorDocument flow transitively;
+         pinned here only to keep versions auditable (no PackageReference for them). -->
+    <PackageVersion Include="Markdown.Avalonia" Version="11.0.3" />
+    <PackageVersion Include="ColorTextBlock.Avalonia" Version="11.0.3" />
+    <PackageVersion Include="ColorDocument.Avalonia" Version="11.0.3" />
+  </ItemGroup>
+
   <ItemGroup Label="MVVM + DI">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
