@@ -60,3 +60,19 @@ internal sealed class FakeRecentFilesStore : IRecentFilesStore
         Changed?.Invoke(this, EventArgs.Empty);
     }
 }
+
+/// <summary>In-memory <see cref="ISettingsStore"/> — keeps values by reference (no JSON round-trip),
+/// which is exactly what the holder/VM tests need.</summary>
+internal sealed class FakeSettingsStore : ISettingsStore
+{
+    private readonly Dictionary<string, object?> _values = new();
+    public int SaveCount { get; private set; }
+
+    public T? Load<T>(string key) => _values.TryGetValue(key, out var v) ? (T?)v : default;
+
+    public void Save<T>(string key, T value)
+    {
+        _values[key] = value;
+        SaveCount++;
+    }
+}
