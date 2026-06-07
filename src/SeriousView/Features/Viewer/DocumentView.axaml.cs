@@ -31,6 +31,9 @@ public partial class DocumentView : UserControl
             engine.ContainerBlockHandler = new AdmonitionBlockHandler(engine);
         }
 
+        // Relay the editor caret position to the active tab VM (shown in the status bar).
+        Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+
         DataContextChanged += OnDataContextChanged;
         DetachedFromVisualTree += (_, _) => Unsubscribe();
     }
@@ -40,7 +43,34 @@ public partial class DocumentView : UserControl
         Unsubscribe();
         _vm = DataContext as DocumentTabViewModel;
         if (_vm is not null)
+        {
             _vm.NavigationRequested += OnNavigationRequested;
+            // After the new document/layout settles: refresh the caret readout and, for a source
+            // tab, focus the editor so the keyboard works immediately (#29).
+            Dispatcher.UIThread.Post(ActivateSource);
+        }
+    }
+
+    private void OnCaretPositionChanged(object? sender, EventArgs e) => UpdateCaret();
+
+    private void UpdateCaret()
+    {
+        if (_vm is null)
+            return;
+
+        var caret = Source.TextArea.Caret;
+        _vm.CaretLine = caret.Line;
+        _vm.CaretColumn = caret.Column;
+    }
+
+    private void ActivateSource()
+    {
+        if (_vm is null)
+            return;
+
+        UpdateCaret();
+        if (_vm.ShowSource)
+            Source.TextArea.Focus(); // the TextArea handles keyboard, not the TextEditor wrapper
     }
 
     private void Unsubscribe()

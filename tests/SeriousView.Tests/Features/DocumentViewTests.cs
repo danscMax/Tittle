@@ -1,6 +1,9 @@
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using AvaloniaEdit;
 using SeriousView.Features.Shell;
 using SeriousView.Features.Viewer;
 using Xunit;
@@ -70,4 +73,24 @@ public class DocumentViewTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void DocumentView_RelaysCaretPosition_IntoTheTabVm()
+    {
+        var vm = DocumentTabViewModel.FromFile("line1\nline2\nline3", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        editor.TextArea.Caret.Line = 3;
+        editor.TextArea.Caret.Column = 2;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(3, vm.CaretLine);
+        Assert.Equal(2, vm.CaretColumn);
+        window.Close();
+    }
+    // NB: auto-focus (#29) can't be asserted headlessly (the headless window isn't activated, so
+    // Focus() leaves IsFocused false) — it's verified live instead (keyboard scrolls without a click).
 }

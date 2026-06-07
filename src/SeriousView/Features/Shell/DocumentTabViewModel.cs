@@ -36,6 +36,18 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "";
 
+    /// <summary>Caret line/column (1-based), pushed from the editor; surfaced in the status bar
+    /// while the source editor is visible.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CaretText))]
+    private int _caretLine = 1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CaretText))]
+    private int _caretColumn = 1;
+
+    public string CaretText => $"Стр {CaretLine}, Кол {CaretColumn}";
+
     /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
     public string DocumentText { get; }

@@ -167,4 +167,15 @@ public class DocumentTabViewModelTests
         Assert.True(vm.HighlightSuppressed);
         Assert.Contains("без подсветки", vm.StatusText);
     }
+
+    [Fact]
+    public void CaretText_FormatsLineAndColumn_AndUpdates()
+    {
+        var vm = DocumentTabViewModel.FromFile("a\nb", "/src/a.cs");
+        Assert.Equal("Стр 1, Кол 1", vm.CaretText);
+
+        vm.CaretLine = 5;
+        vm.CaretColumn = 12;
+        Assert.Equal("Стр 5, Кол 12", vm.CaretText);
+    }
 }
