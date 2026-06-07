@@ -1,9 +1,18 @@
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Text;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
+
+/// <summary>How a markdown document is shown: rendered preview or raw source.
+/// Non-markdown files are always source (the toggle is hidden).</summary>
+public enum DocumentViewMode
+{
+    Preview,
+    Source,
+}
 
 /// <summary>One open document = one tab. Holds its content, grammar, header and
 /// per-document status metrics. Content is pushed to the editor via
@@ -27,6 +36,38 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
     public string DocumentText { get; }
+
+    /// <summary>True for markdown files — drives whether a rendered preview is offered.</summary>
+    public bool IsMarkdown => MarkdownFile.IsMarkdownExtension(GrammarExtension);
+
+    /// <summary>Preview vs source. Defaults to Preview; only meaningful for markdown
+    /// (for code files <see cref="ShowSource"/> short-circuits to true regardless).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowPreview))]
+    [NotifyPropertyChangedFor(nameof(ShowSource))]
+    [NotifyPropertyChangedFor(nameof(ViewModeLabel))]
+    private DocumentViewMode _viewMode = DocumentViewMode.Preview;
+
+    /// <summary>Show the rendered markdown preview (markdown file in Preview mode).</summary>
+    public bool ShowPreview => IsMarkdown && ViewMode == DocumentViewMode.Preview;
+
+    /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode).</summary>
+    public bool ShowSource => !IsMarkdown || ViewMode == DocumentViewMode.Source;
+
+    /// <summary>Base directory for resolving relative image/asset paths in the preview.</summary>
+    public string? AssetPathRoot => FilePath is null ? null : Path.GetDirectoryName(FilePath);
+
+    /// <summary>Markdown handed to the renderer. Currently the raw text; a Core
+    /// preprocessing pass (admonitions, footnotes) is layered in later milestones.</summary>
+    public string PreviewMarkdown => DocumentText;
+
+    /// <summary>Label for the preview/source toggle, reflecting the current mode.</summary>
+    public string ViewModeLabel => ViewMode == DocumentViewMode.Preview ? "Предпросмотр" : "Исходник";
+
+    /// <summary>Flip preview ⟷ source. Only enabled for markdown documents.</summary>
+    [RelayCommand(CanExecute = nameof(IsMarkdown))]
+    private void ToggleViewMode()
+        => ViewMode = ViewMode == DocumentViewMode.Preview ? DocumentViewMode.Source : DocumentViewMode.Preview;
 
     private DocumentTabViewModel(string header, string content)
     {
