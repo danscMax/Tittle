@@ -3,6 +3,7 @@ using System.Linq;
 using Avalonia;                 // AttachDevTools extension lives in the Avalonia namespace
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Windowing;
@@ -46,9 +47,60 @@ public partial class MainWindow : AppWindow
         PositionChanged += (_, _) => TrackNormalBounds();
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
+        // Tunnel both so the shortcuts win over the focused editor (which otherwise swallows
+        // Ctrl+L / Alt+Z and consumes the wheel for scrolling).
+        AddHandler(PointerWheelChangedEvent, OnPointerWheel, RoutingStrategies.Tunnel);
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
 #if DEBUG
         this.AttachDevTools();
 #endif
+    }
+
+    // Central keyboard-shortcut dispatcher. Tunnelling (preview) runs before the AvaloniaEdit editor
+    // processes the key, so app shortcuts fire regardless of where focus sits; non-matching keys are
+    // left untouched for the editor.
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        var ctrl = e.KeyModifiers.HasFlag(KeyModifiers.Control);
+        var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var alt = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+
+        var command = (ctrl, shift, alt, e.Key) switch
+        {
+            (true, false, false, Key.O) => vm.OpenFileCommand,
+            (true, false, false, Key.W) => vm.CloseActiveTabCommand,
+            (true, false, false, Key.Tab) => vm.SelectNextTabCommand,
+            (true, true, false, Key.Tab) => vm.SelectPreviousTabCommand,
+            (true, false, false, Key.OemPlus or Key.Add) => vm.ZoomInCommand,
+            (true, false, false, Key.OemMinus or Key.Subtract) => vm.ZoomOutCommand,
+            (true, false, false, Key.D0 or Key.NumPad0) => vm.ZoomResetCommand,
+            (true, false, false, Key.L) => vm.ToggleLineNumbersCommand,
+            (false, false, true, Key.Z) => vm.ToggleWordWrapCommand,
+            _ => (System.Windows.Input.ICommand?)null,
+        };
+
+        if (command is null)
+            return;
+
+        if (command.CanExecute(null))
+            command.Execute(null);
+        e.Handled = true;
+    }
+
+    // Ctrl + mouse wheel zooms the editor font (like VS Code).
+    private void OnPointerWheel(object? sender, PointerWheelEventArgs e)
+    {
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || DataContext is not MainWindowViewModel vm)
+            return;
+
+        if (e.Delta.Y > 0)
+            vm.Editor.ZoomIn();
+        else if (e.Delta.Y < 0)
+            vm.Editor.ZoomOut();
+        e.Handled = true;
     }
 
     public MainWindow(MainWindowViewModel viewModel, IAppSettingsService settings) : this()

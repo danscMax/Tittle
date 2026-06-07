@@ -194,6 +194,36 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedTab = Tabs[Math.Min(index, Tabs.Count - 1)];
     }
 
+    /// <summary>Close the active tab (Ctrl+W).</summary>
+    [RelayCommand]
+    private void CloseActiveTab()
+    {
+        if (SelectedTab is not null)
+            CloseTab(SelectedTab);
+    }
+
+    /// <summary>Activate the next tab, wrapping around (Ctrl+Tab).</summary>
+    [RelayCommand]
+    private void SelectNextTab() => CycleTab(1);
+
+    /// <summary>Activate the previous tab, wrapping around (Ctrl+Shift+Tab).</summary>
+    [RelayCommand]
+    private void SelectPreviousTab() => CycleTab(-1);
+
+    private void CycleTab(int direction)
+    {
+        if (Tabs.Count == 0)
+            return;
+        if (SelectedTab is null)
+        {
+            SelectedTab = Tabs[0];
+            return;
+        }
+
+        var n = Tabs.Count;
+        SelectedTab = Tabs[(Tabs.IndexOf(SelectedTab) + direction + n) % n];
+    }
+
     /// <summary>Label for the theme button, reflecting the current mode.</summary>
     public string ThemeModeLabel => _theme.Mode switch
     {

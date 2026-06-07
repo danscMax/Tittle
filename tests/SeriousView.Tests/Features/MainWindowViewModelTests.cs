@@ -313,4 +313,55 @@ public class MainWindowViewModelTests
         Assert.Same(vm.Editor, vm.Tabs[0].Editor);
         Assert.Same(vm.Editor, vm.Tabs[1].Editor);
     }
+
+    [AvaloniaFact]
+    public void SelectNextTab_CyclesForward_WithWrap()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // tab 0
+        vm.OpenSampleCommand.Execute(null); // tab 1 (active)
+        var (t0, t1) = (vm.Tabs[0], vm.Tabs[1]);
+
+        vm.SelectNextTabCommand.Execute(null); // wraps to tab 0
+        Assert.Same(t0, vm.SelectedTab);
+        vm.SelectNextTabCommand.Execute(null); // tab 1
+        Assert.Same(t1, vm.SelectedTab);
+    }
+
+    [AvaloniaFact]
+    public void SelectPreviousTab_CyclesBackward_WithWrap()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // tab 0
+        vm.OpenSampleCommand.Execute(null); // tab 1 (active)
+        var (t0, t1) = (vm.Tabs[0], vm.Tabs[1]);
+
+        vm.SelectPreviousTabCommand.Execute(null); // tab 0
+        Assert.Same(t0, vm.SelectedTab);
+        vm.SelectPreviousTabCommand.Execute(null); // wraps to tab 1
+        Assert.Same(t1, vm.SelectedTab);
+    }
+
+    [AvaloniaFact]
+    public void CycleTab_WithNoTabs_IsNoOp()
+    {
+        var vm = CreateVm();
+
+        vm.SelectNextTabCommand.Execute(null);
+
+        Assert.Null(vm.SelectedTab);
+        Assert.Empty(vm.Tabs);
+    }
+
+    [AvaloniaFact]
+    public void CloseActiveTab_ClosesTheSelectedTab()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
+        vm.OpenSampleCommand.Execute(null);
+
+        vm.CloseActiveTabCommand.Execute(null);
+
+        Assert.Single(vm.Tabs);
+    }
 }
