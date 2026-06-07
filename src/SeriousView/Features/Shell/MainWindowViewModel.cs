@@ -70,6 +70,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ToggleLineNumbers() => Editor.ToggleLineNumbers();
 
+    /// <summary>Open the go-to-line overlay on the active tab (Ctrl+G), only in source view.</summary>
+    [RelayCommand]
+    private void OpenGoToLine()
+    {
+        if (SelectedTab?.ShowSource == true)
+            SelectedTab.IsGoToLineOpen = true;
+    }
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, string[] args)

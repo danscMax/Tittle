@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
@@ -51,6 +52,8 @@ public partial class MainWindow : AppWindow
         // Ctrl+L / Alt+Z and consumes the wheel for scrolling).
         AddHandler(PointerWheelChangedEvent, OnPointerWheel, RoutingStrategies.Tunnel);
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
+        // Go-to-line input (status bar): Enter jumps, Esc closes.
+        GoToLineBox.KeyDown += OnGoToLineKeyDown;
 #if DEBUG
         this.AttachDevTools();
 #endif
@@ -78,6 +81,7 @@ public partial class MainWindow : AppWindow
             (true, false, false, Key.OemMinus or Key.Subtract) => vm.ZoomOutCommand,
             (true, false, false, Key.D0 or Key.NumPad0) => vm.ZoomResetCommand,
             (true, false, false, Key.L) => vm.ToggleLineNumbersCommand,
+            (true, false, false, Key.G) => vm.OpenGoToLineCommand,
             (false, false, true, Key.Z) => vm.ToggleWordWrapCommand,
             _ => (System.Windows.Input.ICommand?)null,
         };
@@ -88,6 +92,28 @@ public partial class MainWindow : AppWindow
         if (command.CanExecute(null))
             command.Execute(null);
         e.Handled = true;
+
+        // Ctrl+G just opened the go-to-line input — move focus into it.
+        if (e.Key == Key.G && vm.SelectedTab?.IsGoToLineOpen == true)
+            Dispatcher.UIThread.Post(() => { GoToLineBox.Focus(); GoToLineBox.SelectAll(); });
+    }
+
+    // Go-to-line input (status bar): Enter submits the jump, Esc closes.
+    private void OnGoToLineKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel { SelectedTab: { } tab })
+            return;
+
+        if (e.Key == Key.Enter)
+        {
+            tab.SubmitGoToLineCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            tab.CloseGoToLineCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     // Ctrl + mouse wheel zooms the editor font (like VS Code).

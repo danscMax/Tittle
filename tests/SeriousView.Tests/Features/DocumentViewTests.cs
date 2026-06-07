@@ -91,6 +91,23 @@ public class DocumentViewTests
         Assert.Equal(2, vm.CaretColumn);
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void DocumentView_GoToLine_ScrollsTheEditorToThatLine()
+    {
+        var vm = DocumentTabViewModel.FromFile("l1\nl2\nl3\nl4\nl5", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.GoToLineText = "4";
+        vm.SubmitGoToLineCommand.Execute(null); // → GoToLineRequested(4) → DocumentView scrolls
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.Equal(4, editor.TextArea.Caret.Line);
+        window.Close();
+    }
     // NB: auto-focus (#29) can't be asserted headlessly (the headless window isn't activated, so
     // Focus() leaves IsFocused false) — it's verified live instead (keyboard scrolls without a click).
 }

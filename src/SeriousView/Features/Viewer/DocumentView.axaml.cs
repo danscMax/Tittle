@@ -45,11 +45,19 @@ public partial class DocumentView : UserControl
         if (_vm is not null)
         {
             _vm.NavigationRequested += OnNavigationRequested;
+            _vm.GoToLineRequested += OnGoToLineRequested;
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
             Dispatcher.UIThread.Post(ActivateSource);
         }
     }
+
+    // The go-to-line request is raised by the status-bar input (wired in MainWindow); scroll there.
+    private void OnGoToLineRequested(int line) => Dispatcher.UIThread.Post(() =>
+    {
+        ScrollSourceToLine(line);
+        Source.TextArea.Focus();
+    });
 
     private void OnCaretPositionChanged(object? sender, EventArgs e) => UpdateCaret();
 
@@ -76,7 +84,11 @@ public partial class DocumentView : UserControl
     private void Unsubscribe()
     {
         if (_vm is not null)
+        {
             _vm.NavigationRequested -= OnNavigationRequested;
+            _vm.GoToLineRequested -= OnGoToLineRequested;
+        }
+
         _vm = null;
     }
 

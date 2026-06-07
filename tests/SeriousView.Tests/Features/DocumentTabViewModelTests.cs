@@ -178,4 +178,48 @@ public class DocumentTabViewModelTests
         vm.CaretColumn = 12;
         Assert.Equal("Стр 5, Кол 12", vm.CaretText);
     }
+
+    [Fact]
+    public void SubmitGoToLine_ValidLine_RaisesRequest_AndCloses()
+    {
+        var vm = DocumentTabViewModel.FromFile("a\nb\nc\nd\ne", "/src/a.cs");
+        vm.IsGoToLineOpen = true;
+        vm.GoToLineText = "3";
+        int? got = null;
+        vm.GoToLineRequested += l => got = l;
+
+        vm.SubmitGoToLineCommand.Execute(null);
+
+        Assert.Equal(3, got);
+        Assert.False(vm.IsGoToLineOpen);
+        Assert.Equal("", vm.GoToLineText);
+    }
+
+    [Fact]
+    public void SubmitGoToLine_ClampsToDocumentBounds()
+    {
+        var vm = DocumentTabViewModel.FromFile("a\nb\nc", "/src/a.cs"); // 3 lines
+        vm.GoToLineText = "999";
+        int? got = null;
+        vm.GoToLineRequested += l => got = l;
+
+        vm.SubmitGoToLineCommand.Execute(null);
+
+        Assert.Equal(3, got);
+    }
+
+    [Fact]
+    public void SubmitGoToLine_NonNumeric_DoesNotRaise_ButCloses()
+    {
+        var vm = DocumentTabViewModel.FromFile("a\nb", "/src/a.cs");
+        vm.IsGoToLineOpen = true;
+        vm.GoToLineText = "abc";
+        var raised = false;
+        vm.GoToLineRequested += _ => raised = true;
+
+        vm.SubmitGoToLineCommand.Execute(null);
+
+        Assert.False(raised);
+        Assert.False(vm.IsGoToLineOpen);
+    }
 }

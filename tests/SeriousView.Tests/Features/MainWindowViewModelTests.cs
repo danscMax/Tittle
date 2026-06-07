@@ -364,4 +364,34 @@ public class MainWindowViewModelTests
 
         Assert.Single(vm.Tabs);
     }
+
+    [AvaloniaFact]
+    public void OpenGoToLine_OpensOverlay_OnSourceTab()
+    {
+        var vm = CreateVm(content: "x", args: new[] { "/a.cs" }); // code → source view
+
+        vm.OpenGoToLineCommand.Execute(null);
+
+        Assert.True(vm.SelectedTab!.IsGoToLineOpen);
+    }
+
+    [AvaloniaFact]
+    public void OpenGoToLine_NoOp_ForMarkdownPreview()
+    {
+        var vm = CreateVm(content: "# H", args: new[] { "/a.md" }); // markdown → preview
+
+        vm.OpenGoToLineCommand.Execute(null);
+
+        Assert.False(vm.SelectedTab!.IsGoToLineOpen);
+    }
+
+    [AvaloniaFact]
+    public void OpenGoToLine_NoOp_WhenNoTab()
+    {
+        var vm = CreateVm();
+
+        vm.OpenGoToLineCommand.Execute(null); // welcome, no selected tab — must not throw
+
+        Assert.Null(vm.SelectedTab);
+    }
 }

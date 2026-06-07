@@ -48,6 +48,35 @@ public partial class DocumentTabViewModel : ViewModelBase
 
     public string CaretText => $"Стр {CaretLine}, Кол {CaretColumn}";
 
+    /// <summary>Go-to-line overlay (Ctrl+G) state, shown over the source editor.</summary>
+    [ObservableProperty]
+    private bool _isGoToLineOpen;
+
+    [ObservableProperty]
+    private string _goToLineText = "";
+
+    /// <summary>Raised with a clamped 1-based line when the user submits; the view scrolls there.</summary>
+    public event Action<int>? GoToLineRequested;
+
+    [RelayCommand]
+    private void SubmitGoToLine()
+    {
+        if (int.TryParse(GoToLineText, out var line))
+        {
+            var max = Math.Max(1, TextMetrics.LineCount(DocumentText));
+            GoToLineRequested?.Invoke(Math.Clamp(line, 1, max));
+        }
+
+        CloseGoToLine();
+    }
+
+    [RelayCommand]
+    private void CloseGoToLine()
+    {
+        IsGoToLineOpen = false;
+        GoToLineText = "";
+    }
+
     /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
     public string DocumentText { get; }
