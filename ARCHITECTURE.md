@@ -24,7 +24,7 @@ MVVM (CommunityToolkit.Mvvm), DI (Microsoft.Extensions.DependencyInjection), Cen
 
 | Project | Role | Rules |
 |---|---|---|
-| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IRecentFilesStore), `Services/` (RecentFilesList, FileReader), `Text/` (TextMetrics). | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
+| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IRecentFilesStore), `Services/` (RecentFilesList, FileReader), `Text/` (TextMetrics, MarkdownFile, MarkdownLink, MarkdownPreprocessor). | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
 | **SeriousView** (UI, WinExe) | Avalonia app. `Features/` (Shell, Welcome, Viewer, …), `Platform/` (Avalonia/IO port impls), `Shared/` (cross-feature VM base, converters), `Themes/`, `App`. AssemblyName=SeriousView. | Talks to the outside world only through Core ports. |
 | **SeriousView.Tests** | xUnit + Avalonia.Headless. Mirrors structure: `Core/`, `Features/`, `Platform/`. | Pure logic → `[Fact]`; UI/resources → `[AvaloniaFact]` + `TestAppBuilder`. |
 
@@ -52,7 +52,7 @@ Source of features: `E:\Scripts\Markdown Viewer`. Implement incrementally per ro
 
 | Original domain | Lands in |
 |---|---|
-| Markdown rendering (GFM, tables, footnotes, admonitions) | port `IMarkdownRenderer` (Core/Abstractions) + impl in `Platform/` + `Features/Viewer` |
+| Markdown rendering (GFM, tables, footnotes, admonitions) | **DONE (M3)** — a View control (`Features/Viewer/DocumentView` hosts Markdown.Avalonia's `MarkdownScrollViewer`) + pure `Core/Text/MarkdownPreprocessor` (GitHub alerts → `:::` containers, task lists → glyphs, footnotes) + `Features/Viewer/AdmonitionBlockHandler` (`IContainerBlockHandler`). **No `IMarkdownRenderer` port** — it's a control, not a swappable service (YAGNI, §7). |
 | Code highlighting / decoration | `Features/Viewer` (EditorBehavior / TextMate) |
 | Diagrams (Mermaid/PlantUML), Math (KaTeX) | port `IDiagramRenderer` + `Features/Viewer` |
 | TOC / outline / search | pure logic in `Core` + `Features/Viewer`\|`Features/Search` |
@@ -64,7 +64,10 @@ Source of features: `E:\Scripts\Markdown Viewer`. Implement incrementally per ro
 | Live-reload | port `IDocumentWatcher` (FileSystemWatcher impl in `Platform/`) |
 | Bookmarks | port `IBookmarkStore` |
 
-These ports/models do **not** exist yet — add each with its feature.
+Except where marked **DONE**, these ports/models do **not** exist yet — add each with its feature.
+Note how markdown rendering landed **without** the speculatively-mapped `IMarkdownRenderer` port:
+the renderer turned out to be a control, so the only Core addition was pure preprocessing logic.
+Treat the remaining rows as direction, not committed contracts.
 
 ## 6. Conventions
 

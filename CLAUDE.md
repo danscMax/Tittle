@@ -56,8 +56,15 @@ proposing an upgrade to 12.**
 
 Roadmap-driven, one milestone at a time; each feature is its own commit.
 M1 (skeleton) + M2 (visual/UX) done, plus a visual-polish pass and a structure
-refactor to feature-slices (`ARCHITECTURE.md`). Next: M3 (markdown rendering via
-Markdown.Avalonia). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+refactor to feature-slices (`ARCHITECTURE.md`). **M3 (markdown rendering) done**:
+Markdown.Avalonia `MarkdownScrollViewer` in `Features/Viewer/DocumentView`, a
+preview/source toggle per markdown tab, code blocks via our AvaloniaEdit, links
+hardened to http/https/mailto, and a pure `Core/Text/MarkdownPreprocessor` that
+adds GitHub admonitions (`> [!NOTE]` → themed callouts via `AdmonitionBlockHandler`),
+GFM task-list glyphs and footnotes. Renderer follows Light/Dark (auto FluentAvalonia
+style — never set `MarkdownStyleName`). Known gaps (deferred): `_underscore_` emphasis
+(use `*asterisks*`), Math/KaTeX, Mermaid/diagrams, TOC, in-doc search, export.
+Next: M4. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
 
 ## Conventions
 
