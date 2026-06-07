@@ -8,22 +8,36 @@ namespace SeriousView.Platform;
 /// <summary>
 /// Maps <see cref="ThemeMode"/> to <see cref="Application.RequestedThemeVariant"/>.
 /// Auto → <see cref="ThemeVariant.Default"/>, which makes Avalonia follow the OS
-/// theme (and react to OS theme changes) automatically.
+/// theme (and react to OS theme changes) automatically. The chosen mode is restored from
+/// <see cref="IAppSettingsService"/> on construction and persisted on every change.
 /// </summary>
 public sealed class ThemeService : IThemeService
 {
-    public ThemeMode Mode { get; private set; } = ThemeMode.Dark;
+    private readonly IAppSettingsService _settings;
+
+    public ThemeService(IAppSettingsService settings)
+    {
+        _settings = settings;
+        Mode = settings.Current.Theme; // restore persisted mode (applied at startup via ApplyCurrent)
+    }
+
+    public ThemeMode Mode { get; private set; }
 
     public event EventHandler? Changed;
 
     public void SetMode(ThemeMode mode)
     {
         Mode = mode;
+        _settings.Update(_settings.Current with { Theme = mode });
         Apply();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void Cycle() => SetMode(Mode.Next());
+
+    /// <summary>Applies the current <see cref="Mode"/> to the app <em>without</em> persisting —
+    /// called once at startup so the saved theme is in place before the first render (no flash).</summary>
+    public void ApplyCurrent() => Apply();
 
     private void Apply()
     {

@@ -32,5 +32,9 @@ public interface IThemeService
     /// <summary>Cycles Dark → Light → Auto → Dark.</summary>
     void Cycle();
 
+    /// <summary>Applies the current <see cref="Mode"/> without persisting — used at startup so the
+    /// restored theme is in place before the first render.</summary>
+    void ApplyCurrent();
+
     event EventHandler? Changed;
 }

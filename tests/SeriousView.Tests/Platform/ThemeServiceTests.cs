@@ -3,6 +3,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Services;
+using SeriousView.Core.Settings;
 using SeriousView.Platform;
 using Xunit;
 
@@ -10,11 +12,14 @@ namespace SeriousView.Tests.Platform;
 
 public class ThemeServiceTests
 {
+    private static ThemeService NewService(ISettingsStore? store = null)
+        => new(new AppSettingsService(store ?? new FakeSettingsStore()));
+
     [AvaloniaFact]
     public void SetMode_AppliesRequestedThemeVariant()
     {
         var app = Application.Current!;
-        var service = new ThemeService();
+        var service = NewService();
 
         service.SetMode(ThemeMode.Light);
         Assert.Equal(ThemeVariant.Light, app.RequestedThemeVariant);
@@ -29,7 +34,7 @@ public class ThemeServiceTests
     [AvaloniaFact]
     public void Cycle_GoesDarkLightAutoDark()
     {
-        var service = new ThemeService(); // starts Dark
+        var service = NewService(); // starts Dark
 
         service.Cycle();
         Assert.Equal(ThemeMode.Light, service.Mode);
@@ -37,6 +42,26 @@ public class ThemeServiceTests
         Assert.Equal(ThemeMode.Auto, service.Mode);
         service.Cycle();
         Assert.Equal(ThemeMode.Dark, service.Mode);
+    }
+
+    [AvaloniaFact]
+    public void SetMode_PersistsThemeToSettings()
+    {
+        var holder = new AppSettingsService(new FakeSettingsStore());
+        var service = new ThemeService(holder);
+
+        service.SetMode(ThemeMode.Light);
+
+        Assert.Equal(ThemeMode.Light, holder.Current.Theme);
+    }
+
+    [Fact]
+    public void Ctor_RestoresPersistedMode()
+    {
+        var store = new FakeSettingsStore();
+        new AppSettingsService(store).Update(new AppSettings { Theme = ThemeMode.Auto });
+
+        Assert.Equal(ThemeMode.Auto, NewService(store).Mode);
     }
 
     [Fact]

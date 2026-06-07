@@ -23,6 +23,8 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             Services = ConfigureServices(desktop.Args ?? Array.Empty<string>());
+            // Apply the persisted theme before the window is created — no flash of the wrong theme.
+            Services.GetRequiredService<IThemeService>().ApplyCurrent();
             desktop.MainWindow = Services.GetRequiredService<MainWindow>();
         }
 
@@ -44,8 +46,9 @@ public partial class App : Application
         services.AddSingleton<Func<TopLevel?>>(_ => static () =>
             (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         services.AddSingleton<IFileDialogService, FileDialogService>();
-        services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
+        services.AddSingleton<IAppSettingsService, AppSettingsService>();
+        services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<IRecentFilesStore, RecentFilesStore>();
 
         services.AddSingleton<MainWindowViewModel>();

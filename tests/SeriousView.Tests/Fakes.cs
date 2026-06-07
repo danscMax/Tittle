@@ -45,6 +45,8 @@ internal sealed class FakeThemeService : IThemeService
     }
 
     public void Cycle() => SetMode(Mode.Next());
+
+    public void ApplyCurrent() { /* no-op: the fake never touches the live Application */ }
 }
 
 internal sealed class FakeRecentFilesStore : IRecentFilesStore
