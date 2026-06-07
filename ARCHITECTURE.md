@@ -24,7 +24,7 @@ MVVM (CommunityToolkit.Mvvm), DI (Microsoft.Extensions.DependencyInjection), Cen
 
 | Project | Role | Rules |
 |---|---|---|
-| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IRecentFilesStore), `Services/` (RecentFilesList, FileReader), `Text/` (TextMetrics, MarkdownFile/Link/Preprocessor/Outline, TextEncodingDetector, BinaryContent, LineEndings), `Documents/` (FileLoadResult, FileLimits). One BCL dep (`System.Text.Encoding.CodePages`) for Windows-1251. | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
+| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IAppSettingsService, IRecentFilesStore), `Services/` (RecentFilesList, FileReader, AppSettingsService), `Text/` (TextMetrics, MarkdownFile/Link/Preprocessor/Outline, TextEncodingDetector, BinaryContent, LineEndings), `Documents/` (FileLoadResult, FileLimits), `Settings/` (AppSettings, WindowPlacement, SessionState, WindowPlacementValidator), `Diagnostics/` (CrashLog). One BCL dep (`System.Text.Encoding.CodePages`) for Windows-1251. | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
 | **SeriousView** (UI, WinExe) | Avalonia app. `Features/` (Shell, Welcome, Viewer, …), `Platform/` (Avalonia/IO port impls), `Shared/` (cross-feature VM base, converters), `Themes/`, `App`. AssemblyName=SeriousView. | Talks to the outside world only through Core ports. |
 | **SeriousView.Tests** | xUnit + Avalonia.Headless. Mirrors structure: `Core/`, `Features/`, `Platform/`. | Pure logic → `[Fact]`; UI/resources → `[AvaloniaFact]` + `TestAppBuilder`. |
 
@@ -59,8 +59,8 @@ Source of features: `E:\Scripts\Markdown Viewer`. Implement incrementally per ro
 | Sync-scroll | behaviour in `Features/Viewer` (no port) |
 | Export PDF/HTML | port `IExporter` + `Platform/` |
 | Theme presets | `Themes/` (+ optional `IThemePresetProvider`) |
-| Settings | `AppSettings` + `Core` logic + `ISettingsStore` (have it) + `Features/Settings` |
-| Tabs / session restore | `Features/Shell` + port `ISessionStore` |
+| Settings / window state | **DONE (M6)** — typed `Core/Settings/AppSettings` held by `IAppSettingsService` (`AppSettingsService`), persisted atomically via `ISettingsStore` as one `settings.json`. Theme + window placement + session restore. |
+| Tabs / session restore | **DONE (M6)** — session (open files + active tab) is a field in `AppSettings`, saved on window close and restored at startup. **No `ISessionStore` port** — the holder is the seam (YAGNI, §7), mirroring how M3 skipped `IMarkdownRenderer`. |
 | Live-reload | port `IDocumentWatcher` (FileSystemWatcher impl in `Platform/`) |
 | Bookmarks | port `IBookmarkStore` |
 

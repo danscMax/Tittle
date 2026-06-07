@@ -73,9 +73,19 @@ detection, CR/CRLF→LF normalization, size limits (no TextMate >5 MB, don't loa
 `IFileReader.LoadAsync` returns a `FileLoadResult` (Text/Binary/TooLarge); guarded async
 startup read; friendly error messages; a notice overlay for binary/too-large/empty;
 status shows encoding · EOL. Backlog lives in `BACKLOG.md`.
+**M6 (persistence) done**: a typed `Core/Settings/AppSettings` (theme + window + session) held by
+`IAppSettingsService` (`AppSettingsService`) and persisted as one atomic `settings.json`
+(`JsonSettingsStore` writes temp + `File.Replace`). Theme restored/applied at startup before the
+first render; window size/position/maximized restored with off-screen re-centring
+(`WindowPlacementValidator` against `Screens`) — note AppWindow's `ExtendsContentIntoTitleBar`
+inflates the `Height` getter by the title-bar height, so we measure that chrome offset once and
+compensate on save to avoid per-launch drift; session (open files + active tab) reopened at startup
+when launched with no file arg (arg > session > welcome), **no `ISessionStore` port** (the holder is
+the seam). Unhandled exceptions logged to `%AppData%/SeriousView/crash.log` (`Platform/CrashLogger`
++ pure `Core/Diagnostics/CrashLog`). Window icon (#9) deferred to a visual-polish pass.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-Next: M6 (persistence — theme/window). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+Next: M7 (keyboard & editor controls). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
 
 ## Conventions
 

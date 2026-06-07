@@ -27,21 +27,13 @@ heavy rendering extras (high effort/risk)**. `★` = audit priority. Effort: S/M
 - **M5** robust file ingestion (items 31–38): encoding/BOM (UTF-8/16/32 → Windows-1251),
   binary detection, CR/CRLF→LF, size limits (no highlight >5 MB, don't load >50 MB),
   guarded async startup, friendly errors, notice overlay, encoding·EOL in the status bar
+- **M6** persistence (items 21★ 22★ 39 40 + session): typed `AppSettings` (theme + window + session)
+  in one atomic `settings.json`; theme restored at startup; window size/position/maximized restored
+  with off-screen re-centring + title-bar chrome-offset compensation (no drift); session reopens
+  last tabs (arg > session > welcome), no `ISessionStore` port; crash log to `%AppData%/SeriousView`.
+  **Deferred: window icon #9** (needs a brand asset — own visual-polish step).
 
 ---
-
-## M6 — Persistence (settings + session) ★★ · effort S–M
-
-"The app remembers me." `ISettingsStore` already exists — wire it up + harden it.
-
-| # | Item | Notes |
-|---|---|---|
-| 21★ | Persist theme across launches | `ThemeService` ignores saved settings today (always Dark). |
-| 22★ | Persist window size / position / maximized | Always 1100×750 centred now. |
-| 40 | Atomic settings write (temp + rename) | `settings.json` must survive a crash / double launch. |
-| 39 | Crash log to `%AppData%/SeriousView` | Diagnostics for unhandled exceptions. |
-| 9 | Window / taskbar icon (`.ico`) | No icon in Alt-Tab / taskbar. |
-| — | (Later) Session restore: reopen last tabs | Bigger; needs `ISessionStore`. Optional tail of M6. |
 
 ## M7 — Keyboard & editor controls · effort M
 
@@ -124,11 +116,11 @@ CSV/TSV-as-table · JSON pretty-print toggle.
 
 - **Done (1–8, 10):** visual quick-wins + press effect.
 - **Done — M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
-- **M6 persistence:** 9 21★ 22★ 39 40.
+- **Done — M6 persistence:** 21★ 22★ 39 40 (+ session restore). **#9 window icon deferred.**
 - **M7 keyboard:** 12 13 14 15 16 19 20 29.
 - **M8 tabs/UX:** 11 17 18 23 24 25 26 27 28 30.
 - Improvements 1–40 are fully placed; ported-only features (search, math, diagrams, export,
   sync-scroll, live-reload) are M9–M14.
 
-**Suggested next:** **M6** (persistence) — high perceived value on existing infra (`ISettingsStore`
-exists): remember theme + window, harden with atomic writes + a crash log.
+**Suggested next:** **M7** (keyboard & editor controls) — Ctrl+O/W, Ctrl+Tab, go-to-line (reuses M4),
+font zoom, word-wrap, line numbers, caret position. Everyday ergonomics on top of the now-persistent shell.
