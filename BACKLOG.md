@@ -24,24 +24,11 @@ heavy rendering extras (high effort/risk)**. `★` = audit priority. Effort: S/M
 - **M3** markdown rendering (preview/source toggle, GFM, code highlight, admonitions, task lists,
   footnotes, hardened links)
 - **M4** TOC/outline sidebar (heading parse, source + in-place preview navigation)
+- **M5** robust file ingestion (items 31–38): encoding/BOM (UTF-8/16/32 → Windows-1251),
+  binary detection, CR/CRLF→LF, size limits (no highlight >5 MB, don't load >50 MB),
+  guarded async startup, friendly errors, notice overlay, encoding·EOL in the status bar
 
 ---
-
-## M5 — Robust file ingestion (reliability) ★★★  · effort M
-
-Foundation: real-world files must not crash the app or render garbage. Mostly **pure Core logic**
-(testable) + thin wiring in `FileReader`/startup. Everything else sits on top of this.
-
-| # | Item | Notes |
-|---|---|---|
-| 33★ | Guard startup read (async + try/catch) | Ctor currently reads sync, no catch → a locked/missing file crashes on launch. |
-| 31★ | Encoding + BOM detection (UTF-8/16, Windows-1251/ANSI) | `File.ReadAllText` mangles non-UTF8 Cyrillic. Pure `Core/Text/EncodingDetector`. |
-| 32★ | Binary-file detection (NUL bytes) | `.png`/`.exe` dumped as garbage into the editor today. Pure Core check. |
-| 37 | Line-ending normalization (CR/CRLF → LF) | Old Mac `\r`-only files show as "1 line". |
-| 38 | Explicit empty-file handling | "Строк: 0" + blank looks like a load failure. |
-| 34 | Friendly error messages by exception type | "файл не найден / нет доступа", not raw `ex.Message`. |
-| 35 | File-size guard (warn > ~25–50 MB) | Huge files freeze UI / OOM. |
-| 36 | Disable TextMate for very large files | Tokenizing multi-MB files is the main stall. |
 
 ## M6 — Persistence (settings + session) ★★ · effort S–M
 
@@ -136,12 +123,12 @@ CSV/TSV-as-table · JSON pretty-print toggle.
 ## Traceability — 40 improvements → where
 
 - **Done (1–8, 10):** visual quick-wins + press effect.
-- **M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
+- **Done — M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
 - **M6 persistence:** 9 21★ 22★ 39 40.
 - **M7 keyboard:** 12 13 14 15 16 19 20 29.
 - **M8 tabs/UX:** 11 17 18 23 24 25 26 27 28 30.
 - Improvements 1–40 are fully placed; ported-only features (search, math, diagrams, export,
   sync-scroll, live-reload) are M9–M14.
 
-**Suggested next:** **M5** — it removes the real crash/garbage risks on arbitrary files and is
-mostly pure, well-tested Core logic that everything else builds on.
+**Suggested next:** **M6** (persistence) — high perceived value on existing infra (`ISettingsStore`
+exists): remember theme + window, harden with atomic writes + a crash log.

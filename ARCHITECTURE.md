@@ -24,7 +24,7 @@ MVVM (CommunityToolkit.Mvvm), DI (Microsoft.Extensions.DependencyInjection), Cen
 
 | Project | Role | Rules |
 |---|---|---|
-| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IRecentFilesStore), `Services/` (RecentFilesList, FileReader), `Text/` (TextMetrics, MarkdownFile, MarkdownLink, MarkdownPreprocessor). | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
+| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IRecentFilesStore), `Services/` (RecentFilesList, FileReader), `Text/` (TextMetrics, MarkdownFile/Link/Preprocessor/Outline, TextEncodingDetector, BinaryContent, LineEndings), `Documents/` (FileLoadResult, FileLimits). One BCL dep (`System.Text.Encoding.CodePages`) for Windows-1251. | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
 | **SeriousView** (UI, WinExe) | Avalonia app. `Features/` (Shell, Welcome, Viewer, …), `Platform/` (Avalonia/IO port impls), `Shared/` (cross-feature VM base, converters), `Themes/`, `App`. AssemblyName=SeriousView. | Talks to the outside world only through Core ports. |
 | **SeriousView.Tests** | xUnit + Avalonia.Headless. Mirrors structure: `Core/`, `Features/`, `Platform/`. | Pure logic → `[Fact]`; UI/resources → `[AvaloniaFact]` + `TestAppBuilder`. |
 

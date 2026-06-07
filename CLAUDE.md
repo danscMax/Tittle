@@ -66,9 +66,16 @@ style — never set `MarkdownStyleName`). **M4 (TOC/outline) done**: collapsible
 sidebar (`Features/Viewer/OutlinePanel`) listing headings from pure
 `Core/Text/MarkdownOutline`; clicking scrolls the source editor by line, or the preview
 in place (visual-tree `BringIntoView` on `Heading1..6` controls — no public API exists).
+**M5 (robust file ingestion) done**: pure `Core/Text` + `Core/Documents` loader —
+encoding detection (BOM → strict UTF-8 → Windows-1251, via
+`System.Text.Encoding.CodePages`; works under InvariantGlobalization), binary-file
+detection, CR/CRLF→LF normalization, size limits (no TextMate >5 MB, don't load >50 MB);
+`IFileReader.LoadAsync` returns a `FileLoadResult` (Text/Binary/TooLarge); guarded async
+startup read; friendly error messages; a notice overlay for binary/too-large/empty;
+status shows encoding · EOL. Backlog lives in `BACKLOG.md`.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-Next: M5. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+Next: M6 (persistence — theme/window). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
 
 ## Conventions
 
