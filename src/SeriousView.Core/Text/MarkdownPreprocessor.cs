@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SeriousView.Core.Text;
@@ -23,10 +25,72 @@ public static partial class MarkdownPreprocessor
         var lines = new List<string>(
             markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
 
+        lines = ConvertFootnotes(lines);
         lines = ConvertAdmonitions(lines);
         ConvertTaskListsInPlace(lines);
 
         return string.Join("\n", lines);
+    }
+
+    // Footnotes: pull out [^id]: definitions, replace [^id] references with superscript
+    // numbers (numbered by first reference), and append a "Сноски" section. Anchored
+    // navigation isn't attempted — the superscript ties the marker to the numbered list.
+    private static List<string> ConvertFootnotes(List<string> lines)
+    {
+        var defs = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        var body = new List<string>(lines.Count);
+        foreach (var line in lines)
+        {
+            var def = FootnoteDef().Match(line);
+            if (def.Success)
+                defs[def.Groups[1].Value] = def.Groups[2].Value;
+            else
+                body.Add(line);
+        }
+
+        if (defs.Count == 0)
+            return lines; // no definitions → leave any [^id] as authored
+
+        var order = new List<string>();
+        var numberOf = new Dictionary<string, int>(System.StringComparer.Ordinal);
+
+        for (var i = 0; i < body.Count; i++)
+        {
+            body[i] = FootnoteRef().Replace(body[i], m =>
+            {
+                var id = m.Groups[1].Value;
+                if (!numberOf.TryGetValue(id, out var n))
+                {
+                    n = order.Count + 1;
+                    numberOf[id] = n;
+                    order.Add(id);
+                }
+                return Superscript(n);
+            });
+        }
+
+        if (order.Count == 0)
+            return lines; // definitions but nothing references them → leave as authored
+
+        body.Add(string.Empty);
+        body.Add("---");
+        body.Add(string.Empty);
+        body.Add("**Сноски**");
+        body.Add(string.Empty);
+        foreach (var id in order)
+            body.Add($"{numberOf[id]}. {(defs.TryGetValue(id, out var t) ? t : string.Empty)}");
+
+        return body;
+    }
+
+    private static string Superscript(int n)
+    {
+        const string digits = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+        var text = n.ToString(CultureInfo.InvariantCulture);
+        var sb = new StringBuilder(text.Length);
+        foreach (var ch in text)
+            sb.Append(digits[ch - '0']);
+        return sb.ToString();
     }
 
     // A GitHub alert opens with the marker alone on a quoted line; subsequent quoted
@@ -89,4 +153,12 @@ public static partial class MarkdownPreprocessor
     // Capture: (1) list marker incl. trailing space, (2) the check char, (3) the item text.
     [GeneratedRegex(@"^(\s*[-*+]\s+)\[([ xX])\]\s+(.*)$")]
     private static partial Regex TaskItem();
+
+    // A footnote definition line: [^id]: text. Capture (1) id, (2) text.
+    [GeneratedRegex(@"^\[\^([^\]]+)\]:\s?(.*)$")]
+    private static partial Regex FootnoteDef();
+
+    // An inline footnote reference: [^id]. Capture (1) id.
+    [GeneratedRegex(@"\[\^([^\]]+)\]")]
+    private static partial Regex FootnoteRef();
 }
