@@ -62,6 +62,12 @@
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
+        <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
+        <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
+                IsVisible="{Binding SelectedTab.IsMarkdown}"
+                Command="{Binding ToggleOutlineCommand}" Padding="8,3">
+          <ui:SymbolIcon Symbol="List" FontSize="16"/>
+        </Button>
         <!-- Preview/source toggle — shown only for markdown tabs. -->
         <Button Content="{Binding SelectedTab.ViewModeLabel}" AutomationProperties.AutomationId="ViewModeButton"
                 IsVisible="{Binding SelectedTab.IsMarkdown}"
@@ -95,17 +101,22 @@
       </DockPanel>
     </Border>
 
-    <Panel>
-      <!-- Welcome view shown when no tabs are open. -->
-      <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
-      <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
-        <ContentControl.ContentTemplate>
-          <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <controls:DocumentView/>
-          </DataTemplate>
-        </ContentControl.ContentTemplate>
-      </ContentControl>
-    </Panel>
+    <!-- Outline sidebar (col 0, collapses to 0 when hidden) + document body (col 1). -->
+    <Grid ColumnDefinitions="Auto,*">
+      <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
+
+      <Panel Grid.Column="1">
+        <!-- Welcome view shown when no tabs are open. -->
+        <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
+        <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
+          <ContentControl.ContentTemplate>
+            <DataTemplate x:DataType="vm:DocumentTabViewModel">
+              <controls:DocumentView/>
+            </DataTemplate>
+          </ContentControl.ContentTemplate>
+        </ContentControl>
+      </Panel>
+    </Grid>
 
   </DockPanel>
 </wnd:AppWindow>

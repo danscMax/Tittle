@@ -52,4 +52,18 @@
     <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}" />
   </Style>
 
+  <!-- Outline (TOC) entries: subtle overlay hover that reads on the chrome-coloured sidebar
+       (ChromeOverlayBrush would be invisible there). -->
+  <Style Selector="Button.outline-item /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.1" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.outline-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
+  </Style>
+
 </Styles>

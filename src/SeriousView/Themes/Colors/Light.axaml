@@ -20,6 +20,9 @@
     <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#1B1B24" />
     <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#6B6B78" />
 
+    <!-- Subtle hover overlay for outline (TOC) items (reads on the chrome sidebar). -->
+    <SolidColorBrush x:Key="OutlineItemHoverBrush" Color="#000000" Opacity="0.06" />
+
     <!-- Accent -->
     <SolidColorBrush x:Key="AccentBrush" Color="#2D6CF6" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#1F5AE8" />

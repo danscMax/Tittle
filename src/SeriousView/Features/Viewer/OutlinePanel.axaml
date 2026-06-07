@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SeriousView.Features.Shell"
+             xmlns:conv="using:SeriousView.Shared"
+             x:Class="SeriousView.Features.Viewer.OutlinePanel"
+             x:DataType="vm:MainWindowViewModel">
+  <!-- Collapsible left sidebar listing the active markdown document's headings (TOC).
+       Bound to the active tab's Outline; each item navigates via the tab's
+       NavigateToHeadingCommand (runtime binding through the ItemsControl DataContext,
+       as the item DataContext is a HeadingOutline). -->
+  <Border Width="240"
+          Background="{DynamicResource ChromeOverlayBrush}"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding SelectedTab.Outline}" Margin="6,8">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:CompileBindings="False">
+            <Button Classes="outline-item"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                    Background="Transparent" BorderThickness="0" Padding="8,4"
+                    FontSize="12.5"
+                    Foreground="{DynamicResource ChromeForegroundBrush}"
+                    Margin="{Binding Level, Converter={x:Static conv:LevelToIndentConverter.Instance}}"
+                    Content="{Binding Text}"
+                    Command="{Binding $parent[ItemsControl].DataContext.SelectedTab.NavigateToHeadingCommand}"
+                    CommandParameter="{Binding}"/>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Border>
+</UserControl>

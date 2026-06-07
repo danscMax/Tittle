@@ -54,4 +54,20 @@ public class DocumentViewTests
         Assert.False(vm.ShowPreview);
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void DocumentView_NavigateToHeading_ScrollsWithoutThrowing()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n\ntext\n\n## B", "/docs/readme.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // Starts in Preview (markdown default) → navigation falls back to source + scroll.
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[1]);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(DocumentViewMode.Source, vm.ViewMode);
+        window.Close();
+    }
 }

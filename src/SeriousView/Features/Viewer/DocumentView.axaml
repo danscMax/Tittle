@@ -10,7 +10,8 @@
        toggled by IsVisible (ShowSource / ShowPreview are mutually exclusive). -->
   <Panel>
     <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
-    <ae:TextEditor IsVisible="{Binding ShowSource}"
+    <ae:TextEditor x:Name="Source"
+                   IsVisible="{Binding ShowSource}"
                    viewer:EditorBehavior.Text="{Binding DocumentText}"
                    viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
                    Background="{DynamicResource EditorSurfaceBrush}"
