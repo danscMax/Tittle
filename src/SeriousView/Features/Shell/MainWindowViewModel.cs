@@ -55,6 +55,10 @@ public partial class MainWindowViewModel : ViewModelBase
     /// line numbers). Bound by <c>DocumentView</c>; persisted whenever it changes.</summary>
     public EditorOptions Editor { get; }
 
+    /// <summary>Shell layout options (menu / toolbar / view-toggle placement, omnibar / rail). Drives
+    /// the chrome (M7.5); persisted whenever it changes. Default is the etalon (menu hidden behind ☰).</summary>
+    public LayoutOptions Layout { get; }
+
     [RelayCommand]
     private void ZoomIn() => Editor.ZoomIn();
 
@@ -92,6 +96,11 @@ public partial class MainWindowViewModel : ViewModelBase
         Editor = EditorOptions.FromSettings(_settings.Current.Editor);
         Editor.PropertyChanged += (_, _) =>
             _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
+
+        // Shared shell-layout options, same restore-and-persist pattern. Drives the chrome in later phases.
+        Layout = LayoutOptions.FromSettings(_settings.Current.Layout);
+        Layout.PropertyChanged += (_, _) =>
+            _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
         _theme.Changed += (_, _) => OnPropertyChanged(nameof(ThemeModeLabel));
