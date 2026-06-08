@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Services;
@@ -19,7 +20,13 @@ public sealed class RecentFilesStore : IRecentFilesStore
     public RecentFilesStore(ISettingsStore settings)
     {
         _settings = settings;
-        _list = new RecentFilesList(_settings.Load<List<string>>(Key));
+        // Drop entries whose file no longer exists (e.g. deleted temp files) so the recent list
+        // never surfaces dead paths; prune them from persistence too.
+        var loaded = _settings.Load<List<string>>(Key) ?? new List<string>();
+        var existing = loaded.Where(File.Exists).ToList();
+        _list = new RecentFilesList(existing);
+        if (existing.Count != loaded.Count)
+            _settings.Save(Key, _list.Paths.ToList());
     }
 
     public IReadOnlyList<string> Items => _list.Paths;
