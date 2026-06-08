@@ -50,11 +50,11 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 | # | Phase | Notes |
 |---|---|---|
-| 1 | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}`, `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail` + settings migration. Pure Core + test. |
+| 1 | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. |
 | 2 | Chrome render by Layout | Rewrite `MainWindow.axaml` into conditional sections that read `Layout`. |
 | 3 | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). |
 | 4 | Omnibar | File path + 📂 Open + ⌘ palette entry. Toggle via `ShowOmnibar`. |
-| 5 | **Command palette Ctrl+K** | The action hub (Open, Theme, View, Outline, Search, Export, Settings…). **⚠ Risk: overlay over AvaloniaEdit won't repaint** (go-to-line proved this). **Research a real top-level `Popup`/`OverlayLayer`/`Flyout` FIRST**, before building UI on it. |
+| 5 | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Decided (audit 2026-06-08): top-level `Window`, NOT Popup/OverlayLayer** — overlay over AvaloniaEdit won't repaint (go-to-line proved it; VS Code/Zed use a separate surface). **+ fuzzy-matching** (fzf-style: `opfil`→`Open File`) — fix the algorithm before the UI. |
 | 6 | Contextual toolbar | Thin icon row under the tabs, shown only in **Source** mode (find/replace, wrap, line-numbers, indent, undo/redo). `Fixed` toolbar (Notepad++-style) is an opt-in preset. |
 | 7 | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. |
 | 8 | Settings → Раскладка panel | Switches all the `Layout` knobs live (the in-app home for customization). |

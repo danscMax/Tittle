@@ -47,10 +47,12 @@ Requires the **.NET 9 SDK**. Built and tested on Windows/Linux/macOS (see CI).
 
 ## Avalonia 11, not 12 (deliberate)
 
-The viewer ecosystem (Markdown.Avalonia, FluentAvaloniaUI) is stable only on the
-11.x line as of mid-2026; on 12 it is alpha/preview. We start on 11.3.17 and plan
-to migrate to 12 once that ecosystem stabilises. **Re-verify the ecosystem before
-proposing an upgrade to 12.**
+Avalonia **12 core is stable** (12.0.4, May 2026 — with large render-perf gains) and
+`Avalonia.AvaloniaEdit 12.0.0` exists, but the rest of the viewer ecosystem
+(Markdown.Avalonia, FluentAvaloniaUI) was **not confirmed stable on 12** as of mid-2026.
+We stay on the 11.3.x line until those two ship stable 12 builds, then migrate. **Re-verify
+Markdown.Avalonia + FluentAvalonia on 12 (NuGet) before proposing the upgrade** — the blocker
+is the ecosystem, not Avalonia itself.
 
 ## Roadmap
 
