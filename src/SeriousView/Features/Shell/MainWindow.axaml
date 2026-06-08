@@ -100,13 +100,17 @@
       </Button>
 
       <!-- Tab strip lives in the title bar; AllowInteractionInTitleBar so clicks select tabs
-           instead of dragging the window. Bottom-aligned so the accent line meets the body. -->
+           instead of dragging the window. Bottom-aligned so the accent line meets the body.
+           HorizontalAlignment=Left so the ListBox sizes to the tabs (not the whole star column) —
+           otherwise its empty interactive area right of the tabs would swallow the window drag when
+           a file is open (welcome drags fine because the ListBox is collapsed there). It still caps
+           at the column width and scrolls when the tabs overflow. -->
       <ListBox Grid.Column="1" wnd:AppWindow.AllowInteractionInTitleBar="True"
                IsVisible="{Binding HasTabs}"
                ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
                ItemContainerTheme="{StaticResource VsCodeTab}"
                Background="Transparent" BorderThickness="0" Padding="0"
-               VerticalAlignment="Bottom"
+               HorizontalAlignment="Left" VerticalAlignment="Bottom"
                ScrollViewer.HorizontalScrollBarVisibility="Auto"
                ScrollViewer.VerticalScrollBarVisibility="Disabled">
         <ListBox.ItemsPanel>
