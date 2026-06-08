@@ -4,6 +4,7 @@ using Avalonia;                 // AttachDevTools extension lives in the Avaloni
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
@@ -41,6 +42,13 @@ public partial class MainWindow : AppWindow
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
 
+        // Match the caption-button band to our 40px strip so min/max/close align vertically with the
+        // tabs instead of sitting high, and pin the glyph colour across active/inactive (FluentAvalonia
+        // dims the buttons by window-activation state otherwise — reads as the colour "changing").
+        TitleBar.Height = 40;
+        ActualThemeVariantChanged += (_, _) => ApplyCaptionColors();
+        ApplyCaptionColors();
+
         _requestedWidth = Width;
         _requestedHeight = Height;
 
@@ -56,6 +64,18 @@ public partial class MainWindow : AppWindow
 #if DEBUG
         this.AttachDevTools();
 #endif
+    }
+
+    // Pin the caption-button glyph colour to the chrome foreground for the current theme, so the
+    // min/max/close buttons don't change colour with window activation (see the ctor note).
+    private void ApplyCaptionColors()
+    {
+        if (this.TryGetResource("ChromeForegroundBrush", ActualThemeVariant, out var res)
+            && res is ISolidColorBrush brush)
+        {
+            TitleBar.ButtonForegroundColor = brush.Color;
+            TitleBar.ButtonInactiveForegroundColor = brush.Color;
+        }
     }
 
     // Central keyboard-shortcut dispatcher. Tunnelling (preview) runs before the AvaloniaEdit editor
