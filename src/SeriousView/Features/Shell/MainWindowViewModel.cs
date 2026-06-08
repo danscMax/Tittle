@@ -27,6 +27,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool HasRecent => _recent.Items.Count > 0;
 
+    /// <summary>Recent files projected for display (name + folder) with a self-contained open command —
+    /// bound by the ☰ File ▸ Recent submenu and the welcome list. Rebuilt when the recent list changes.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<RecentFileItem> _recentItems = Array.Empty<RecentFileItem>();
+
     /// <summary>True when at least one document tab is open (drives the empty placeholder).</summary>
     public bool HasTabs => Tabs.Count > 0;
 
@@ -103,12 +108,18 @@ public partial class MainWindowViewModel : ViewModelBase
             _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
-        _theme.Changed += (_, _) => OnPropertyChanged(nameof(ThemeModeLabel));
+        _theme.Changed += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ThemeModeLabel));
+            OnPropertyChanged(nameof(CurrentTheme));
+        };
         _recent.Changed += (_, _) =>
         {
             OnPropertyChanged(nameof(RecentFiles));
             OnPropertyChanged(nameof(HasRecent));
+            RefreshRecentItems();
         };
+        RefreshRecentItems(); // seed from any persisted recent files
 
         // Startup precedence: an explicit file argument wins, then the last session, else welcome.
         // All paths are async and guarded so a missing/locked/unreadable file can't crash startup.
@@ -159,6 +170,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private Task OpenRecent(string path) => OpenPathAsync(path);
+
+    /// <summary>Rebuild <see cref="RecentItems"/> from the store (each item carries its own open command).</summary>
+    private void RefreshRecentItems() =>
+        RecentItems = _recent.Items.Select(p => new RecentFileItem(p, () => _ = OpenPathAsync(p))).ToList();
 
     /// <summary>Opens the built-in sample document (offered on the welcome screen).</summary>
     [RelayCommand]
@@ -249,8 +264,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _ => "Тёмная",
     };
 
+    /// <summary>Current theme mode — drives the radio check-marks in the ☰ View ▸ Theme submenu.</summary>
+    public ThemeMode CurrentTheme => _theme.Mode;
+
     [RelayCommand]
     private void ToggleTheme() => _theme.Cycle();
+
+    /// <summary>Apply a specific theme mode (the ☰ View ▸ Theme radio items).</summary>
+    [RelayCommand]
+    private void SetTheme(ThemeMode mode) => _theme.SetMode(mode);
 
     private void AddTab(DocumentTabViewModel tab)
     {

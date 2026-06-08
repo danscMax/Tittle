@@ -50,13 +50,13 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 | # | Phase | Notes |
 |---|---|---|
-| 1 | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. |
-| 2 | Chrome render by Layout | Rewrite `MainWindow.axaml` into conditional sections that read `Layout`. |
-| 3 | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). |
+| 1 ✅ | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. **Done `e21931b` (+ `LayoutOptions` seam `d2ee4d9`).** |
+| 2 ◐ | Chrome render by Layout | Rewrite `MainWindow.axaml` into conditional sections that read `Layout`. **Started: ☰ visibility binds `MenuPlacement==Hidden` via `EnumToBoolConverter` — first real consumer of `Layout`.** |
+| 3 ✅ | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). **Done (this commit): ☰ replaces the wordmark; standard `MenuFlyout`/`MenuItem` (FA-themed) with Файл (Открыть/Пример/Недавние ▸/Закрыть) and Вид (Тема radio · Перенос/Номера checks · Перейти к строке); shortcut hints via `InputGesture`. Bar/TitleBar presets deferred to phase 8.** |
 | 4 | Omnibar | File path + 📂 Open + ⌘ palette entry. Toggle via `ShowOmnibar`. |
 | 5 | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Decided (audit 2026-06-08): top-level `Window`, NOT Popup/OverlayLayer** — overlay over AvaloniaEdit won't repaint (go-to-line proved it; VS Code/Zed use a separate surface). **+ fuzzy-matching** (fzf-style: `opfil`→`Open File`) — fix the algorithm before the UI. |
 | 6 | Contextual toolbar | Thin icon row under the tabs, shown only in **Source** mode (find/replace, wrap, line-numbers, indent, undo/redo). `Fixed` toolbar (Notepad++-style) is an opt-in preset. |
-| 7 | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. |
+| 7 ◐ | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. **Done: theme is now ☰ Вид ▸ Тема (radio Тёмная/Светлая/Авто), standalone Тема button removed; Предпросмотр/Исходник already by the tabs. Palette entry pending phase 5.** |
 | 8 | Settings → Раскладка panel | Switches all the `Layout` knobs live (the in-app home for customization). |
 
 **Fixes folded into M7.5 (found during the visual audit):**
@@ -64,7 +64,7 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | Fix | What |
 |---|---|
 | go-to-line overlap | On welcome (no tab) the status text and go-to-line input both show and overlap — guard on `HasTabs`. |
-| Recent files | `OpenPathAsync` records any path with no validation → temp/dead files linger as raw long paths. Validate `File.Exists`, show **name + folder** (tooltip = full path), drop missing. |
+| Recent files ◐ | `OpenPathAsync` records any path with no validation → temp/dead files linger as raw long paths. Validate `File.Exists`, show **name + folder** (tooltip = full path), drop missing. **Display done (this commit): pure `RecentFileLabel` → name + folder + full-path tooltip, in the ☰ submenu and the welcome list (shared `RecentFileItem`). `File.Exists` drop-missing deferred with single-instance #11b.** |
 | Content padding | `DocumentView` preview & source have no padding — text hugs the edges. Add padding + readable max-width for preview. |
 | Draggable title-bar | Empty zone right of the tabs doesn't drag the window (the tab ListBox claims it). Make the empty area draggable. |
 | **Single-instance (#11b)** | File-open spawns a new process/window; needs single-instance + IPC to forward the path. **Also fixes the settings.json race** when multiple instances close. |

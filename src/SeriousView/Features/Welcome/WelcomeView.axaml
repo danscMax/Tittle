@@ -54,15 +54,20 @@
       <StackPanel IsVisible="{Binding HasRecent}" Spacing="2" Margin="0,18,0,0">
         <TextBlock Text="Недавние" FontWeight="SemiBold" FontSize="12"
                    Foreground="{DynamicResource ChromeForegroundMutedBrush}" Margin="6,0,0,4"/>
-        <ItemsControl ItemsSource="{Binding RecentFiles}">
+        <ItemsControl ItemsSource="{Binding RecentItems}">
           <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="x:String">
-              <Button Content="{Binding}" ToolTip.Tip="{Binding}" Classes="recent"
-                      Command="{Binding $parent[ItemsControl].((vm:MainWindowViewModel)DataContext).OpenRecentCommand}"
-                      CommandParameter="{Binding}"
+            <DataTemplate x:DataType="vm:RecentFileItem">
+              <Button Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Path}" Classes="recent"
                       Background="Transparent" BorderThickness="0"
                       HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                      Padding="8,5"/>
+                      Padding="8,5">
+                <StackPanel Spacing="1">
+                  <TextBlock Text="{Binding Name}" FontSize="13"
+                             Foreground="{DynamicResource ChromeForegroundBrush}"/>
+                  <TextBlock Text="{Binding Folder}" FontSize="11" TextTrimming="CharacterEllipsis"
+                             Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+                </StackPanel>
+              </Button>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>

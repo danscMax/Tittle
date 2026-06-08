@@ -125,6 +125,21 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void SetTheme_AppliesModeDirectly_AndUpdatesLabelAndCurrent()
+    {
+        var theme = new FakeThemeService(); // starts Dark
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService(null), new FakeFileReader("x"), theme,
+            new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
+
+        vm.SetThemeCommand.Execute(ThemeMode.Light);
+
+        Assert.Equal(ThemeMode.Light, theme.Mode);
+        Assert.Equal(ThemeMode.Light, vm.CurrentTheme);
+        Assert.Equal("Светлая", vm.ThemeModeLabel);
+    }
+
+    [AvaloniaFact]
     public void HasTabs_BecomesFalse_AfterClosingLastTab()
     {
         var vm = CreateVm();
@@ -166,6 +181,25 @@ public class MainWindowViewModelTests
 
         Assert.Contains("/path/doc.md", recent.Items);
         Assert.Contains("/path/doc.md", vm.RecentFiles);
+    }
+
+    [AvaloniaFact]
+    public void RecentItems_ProjectPaths_IntoNameAndFolder_WithOpenCommand()
+    {
+        var recent = new FakeRecentFilesStore();
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService(null), new FakeFileReader("x"), new FakeThemeService(),
+            recent, Holder(), Array.Empty<string>());
+        var dir = Path.Combine(Path.GetTempPath(), "docs");
+        var path = Path.Combine(dir, "readme.md");
+
+        recent.Add(path);
+
+        var item = Assert.Single(vm.RecentItems);
+        Assert.Equal("readme.md", item.Name);
+        Assert.Equal(dir, item.Folder);
+        Assert.Equal(path, item.Path);
+        Assert.NotNull(item.OpenCommand);
     }
 
     [AvaloniaFact]
