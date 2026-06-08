@@ -14,8 +14,8 @@
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"
         Width="1100" Height="750"
-        Background="Transparent"
-        TransparencyLevelHint="AcrylicBlur, Mica, Blur"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        TransparencyLevelHint="None"
         DragDrop.AllowDrop="True">
   <wnd:AppWindow.Styles>
     <!-- Compact flat buttons for the editor controls that now live in the status bar (wrap/numbers/zoom). -->

@@ -4,18 +4,8 @@
              x:Class="SeriousView.Features.Welcome.WelcomeView"
              x:DataType="vm:MainWindowViewModel">
   <Panel>
-    <!-- Acrylic backdrop: the blurred desktop shows through behind the welcome content,
-         giving the empty state a premium frosted-glass look (tint follows the theme). -->
-    <ExperimentalAcrylicBorder IsHitTestVisible="False">
-      <ExperimentalAcrylicBorder.Material>
-        <ExperimentalAcrylicMaterial BackgroundSource="Digger"
-                                     TintColor="{DynamicResource AcrylicTintColor}"
-                                     TintOpacity="0.5" MaterialOpacity="0.5" />
-      </ExperimentalAcrylicBorder.Material>
-    </ExperimentalAcrylicBorder>
-
-    <!-- Soft accent glows for depth — visible regardless of what is behind the window,
-         so the empty state always reads as premium (the acrylic adds the desktop blur). -->
+    <!-- Soft accent glows for depth over the solid window background (Obsidian-like: no desktop
+         blur — just gentle accent light in the corners). -->
     <Border IsHitTestVisible="False">
       <Border.Background>
         <RadialGradientBrush Center="28%,22%" GradientOrigin="28%,22%" RadiusX="55%" RadiusY="55%">

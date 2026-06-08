@@ -10,9 +10,6 @@
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#15151A" />
     <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#1B1B22" />
 
-    <!-- Acrylic tint for the welcome backdrop (lets the blurred desktop show through). -->
-    <Color x:Key="AcrylicTintColor">#1B1B26</Color>
-
     <!-- Chrome (subtle vertical gradient for depth) -->
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#2B2B36" Offset="0" />
@@ -31,12 +28,9 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#74A0FF" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
-    <!-- Status bar (accent gradient) -->
-    <LinearGradientBrush x:Key="StatusBarBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,0%">
-        <GradientStop Color="#2D6CF6" Offset="0" />
-        <GradientStop Color="#2257D6" Offset="1" />
-    </LinearGradientBrush>
-    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#FFFFFF" />
+    <!-- Status bar — muted chrome tone (sits with the title bar, not a screaming accent). -->
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#20202A" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#B7B7C5" />
 
     <!-- Admonitions / GitHub alerts (dark): accent stripe (full colour) + subtle tint. -->
     <SolidColorBrush x:Key="AdmonitionNoteBrush" Color="#4493F8" />

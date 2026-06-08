@@ -4,7 +4,6 @@ using Avalonia;                 // AttachDevTools extension lives in the Avaloni
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
@@ -172,14 +171,6 @@ public partial class MainWindow : AppWindow
         // window back onto a visible screen. Screens are populated once the window is shown.
         EnsureOnScreen();
         TrackNormalBounds();
-
-        // No OS blur (older Windows / some Linux): Background=Transparent would show the
-        // desktop, so fall back to a solid window background.
-        if (ActualTransparencyLevel == WindowTransparencyLevel.None
-            && this.TryFindResource("WindowBackgroundBrush", out var res) && res is IBrush solid)
-        {
-            Background = solid;
-        }
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)
