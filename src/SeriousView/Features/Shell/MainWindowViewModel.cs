@@ -61,6 +61,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ToggleOutline() => IsOutlineVisible = !IsOutlineVisible;
 
+    /// <summary>Toggle the focused reading column + side decor in the markdown preview.</summary>
+    [RelayCommand]
+    private void ToggleReadingMode() => Layout.ReadingMode = !Layout.ReadingMode;
+
     /// <summary>Editor display options shared by every tab's source editor (font zoom, wrap,
     /// line numbers). Bound by <c>DocumentView</c>; persisted whenever it changes.</summary>
     public EditorOptions Editor { get; }
@@ -281,7 +285,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void AddTab(DocumentTabViewModel tab)
     {
-        tab.Editor = Editor; // share one editor-options instance across all tabs
+        tab.Editor = Editor;   // share one editor-options instance across all tabs
+        tab.Layout = Layout;   // share the shell-layout options (reading mode)
         Tabs.Add(tab);
         SelectedTab = tab;
     }

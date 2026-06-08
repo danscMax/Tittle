@@ -23,6 +23,16 @@
     <!-- Subtle hover overlay for outline (TOC) items (reads on the chrome sidebar). -->
     <SolidColorBrush x:Key="OutlineItemHoverBrush" Color="#FFFFFF" Opacity="0.07" />
 
+    <!-- Reader / welcome ambient glow (shared by the reading column and the welcome screen). -->
+    <RadialGradientBrush x:Key="ReaderGlowABrush" Center="28%,22%" GradientOrigin="28%,22%" RadiusX="55%" RadiusY="55%">
+        <GradientStop Color="#552D6CF6" Offset="0" />
+        <GradientStop Color="#002D6CF6" Offset="1" />
+    </RadialGradientBrush>
+    <RadialGradientBrush x:Key="ReaderGlowBBrush" Center="78%,82%" GradientOrigin="78%,82%" RadiusX="55%" RadiusY="55%">
+        <GradientStop Color="#4422D3C5" Offset="0" />
+        <GradientStop Color="#0022D3C5" Offset="1" />
+    </RadialGradientBrush>
+
     <!-- Accent -->
     <SolidColorBrush x:Key="AccentBrush" Color="#5A8DFF" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#74A0FF" />

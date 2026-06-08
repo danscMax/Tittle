@@ -89,6 +89,9 @@
                         IsChecked="{Binding Editor.WordWrap, Mode=TwoWay}"/>
               <MenuItem Header="Номера строк" InputGesture="Ctrl+L" ToggleType="CheckBox"
                         IsChecked="{Binding Editor.ShowLineNumbers, Mode=TwoWay}"/>
+              <MenuItem Header="Декоративный фон" ToggleType="CheckBox"
+                        IsChecked="{Binding Layout.ReadingMode, Mode=TwoWay}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <Separator/>
               <MenuItem Header="Перейти к строке…" InputGesture="Ctrl+G" Command="{Binding OpenGoToLineCommand}"/>
             </MenuItem>
@@ -132,6 +135,12 @@
                 IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
                 Command="{Binding ToggleOutlineCommand}" Padding="8,3">
           <ui:SymbolIcon Symbol="List" FontSize="16"/>
+        </Button>
+        <!-- Decorative-background toggle — markdown preview only (meaningless in source view). -->
+        <Button AutomationProperties.AutomationId="ReadingModeButton" ToolTip.Tip="Декоративный фон"
+                IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
+                Command="{Binding ToggleReadingModeCommand}" Padding="8,3">
+          <ui:SymbolIcon Symbol="Document" FontSize="16"/>
         </Button>
         <!-- Preview/source toggle — shown only for markdown tabs. -->
         <Button Content="{Binding SelectedTab.ViewModeLabel}" AutomationProperties.AutomationId="ViewModeButton"

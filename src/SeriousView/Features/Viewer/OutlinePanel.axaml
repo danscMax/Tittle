@@ -11,6 +11,13 @@
   <Border Width="240"
           Background="{DynamicResource ChromeOverlayBrush}"
           BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
+    <Panel>
+    <!-- Same barely-there accent glow as the markdown preview, so the reading chrome is cohesive
+         (toggled with «Декоративный фон»). Sits under the headings, hit-test invisible. -->
+    <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"
+            IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
+    <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
+            IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
     <!-- AllowAutoHide=False reserves a fixed scrollbar gutter (Avalonia 11.1+ auto-margins the
          content beside it) so the rows don't reflow/"compress" when the overlay scrollbar expands
          on pointer-over — the cause of the outline shimmer. -->
@@ -32,5 +39,6 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
     </ScrollViewer>
+    </Panel>
   </Border>
 </UserControl>

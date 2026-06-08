@@ -16,6 +16,7 @@ public class LayoutOptionsTests
         Assert.Equal(ViewTogglePlacement.Tabs, o.ViewTogglePlacement);
         Assert.True(o.ShowOmnibar);
         Assert.False(o.ShowRail);
+        Assert.True(o.ReadingMode);   // reading column on by default (etalon)
     }
 
     [Fact]
@@ -28,6 +29,7 @@ public class LayoutOptionsTests
             ViewTogglePlacement = ViewTogglePlacement.StatusBar,
             ShowOmnibar = false,
             ShowRail = true,
+            ReadingMode = false,
         };
 
         Assert.Equal(s, LayoutOptions.FromSettings(s).ToSettings());

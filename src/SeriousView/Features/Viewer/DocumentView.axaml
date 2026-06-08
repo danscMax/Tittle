@@ -23,17 +23,42 @@
                    HorizontalScrollBarVisibility="Auto"
                    VerticalScrollBarVisibility="Auto"/>
 
-    <!-- Rendered markdown preview, on a solid editor surface (MarkdownScrollViewer
-         itself has no Background). MarkdownStyleName is deliberately NOT set: the
-         auto-detected FluentAvalonia style is theme-variant aware (follows Light/Dark);
-         GithubLike/Standard use fixed colours and render invisible text in dark mode.
-         The hyperlink command is hardened in code-behind. -->
-    <Border IsVisible="{Binding ShowPreview}" Background="{DynamicResource EditorSurfaceBrush}">
+    <!-- Rendered markdown preview: one full-width field. A soft, barely-there accent glow sits UNDER
+         the whole text area (toggled by «Декоративный фон»); the MarkdownScrollViewer is full-bleed so
+         its scrollbar rides the outer right edge, with a Margin that keeps the prose off the window
+         edges (#4). MarkdownStyleName is deliberately NOT set (the auto FluentAvalonia style follows
+         Light/Dark); the hyperlink command is hardened in code-behind. -->
+    <Panel IsVisible="{Binding ShowPreview}" Background="{DynamicResource EditorSurfaceBrush}">
+      <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"
+              IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
+      <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
+              IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
       <md:MarkdownScrollViewer x:Name="Preview"
                                Markdown="{Binding PreviewMarkdown}"
                                AssetPathRoot="{Binding AssetPathRoot}"
-                               SelectionEnabled="True"/>
-    </Border>
+                               SelectionEnabled="True"
+                               Margin="44,24,8,8">
+        <!-- Style the internal ScrollViewer/ScrollBar via MarkdownScrollViewer.Styles — the only scope
+             that reaches Markdown.Avalonia's own bar. Reserve the gutter (so the bar never overlays the
+             prose), slim it and drop the arrow buttons. The thumb keeps the Fluent-dark default tint:
+             a fully replaced ScrollBar template stops the ScrollViewer wiring the bar, and the fill
+             resists every property/resource override — so this slim shape is the best non-breaking result. -->
+        <md:MarkdownScrollViewer.Styles>
+          <Style Selector="ScrollViewer">
+            <Setter Property="AllowAutoHide" Value="False" />
+          </Style>
+          <Style Selector="ScrollBar:vertical">
+            <Setter Property="Width" Value="10" />
+          </Style>
+          <Style Selector="ScrollBar /template/ RepeatButton#PART_LineUpButton">
+            <Setter Property="IsVisible" Value="False" />
+          </Style>
+          <Style Selector="ScrollBar /template/ RepeatButton#PART_LineDownButton">
+            <Setter Property="IsVisible" Value="False" />
+          </Style>
+        </md:MarkdownScrollViewer.Styles>
+      </md:MarkdownScrollViewer>
+    </Panel>
 
     <!-- Notice overlay: binary / too-large / empty files (no editor, no preview).
          Text-only (no SymbolIcon) so it renders without the FluentAvalonia Symbols font. -->

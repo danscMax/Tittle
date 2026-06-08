@@ -85,6 +85,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// the tab is added. The source editor binds to it; null in unit fixtures.</summary>
     public EditorOptions? Editor { get; set; }
 
+    /// <summary>Shared shell-layout options (reading mode), assigned by the shell when the tab is
+    /// added — same pattern as <see cref="Editor"/>. The preview binds to it; null in unit fixtures.</summary>
+    public LayoutOptions? Layout { get; set; }
+
     /// <summary>True for markdown files — drives whether a rendered preview is offered.</summary>
     public bool IsMarkdown => MarkdownFile.IsMarkdownExtension(GrammarExtension);
 

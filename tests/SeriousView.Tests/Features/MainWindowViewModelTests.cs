@@ -370,6 +370,29 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void AllTabs_ShareTheSameLayoutOptions()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
+
+        Assert.Same(vm.Layout, vm.Tabs[0].Layout);
+    }
+
+    [AvaloniaFact]
+    public void ToggleReadingMode_Flips_AndPersists()
+    {
+        var holder = Holder();
+        var vm = CreateVm(settings: holder);
+
+        Assert.True(vm.Layout.ReadingMode); // on by default
+
+        vm.ToggleReadingModeCommand.Execute(null);
+
+        Assert.False(vm.Layout.ReadingMode);
+        Assert.False(holder.Current.Layout!.ReadingMode); // persisted via Layout.PropertyChanged
+    }
+
+    [AvaloniaFact]
     public void SelectNextTab_CyclesForward_WithWrap()
     {
         var vm = CreateVm();

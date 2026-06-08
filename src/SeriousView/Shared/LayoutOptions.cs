@@ -26,6 +26,9 @@ public partial class LayoutOptions : ObservableObject
     [ObservableProperty]
     private bool _showRail;
 
+    [ObservableProperty]
+    private bool _readingMode = true;
+
     public LayoutSettings ToSettings() => new()
     {
         MenuPlacement = MenuPlacement,
@@ -33,6 +36,7 @@ public partial class LayoutOptions : ObservableObject
         ViewTogglePlacement = ViewTogglePlacement,
         ShowOmnibar = ShowOmnibar,
         ShowRail = ShowRail,
+        ReadingMode = ReadingMode,
     };
 
     /// <summary>Build options from persisted settings, or the etalon defaults when none are saved.</summary>
@@ -45,5 +49,6 @@ public partial class LayoutOptions : ObservableObject
             ViewTogglePlacement = s.ViewTogglePlacement,
             ShowOmnibar = s.ShowOmnibar,
             ShowRail = s.ShowRail,
+            ReadingMode = s.ReadingMode,
         };
 }

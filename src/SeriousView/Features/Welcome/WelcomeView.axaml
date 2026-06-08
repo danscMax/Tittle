@@ -4,24 +4,9 @@
              x:Class="SeriousView.Features.Welcome.WelcomeView"
              x:DataType="vm:MainWindowViewModel">
   <Panel>
-    <!-- Soft accent glows for depth over the solid window background (Obsidian-like: no desktop
-         blur — just gentle accent light in the corners). -->
-    <Border IsHitTestVisible="False">
-      <Border.Background>
-        <RadialGradientBrush Center="28%,22%" GradientOrigin="28%,22%" RadiusX="55%" RadiusY="55%">
-          <GradientStop Color="#552D6CF6" Offset="0" />
-          <GradientStop Color="#002D6CF6" Offset="1" />
-        </RadialGradientBrush>
-      </Border.Background>
-    </Border>
-    <Border IsHitTestVisible="False">
-      <Border.Background>
-        <RadialGradientBrush Center="78%,82%" GradientOrigin="78%,82%" RadiusX="55%" RadiusY="55%">
-          <GradientStop Color="#4422D3C5" Offset="0" />
-          <GradientStop Color="#0022D3C5" Offset="1" />
-        </RadialGradientBrush>
-      </Border.Background>
-    </Border>
+    <!-- Soft accent glows for depth (shared with the reading column via Themes/Colors/*). -->
+    <Border IsHitTestVisible="False" Background="{DynamicResource ReaderGlowABrush}"/>
+    <Border IsHitTestVisible="False" Background="{DynamicResource ReaderGlowBBrush}"/>
 
     <ScrollViewer>
     <StackPanel Classes="welcome-enter"
