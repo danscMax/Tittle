@@ -7,7 +7,8 @@
     <!-- Typography / spacing -->
     <x:Double x:Key="ChromeFontSize">12.5</x:Double>
     <Thickness x:Key="ChromePadding">14,8</Thickness>
-    <Thickness x:Key="StatusBarPadding">14,4</Thickness>
+    <!-- Vertical inset is 0; the status bar's MinHeight centres the content to a uniform height. -->
+    <Thickness x:Key="StatusBarPadding">14,0</Thickness>
 
     <!-- Radii -->
     <CornerRadius x:Key="PanelCornerRadius">8</CornerRadius>

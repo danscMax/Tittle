@@ -126,13 +126,13 @@
              Open / Theme now live in the ☰ menu; wrap / numbers / zoom in the status bar. -->
         <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
         <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
-                IsVisible="{Binding SelectedTab.IsMarkdown}"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
                 Command="{Binding ToggleOutlineCommand}" Padding="8,3">
           <ui:SymbolIcon Symbol="List" FontSize="16"/>
         </Button>
         <!-- Preview/source toggle — shown only for markdown tabs. -->
         <Button Content="{Binding SelectedTab.ViewModeLabel}" AutomationProperties.AutomationId="ViewModeButton"
-                IsVisible="{Binding SelectedTab.IsMarkdown}"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
                 Command="{Binding SelectedTab.ToggleViewModeCommand}" Padding="10,3" MinWidth="104"/>
       </StackPanel>
 
@@ -145,21 +145,22 @@
 
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
          (lines · chars · language), divided by a thin separator. -->
-    <Border DockPanel.Dock="Bottom" Classes="chrome"
+    <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
       <DockPanel>
         <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.StatusText}"
+                   IsVisible="{Binding HasTabs}"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
         <!-- Caret position — only meaningful (and shown) while the source editor is visible. -->
         <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.CaretText}"
-                   IsVisible="{Binding SelectedTab.ShowSource}" Margin="0,0,12,0"
+                   IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
         <!-- Editor controls (wrap · numbers · zoom) — status bar, source view only (moved from the
              title bar). Same commands as the keyboard shortcuts and the shared EditorOptions. -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
-                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource}">
+                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}">
           <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
                   Content="↵" Classes="statusbtn"/>
           <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
@@ -177,11 +178,11 @@
              Lives in the status bar (chrome) rather than over the editor, where an overlay won't
              repaint over AvaloniaEdit's GPU surface. -->
         <Panel>
-          <TextBlock Text="{Binding StatusText}" IsVisible="{Binding !SelectedTab.IsGoToLineOpen}"
+          <TextBlock Text="{Binding StatusText}" IsVisible="{Binding !SelectedTab.IsGoToLineOpen, FallbackValue=True}"
                      Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                      VerticalAlignment="Center"/>
           <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
-                      IsVisible="{Binding SelectedTab.IsGoToLineOpen}">
+                      IsVisible="{Binding SelectedTab.IsGoToLineOpen, FallbackValue=False}">
             <TextBlock Text="Перейти к строке:" VerticalAlignment="Center"
                        Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
             <TextBox x:Name="GoToLineBox" Width="72" Height="22" Padding="6,1" FontSize="11.5"
