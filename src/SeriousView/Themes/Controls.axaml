@@ -38,44 +38,48 @@
     <Setter Property="RenderTransform" Value="scale(0.97)" />
   </Style>
 
-  <!-- Recent-file entries on the welcome screen: rounded hover highlight so they read as
-       clickable (they are otherwise transparent and borderless). -->
-  <Style Selector="Button.recent /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.12" />
-      </Transitions>
+  <!-- Recent-file entries (welcome) and outline (TOC) entries share a custom minimal template
+       (Border + ContentPresenter). FluentAvalonia's stock Button template flashed its own light
+       pointer-over background before our darker overlay settled — the "first light, then dark"
+       flicker. Escaping that template makes the hover a single instant overlay on PART_Bg: no FA
+       state, no transition, no fade-through, no shimmer. The Button still fires its Command on click. -->
+  <Style Selector="Button.recent">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="PART_Bg" Background="Transparent" Padding="{TemplateBinding Padding}"
+                CornerRadius="{DynamicResource ControlCornerRadius}">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
     </Setter>
   </Style>
-  <Style Selector="Button.recent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.recent:pointerover /template/ Border#PART_Bg">
+    <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}" />
+  </Style>
+  <Style Selector="Button.recent:pressed /template/ Border#PART_Bg">
     <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}" />
   </Style>
 
-  <!-- Outline (TOC) entries: subtle overlay hover that reads on the chrome-coloured sidebar
-       (ChromeOverlayBrush would be invisible there). -->
-  <Style Selector="Button.outline-item /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.1" />
-      </Transitions>
+  <Style Selector="Button.outline-item">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="PART_Bg" Background="Transparent" Padding="{TemplateBinding Padding}" CornerRadius="4">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            Foreground="{TemplateBinding Foreground}"
+                            FontSize="{TemplateBinding FontSize}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
     </Setter>
   </Style>
-  <Style Selector="Button.outline-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.outline-item:pointerover /template/ Border#PART_Bg">
     <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
   </Style>
-  <!-- Pressed = hover (no FluentAvalonia pressed-background flash on click). The highlight lives
-       entirely on the ContentPresenter overlay; pin the Button root's transform so no FA state can
-       scale/shimmer the row (its size/position must never change → no flicker). -->
-  <Style Selector="Button.outline-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="Button.outline-item:pressed /template/ Border#PART_Bg">
     <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
-  </Style>
-  <Style Selector="Button.outline-item:pointerover">
-    <Setter Property="RenderTransform" Value="none" />
-  </Style>
-  <Style Selector="Button.outline-item:pressed">
-    <Setter Property="RenderTransform" Value="none" />
   </Style>
 
   <!-- Hamburger (☰) menu trigger in the title bar: flat and chrome-coloured, with FluentAvalonia's
