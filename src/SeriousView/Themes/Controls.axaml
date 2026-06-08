@@ -65,6 +65,18 @@
   <Style Selector="Button.outline-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
   </Style>
+  <!-- Pressed = hover (no FluentAvalonia pressed-background flash on click). The highlight lives
+       entirely on the ContentPresenter overlay; pin the Button root's transform so no FA state can
+       scale/shimmer the row (its size/position must never change → no flicker). -->
+  <Style Selector="Button.outline-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
+  </Style>
+  <Style Selector="Button.outline-item:pointerover">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
+  <Style Selector="Button.outline-item:pressed">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
 
   <!-- Hamburger (☰) menu trigger in the title bar: flat and chrome-coloured, with FluentAvalonia's
        built-in pointerover/pressed states (transparent base lets the title strip show through). -->

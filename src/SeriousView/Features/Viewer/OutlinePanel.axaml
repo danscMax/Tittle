@@ -11,7 +11,11 @@
   <Border Width="240"
           Background="{DynamicResource ChromeOverlayBrush}"
           BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <!-- AllowAutoHide=False reserves a fixed scrollbar gutter (Avalonia 11.1+ auto-margins the
+         content beside it) so the rows don't reflow/"compress" when the overlay scrollbar expands
+         on pointer-over — the cause of the outline shimmer. -->
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
+                  AllowAutoHide="False">
       <ItemsControl ItemsSource="{Binding SelectedTab.Outline}" Margin="6,8">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:CompileBindings="False">
