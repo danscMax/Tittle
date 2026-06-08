@@ -7,6 +7,9 @@ publish/
 [Pp]ublish/
 dist/
 [Dd]ist/
+
+# ---- Scratch / working artifacts (mockups, screenshots) ----
+plans/
 *.binlog
 
 # ---- Test results ----
