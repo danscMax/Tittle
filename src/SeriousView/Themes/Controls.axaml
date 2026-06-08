@@ -82,6 +82,12 @@
     <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
   </Style>
 
+  <!-- ☰ title-bar menu flyout: use the app's dark status-bar backing (and its submenus) instead of
+       FluentAvalonia's light acrylic, so the dropdown matches the rest of the chrome. -->
+  <Style Selector="MenuFlyoutPresenter">
+    <Setter Property="Background" Value="{DynamicResource StatusBarBackgroundBrush}" />
+  </Style>
+
   <!-- Hamburger (☰) menu trigger in the title bar: flat and chrome-coloured, with FluentAvalonia's
        built-in pointerover/pressed states (transparent base lets the title strip show through). -->
   <Style Selector="Button.chrome-menu">
