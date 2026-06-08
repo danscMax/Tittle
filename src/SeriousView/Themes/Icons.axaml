@@ -11,4 +11,11 @@
     <EllipseGeometry Center="12,12" RadiusX="2.8" RadiusY="2.8"/>
   </GeometryGroup>
 
+  <!-- Sidebar / "panel" glyph: a rounded frame with a solid left column (the right content area is an
+       EvenOdd hole). The universal "show/hide the side panel" affordance; used on the outline toggle. -->
+  <GeometryGroup x:Key="IconSidebar" FillRule="EvenOdd">
+    <RectangleGeometry Rect="1,2,14,12" RadiusX="2.2" RadiusY="2.2"/>
+    <RectangleGeometry Rect="5.6,3.4,8.6,9.2" RadiusX="1" RadiusY="1"/>
+  </GeometryGroup>
+
 </ResourceDictionary>
