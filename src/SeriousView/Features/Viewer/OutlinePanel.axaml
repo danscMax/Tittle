@@ -18,11 +18,10 @@
             IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
     <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
             IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
-    <!-- AllowAutoHide=False reserves a fixed scrollbar gutter (Avalonia 11.1+ auto-margins the
-         content beside it) so the rows don't reflow/"compress" when the overlay scrollbar expands
-         on pointer-over — the cause of the outline shimmer. -->
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
-                  AllowAutoHide="False">
+    <!-- Slim auto-hide scrollbar, matching the markdown preview's. The "hover compression/shimmer"
+         was FluentAvalonia's button template (now replaced by a custom outline-item template), not the
+         scrollbar — so no reserved gutter is needed and the bar stays consistent across the chrome. -->
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
       <ItemsControl ItemsSource="{Binding SelectedTab.Outline}" Margin="6,8">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:CompileBindings="False">

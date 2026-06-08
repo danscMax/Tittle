@@ -11,16 +11,17 @@ namespace SeriousView.Tests.Features;
 public class OutlinePanelTests
 {
     [AvaloniaFact]
-    public void OutlinePanel_ReservesScrollbarGutter_NoAutoHide()
+    public void OutlinePanel_ScrollbarAutoHides_LikeTheRestOfTheChrome()
     {
-        // Locks in the reflow fix: with AllowAutoHide the overlay scrollbar would expand on hover
-        // and steal width, compressing the rows. Reserving the gutter keeps the layout stable.
+        // The slim auto-hide scrollbar matches the markdown preview's (consistency). The earlier
+        // "hover compression" was FluentAvalonia's button template — fixed by the custom outline-item
+        // template — not the scrollbar, so the outline no longer pins AllowAutoHide=False.
         var window = new Window { Content = new OutlinePanel() };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
         var scroll = window.GetVisualDescendants().OfType<ScrollViewer>().First();
-        Assert.False(scroll.AllowAutoHide);
+        Assert.True(scroll.AllowAutoHide);
 
         window.Close();
     }
