@@ -10,6 +10,11 @@ namespace SeriousView.Core.Settings;
 /// </summary>
 public sealed record AppSettings
 {
+    /// <summary>Persisted schema version, stamped so future field additions migrate instead of
+    /// silently dropping data. Absent/0 in a legacy file means "pre-versioned" → normalized on load
+    /// by <see cref="AppSettingsMigrator"/>.</summary>
+    public int SchemaVersion { get; init; } = AppSettingsMigrator.CurrentSchemaVersion;
+
     /// <summary>Last chosen theme, re-applied at startup. Defaults to Dark.</summary>
     public ThemeMode Theme { get; init; } = ThemeMode.Dark;
 
@@ -21,6 +26,9 @@ public sealed record AppSettings
 
     /// <summary>Editor view options (font zoom, wrap, line numbers), or null for defaults.</summary>
     public EditorSettings? Editor { get; init; }
+
+    /// <summary>Shell layout / chrome customization, or null for the default (etalon) layout.</summary>
+    public LayoutSettings? Layout { get; init; }
 }
 
 /// <summary>Window geometry in screen pixels plus whether it was maximized. When maximized, the

@@ -43,4 +43,39 @@ public class AppSettingsServiceTests
         Assert.NotNull(svc.Current.Window);              // window survived the later theme update
         Assert.Equal(800, svc.Current.Window!.Width);
     }
+
+    [Fact]
+    public void Current_LayoutIsNull_AndSchemaCurrent_WhenStoreEmpty()
+    {
+        var svc = new AppSettingsService(new FakeSettingsStore());
+
+        Assert.Null(svc.Current.Layout); // null → consumers use the etalon defaults
+        Assert.Equal(AppSettingsMigrator.CurrentSchemaVersion, svc.Current.SchemaVersion);
+    }
+
+    [Fact]
+    public void Update_LayoutSurvivesLaterThemeUpdate()
+    {
+        var svc = new AppSettingsService(new FakeSettingsStore());
+
+        svc.Update(svc.Current with { Layout = new LayoutSettings { ShowRail = true } });
+        svc.Update(svc.Current with { Theme = ThemeMode.Light });
+
+        Assert.NotNull(svc.Current.Layout);
+        Assert.True(svc.Current.Layout!.ShowRail);
+        Assert.Equal(ThemeMode.Light, svc.Current.Theme);
+    }
+
+    [Fact]
+    public void Loading_LegacySettingsWithoutSchemaVersion_IsMigratedToCurrent()
+    {
+        var store = new FakeSettingsStore();
+        // A pre-versioned object (SchemaVersion explicitly 0, simulating an old file).
+        store.Save("settings", new AppSettings { SchemaVersion = 0, Theme = ThemeMode.Light });
+
+        var svc = new AppSettingsService(store);
+
+        Assert.Equal(AppSettingsMigrator.CurrentSchemaVersion, svc.Current.SchemaVersion);
+        Assert.Equal(ThemeMode.Light, svc.Current.Theme); // data preserved
+    }
 }

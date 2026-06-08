@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Settings;
 
 namespace SeriousView.Platform;
 
@@ -12,6 +13,11 @@ namespace SeriousView.Platform;
 /// </summary>
 public sealed class JsonSettingsStore : ISettingsStore
 {
+    // Source-generated metadata (AOT-friendly, no per-type reflection) for every persisted type
+    // registered in AppJsonContext (AppSettings + the recent-files List<string>). The generic
+    // Load/Save signatures stay unchanged — the resolver supplies metadata for the concrete T.
+    private static readonly JsonSerializerOptions Options = new() { TypeInfoResolver = AppJsonContext.Default };
+
     private readonly string _dir;
 
     /// <param name="directory">Storage folder; defaults to <c>%AppData%/SeriousView</c>.
@@ -30,7 +36,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             return default;
         try
         {
-            return JsonSerializer.Deserialize<T>(File.ReadAllText(file));
+            return JsonSerializer.Deserialize<T>(File.ReadAllText(file), Options);
         }
         catch
         {
@@ -44,7 +50,7 @@ public sealed class JsonSettingsStore : ISettingsStore
         var temp = file + ".tmp";
         try
         {
-            File.WriteAllText(temp, JsonSerializer.Serialize(value));
+            File.WriteAllText(temp, JsonSerializer.Serialize(value, Options));
             // Atomic swap: temp and target share the directory/filesystem, so this is atomic
             // (Windows ReplaceFile, Unix rename) — a crash mid-write can't corrupt the live file.
             if (File.Exists(file))

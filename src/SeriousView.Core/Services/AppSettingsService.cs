@@ -16,7 +16,8 @@ public sealed class AppSettingsService : IAppSettingsService
     public AppSettingsService(ISettingsStore store)
     {
         _store = store;
-        Current = store.Load<AppSettings>(Key) ?? new AppSettings();
+        // Migrate normalizes an older on-disk schema (stamps version, keeps data) before we hold it.
+        Current = AppSettingsMigrator.Migrate(store.Load<AppSettings>(Key)) ?? new AppSettings();
     }
 
     public AppSettings Current { get; private set; }
