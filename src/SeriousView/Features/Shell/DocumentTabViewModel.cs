@@ -98,6 +98,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
     [NotifyPropertyChangedFor(nameof(ViewModeLabel))]
+    [NotifyPropertyChangedFor(nameof(ViewModeToggleTip))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
     /// <summary>Show the rendered markdown preview (markdown file in Preview mode, has content).</summary>
@@ -151,6 +152,10 @@ public partial class DocumentTabViewModel : ViewModelBase
 
     /// <summary>Label for the preview/source toggle, reflecting the current mode.</summary>
     public string ViewModeLabel => ViewMode == DocumentViewMode.Preview ? "Предпросмотр" : "Исходник";
+
+    /// <summary>Tooltip for the status-bar view toggle — names the switch target (the action).</summary>
+    public string ViewModeToggleTip =>
+        ViewMode == DocumentViewMode.Preview ? "Показать исходник" : "Показать предпросмотр";
 
     /// <summary>Flip preview ⟷ source. Only enabled for markdown documents.</summary>
     [RelayCommand(CanExecute = nameof(IsMarkdown))]

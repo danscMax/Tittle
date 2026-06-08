@@ -132,8 +132,9 @@
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
-        <!-- Per-document quick toggles kept next to the tabs (etalon ViewTogglePlacement = Tabs).
-             Open / Theme now live in the ☰ menu; wrap / numbers / zoom in the status bar. -->
+        <!-- Per-document quick toggles kept next to the tabs. Open / Theme live in the ☰ menu;
+             the preview/source toggle now lives in the status bar (ViewTogglePlacement.Tabs/Omnibar
+             remain future presets); wrap / numbers / zoom are in the status bar too. -->
         <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
         <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
                 IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
@@ -146,10 +147,6 @@
                 Command="{Binding ToggleReadingModeCommand}" Padding="8,3">
           <ui:SymbolIcon Symbol="Document" FontSize="16"/>
         </Button>
-        <!-- Preview/source toggle — shown only for markdown tabs. -->
-        <Button Content="{Binding SelectedTab.ViewModeLabel}" AutomationProperties.AutomationId="ViewModeButton"
-                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
-                Command="{Binding SelectedTab.ToggleViewModeCommand}" Padding="10,3" MinWidth="104"/>
       </StackPanel>
 
       <!-- Reserve room for the system min/max/close buttons. Width is set in code-behind from
@@ -189,6 +186,21 @@
           <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
                   Content="A+" Classes="statusbtn"/>
         </StackPanel>
+        <!-- Preview/source toggle (markdown only) — moved here from the title strip. Compact icon
+             mirrors the current mode (eye = preview, {} = source); the tooltip names the action.
+             Sits just right of the divider, grouped with the editor controls. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                AutomationProperties.AutomationId="ViewModeButton"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
+                Command="{Binding SelectedTab.ToggleViewModeCommand}"
+                ToolTip.Tip="{Binding SelectedTab.ViewModeToggleTip}">
+          <Panel>
+            <ui:SymbolIcon Symbol="Code" FontSize="15"
+                           IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}"/>
+            <PathIcon Data="{StaticResource IconEye}" Width="16" Height="16"
+                      IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"/>
+          </Panel>
+        </Button>
         <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
                 Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <!-- Left segment: status messages, replaced by the go-to-line input (Ctrl+G) while open.

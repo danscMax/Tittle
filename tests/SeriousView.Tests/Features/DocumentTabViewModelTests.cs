@@ -51,6 +51,16 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void ViewModeToggleTip_NamesTheSwitchTarget()
+    {
+        var vm = DocumentTabViewModel.FromFile("# Title", "/docs/readme.md");
+        Assert.Equal("Показать исходник", vm.ViewModeToggleTip);     // in preview → click switches to source
+
+        vm.ToggleViewModeCommand.Execute(null);
+        Assert.Equal("Показать предпросмотр", vm.ViewModeToggleTip);  // in source → click switches to preview
+    }
+
+    [Fact]
     public void AssetPathRoot_IsDocumentDirectory()
     {
         const string path = "/docs/sub/readme.md";
