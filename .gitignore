@@ -5,6 +5,8 @@
 artifacts/
 publish/
 [Pp]ublish/
+dist/
+[Dd]ist/
 *.binlog
 
 # ---- Test results ----
