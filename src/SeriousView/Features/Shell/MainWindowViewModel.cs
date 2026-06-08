@@ -41,9 +41,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _title = "SeriousView";
 
-    /// <summary>Status bar text — mirrors the active tab.</summary>
+    /// <summary>Idle hint shown in the status bar on the welcome screen (no tab open): a short
+    /// call-to-action instead of a bare "Готово".</summary>
+    private const string WelcomeHint = "Откройте файл (Ctrl+O), перетащите его сюда или выберите из недавних";
+
+    /// <summary>Status bar left-segment text: the welcome hint when idle, cleared while a tab is
+    /// active (the tab's own metrics show on the right), or a read-error message.</summary>
     [ObservableProperty]
-    private string _statusText = "Готово";
+    private string _statusText = WelcomeHint;
 
     /// <summary>Whether the user has the outline pane turned on (per-window, persists across tabs).</summary>
     [ObservableProperty]
@@ -284,11 +289,10 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnSelectedTabChanged(DocumentTabViewModel? value)
     {
         Title = value is null ? "SeriousView" : value.Header + " — SeriousView";
-        // Status bar is segmented: the left segment shows messages (reset to idle when no
-        // tab is open), the right segment binds the active tab's metrics
-        // (DocumentTabViewModel.StatusText) directly in the view.
-        if (value is null)
-            StatusText = "Готово";
+        // Status bar is segmented: the left segment shows messages — the welcome hint when no tab is
+        // open, otherwise cleared (the right segment binds the active tab's metrics directly in the
+        // view). A read error overwrites this until the next tab change.
+        StatusText = value is null ? WelcomeHint : "";
         // The outline pane depends on the active tab's headings.
         OnPropertyChanged(nameof(IsOutlinePaneVisible));
     }

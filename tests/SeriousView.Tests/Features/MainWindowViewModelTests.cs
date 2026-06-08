@@ -46,6 +46,27 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void Welcome_StatusBar_ShowsHint_NotReady()
+    {
+        var vm = CreateVm();
+
+        Assert.Contains("Откройте файл", vm.StatusText); // actionable hint, not a bare "Готово"
+        Assert.DoesNotContain("Готово", vm.StatusText);
+    }
+
+    [AvaloniaFact]
+    public void OpeningTab_ClearsLeftStatus_ThenHintReturnsOnClose()
+    {
+        var vm = CreateVm(content: "x", args: new[] { "/a.cs" }); // opens a tab at startup
+
+        Assert.Equal("", vm.StatusText); // left segment cleared while a tab is active
+
+        vm.CloseActiveTabCommand.Execute(null);
+
+        Assert.Contains("Откройте файл", vm.StatusText); // welcome hint restored on the empty screen
+    }
+
+    [AvaloniaFact]
     public void OpenSample_AddsSampleTab_AndActivatesIt()
     {
         var vm = CreateVm();
