@@ -39,8 +39,11 @@
     <!-- Title strip wrapped in a Border so it casts a soft shadow onto the body below
          (ZIndex keeps the shadow above the editor/welcome content). -->
     <Border DockPanel.Dock="Top" ZIndex="1" BoxShadow="{DynamicResource ChromeShadow}">
-    <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-          Background="{DynamicResource ChromeOverlayBrush}" MinHeight="40">
+    <Panel>
+    <!-- Chrome fill on a hit-test-invisible layer so the empty title-bar zones still drag the
+         window — a non-null Background on the Grid itself swallows the AppWindow drag. -->
+    <Border Background="{DynamicResource ChromeOverlayBrush}" IsHitTestVisible="False"/>
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto" MinHeight="40">
       <!-- ☰ menu — the etalon default (MenuPlacement.Hidden). Replaces the "SeriousView" wordmark
            (which crowded the tabs) and gathers File/View commands. First real consumer of Layout:
            shown only for the Hidden placement (Bar / TitleBar presets arrive with Settings → Layout).
@@ -141,6 +144,7 @@
            notify, so an XAML binding would stay at its initial 0). -->
       <Border Grid.Column="3" x:Name="CaptionReserve"/>
     </Grid>
+    </Panel>
     </Border>
 
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
