@@ -97,4 +97,13 @@
     <Setter Property="Padding" Value="9,4" />
   </Style>
 
+  <!-- Outline-sidebar resize handle: a wide-enough hit area that stays invisible until hovered,
+       then shows a faint chrome-coloured hairline (the outline panel already draws the 1px divider). -->
+  <Style Selector="GridSplitter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="GridSplitter:pointerover">
+    <Setter Property="Background" Value="{DynamicResource ChromeBorderBrush}" />
+  </Style>
+
 </Styles>

@@ -6,10 +6,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Reactive;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
+using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
 
@@ -30,6 +32,15 @@ public partial class MainWindow : AppWindow
     private Size _chromeOffset;          // actual − requested, measured once while Normal
     private bool _offsetMeasured;
     private bool _opened;                // gate: ignore property changes during InitializeComponent/restore
+
+    // Outline sidebar width. The GridSplitter drives OutlineColumn live; we mirror the latest shown
+    // width here and commit it to the (persisted) LayoutOptions once on close — routing every drag
+    // pixel through Layout.PropertyChanged would rewrite settings.json continuously.
+    private double _outlineWidth = LayoutOptions.DefaultOutlineWidth;
+
+    // The outline sidebar is column [0] of the body grid. A named ColumnDefinition gets no generated
+    // code-behind field (it isn't a control), so reach it through the named grid instead.
+    private ColumnDefinition OutlineColumn => BodyGrid.ColumnDefinitions[0];
 
     // Parameterless ctor for the XAML designer.
     public MainWindow()
@@ -153,6 +164,34 @@ public partial class MainWindow : AppWindow
         _settings = settings;
         DataContext = viewModel;
         RestoreWindow();
+        WireOutlineSidebar(viewModel);
+    }
+
+    // Restore the persisted outline width, follow live drags into a field, and expand/collapse the
+    // column with the pane's visibility (a hidden pane must not leave a dead 240px gutter).
+    private void WireOutlineSidebar(MainWindowViewModel vm)
+    {
+        _outlineWidth = LayoutOptions.ClampOutlineWidth(vm.Layout.OutlineWidth);
+        OutlineColumn.GetObservable(ColumnDefinition.WidthProperty).Subscribe(new AnonymousObserver<GridLength>(w =>
+        {
+            if (vm.IsOutlinePaneVisible && w.IsAbsolute && w.Value >= 1)
+                _outlineWidth = w.Value;
+        }));
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsOutlinePaneVisible))
+                ApplyOutlineColumn(vm.IsOutlinePaneVisible);
+        };
+        ApplyOutlineColumn(vm.IsOutlinePaneVisible);
+    }
+
+    // Shown → pixel width within [min,max]; hidden → collapse to 0 (no reserved gutter, no splitter).
+    private void ApplyOutlineColumn(bool visible)
+    {
+        OutlineColumn.MinWidth = visible ? LayoutOptions.MinOutlineWidth : 0;
+        OutlineColumn.MaxWidth = visible ? LayoutOptions.MaxOutlineWidth : double.PositiveInfinity;
+        OutlineColumn.Width = new GridLength(
+            visible ? LayoutOptions.ClampOutlineWidth(_outlineWidth) : 0, GridUnitType.Pixel);
     }
 
     // NOTE: Avalonia 11.3 marks DragEventArgs.Data / DataFormats.Files obsolete in favour of the
@@ -285,6 +324,11 @@ public partial class MainWindow : AppWindow
     {
         if (_settings is null)
             return;
+
+        // Commit the last shown outline width once (its PropertyChanged hook persists the layout);
+        // the final Update below then reads the already-updated Current.Layout.
+        if (DataContext is MainWindowViewModel vm)
+            vm.Layout.OutlineWidth = LayoutOptions.ClampOutlineWidth(_outlineWidth);
 
         var maximized = WindowState == WindowState.Maximized;
         // When maximized, Width/Height are the maximized rectangle — persist the tracked Normal bounds.

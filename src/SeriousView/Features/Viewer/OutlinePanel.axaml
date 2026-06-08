@@ -8,8 +8,9 @@
        Bound to the active tab's Outline; each item navigates via the tab's
        NavigateToHeadingCommand (runtime binding through the ItemsControl DataContext,
        as the item DataContext is a HeadingOutline). -->
-  <Border Width="240"
-          Background="{DynamicResource ChromeOverlayBrush}"
+  <!-- Width is driven by the shell's OutlineColumn (user-resizable via the GridSplitter); the panel
+       stretches to fill it. -->
+  <Border Background="{DynamicResource ChromeOverlayBrush}"
           BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
     <Panel>
     <!-- Same barely-there accent glow as the markdown preview, so the reading chrome is cohesive

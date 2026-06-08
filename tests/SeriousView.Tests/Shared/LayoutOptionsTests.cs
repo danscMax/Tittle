@@ -17,6 +17,7 @@ public class LayoutOptionsTests
         Assert.True(o.ShowOmnibar);
         Assert.False(o.ShowRail);
         Assert.True(o.ReadingMode);   // reading column on by default (etalon)
+        Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
     }
 
     [Fact]
@@ -30,8 +31,20 @@ public class LayoutOptionsTests
             ShowOmnibar = false,
             ShowRail = true,
             ReadingMode = false,
+            OutlineWidth = 320,
         };
 
         Assert.Equal(s, LayoutOptions.FromSettings(s).ToSettings());
+    }
+
+    [Theory]
+    [InlineData(100, 180)]   // below min → clamped up
+    [InlineData(500, 480)]   // above max → clamped down
+    [InlineData(300, 300)]   // in range → unchanged
+    public void OutlineWidth_IsClampedToRange(double set, double expected)
+    {
+        var o = new LayoutOptions { OutlineWidth = set };
+
+        Assert.Equal(expected, o.OutlineWidth);
     }
 }

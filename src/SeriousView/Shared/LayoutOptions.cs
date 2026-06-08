@@ -1,3 +1,4 @@
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SeriousView.Core.Settings;
 
@@ -29,6 +30,24 @@ public partial class LayoutOptions : ObservableObject
     [ObservableProperty]
     private bool _readingMode = true;
 
+    /// <summary>Outline/TOC sidebar width range (px). Shared by the splitter (view) and persistence.</summary>
+    public const double MinOutlineWidth = 180, MaxOutlineWidth = 480, DefaultOutlineWidth = 240;
+
+    /// <summary>Clamp a width into the allowed range (NaN → default).</summary>
+    public static double ClampOutlineWidth(double w) =>
+        Math.Clamp(double.IsNaN(w) ? DefaultOutlineWidth : w, MinOutlineWidth, MaxOutlineWidth);
+
+    [ObservableProperty]
+    private double _outlineWidth = DefaultOutlineWidth;
+
+    // Keep the persisted/observable width sane even if a settings file is hand-edited out of range.
+    partial void OnOutlineWidthChanged(double value)
+    {
+        var clamped = ClampOutlineWidth(value);
+        if (clamped != value)
+            OutlineWidth = clamped; // re-set lands in range; an equal value is a no-op (no loop)
+    }
+
     public LayoutSettings ToSettings() => new()
     {
         MenuPlacement = MenuPlacement,
@@ -37,6 +56,7 @@ public partial class LayoutOptions : ObservableObject
         ShowOmnibar = ShowOmnibar,
         ShowRail = ShowRail,
         ReadingMode = ReadingMode,
+        OutlineWidth = OutlineWidth,
     };
 
     /// <summary>Build options from persisted settings, or the etalon defaults when none are saved.</summary>
@@ -50,5 +70,6 @@ public partial class LayoutOptions : ObservableObject
             ShowOmnibar = s.ShowOmnibar,
             ShowRail = s.ShowRail,
             ReadingMode = s.ReadingMode,
+            OutlineWidth = s.OutlineWidth,
         };
 }

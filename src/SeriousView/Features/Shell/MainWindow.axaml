@@ -221,11 +221,23 @@
       </DockPanel>
     </Border>
 
-    <!-- Outline sidebar (col 0, collapses to 0 when hidden) + document body (col 1). -->
-    <Grid ColumnDefinitions="Auto,*">
+    <!-- Outline sidebar (col 0, user-resizable via the splitter; code-behind collapses it to 0 when
+         hidden) + drag handle (col 1) + document body (col 2). The pixel width of OutlineColumn is
+         restored/persisted in code-behind (a ColumnDefinition has no DataContext to bind through). -->
+    <Grid x:Name="BodyGrid">
+      <Grid.ColumnDefinitions>
+        <!-- [0] outline sidebar — width restored / persisted / collapsed from code-behind. -->
+        <ColumnDefinition Width="240" MinWidth="180" MaxWidth="480"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
       <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
+      <GridSplitter Grid.Column="1" AutomationProperties.AutomationId="OutlineSplitter"
+                    ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                    Width="5" Background="Transparent" Cursor="SizeWestEast"
+                    IsVisible="{Binding IsOutlinePaneVisible}"/>
 
-      <Panel Grid.Column="1">
+      <Panel Grid.Column="2">
         <!-- Welcome view shown when no tabs are open. -->
         <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
         <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
