@@ -45,6 +45,7 @@ heavy rendering extras (high effort/risk)**. `★` = audit priority. Effort: S/M
 | # | Item | Notes |
 |---|---|---|
 | 11 | Reuse existing tab when reopening the same file | Opens twice today. |
+| 11b | Single-instance: open the file in the running window, not a 2nd process | File association (`"exe" "%1"`) spawns a new process/window per click today. Needs single-instance guard + IPC to forward the path to the live app. Pairs with #11; makes the `.md` association feel native. |
 | 18 | Tab drag-reorder | Deferred from M2 C9 (now a ListBox). |
 | 25 | Tab context menu (close / close others / copy path / reveal) | |
 | 30 | Tab tooltip with full path | Header is truncated. |
@@ -107,7 +108,7 @@ CSV/TSV-as-table · JSON pretty-print toggle.
 - **Done — M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
 - **Done — M6 persistence:** 21★ 22★ 39 40 (+ session restore). **#9 window icon deferred.**
 - **Done — M7 keyboard:** 12 13 14 15 16 19 20 29.
-- **M8 tabs/UX:** 11 17 18 23 24 25 26 27 28 30.
+- **M8 tabs/UX:** 11 11b 17 18 23 24 25 26 27 28 30.
 - Improvements 1–40 are fully placed; ported-only features (search, math, diagrams, export,
   sync-scroll, live-reload) are M9–M14.
 
