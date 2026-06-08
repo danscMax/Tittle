@@ -16,6 +16,17 @@
         Background="Transparent"
         TransparencyLevelHint="AcrylicBlur, Mica, Blur"
         DragDrop.AllowDrop="True">
+  <wnd:AppWindow.Styles>
+    <!-- Compact flat buttons for the editor controls that now live in the status bar (wrap/numbers/zoom). -->
+    <Style Selector="Button.statusbtn">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="6,1"/>
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
+    </Style>
+  </wnd:AppWindow.Styles>
   <!-- AppWindow draws our content into the title-bar area (ExtendsContentIntoTitleBar, set in
        code-behind). The single top strip = brand + tab strip + buttons, painted with the
        semi-transparent ChromeOverlayBrush so it picks up the app colour AND lets the OS
@@ -62,21 +73,8 @@
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
-        <!-- Editor controls (wrap · line numbers · zoom) — shown only when the source editor is
-             visible. They drive the shared EditorOptions, same as the keyboard shortcuts. -->
-        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding SelectedTab.ShowSource}">
-          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                  Content="↵" FontSize="14" Padding="9,3"/>
-          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                  Content="#" FontSize="13" Padding="9,3"/>
-          <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
-                  Content="A−" Padding="8,3"/>
-          <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
-                  Content="{Binding Editor.FontSize}" MinWidth="34" Padding="6,3"/>
-          <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
-                  Content="A+" Padding="8,3"/>
-          <Border Width="1" Margin="4,8" Background="{DynamicResource ChromeForegroundBrush}" Opacity="0.18"/>
-        </StackPanel>
+        <!-- Editor controls (wrap · numbers · zoom) moved to the status bar — see below; zoom is no
+             longer duplicated in the title bar. -->
         <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
         <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
                 IsVisible="{Binding SelectedTab.IsMarkdown}"
@@ -113,6 +111,21 @@
                    IsVisible="{Binding SelectedTab.ShowSource}" Margin="0,0,12,0"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Editor controls (wrap · numbers · zoom) — status bar, source view only (moved from the
+             title bar). Same commands as the keyboard shortcuts and the shared EditorOptions. -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
+                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource}">
+          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                  Content="↵" Classes="statusbtn"/>
+          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                  Content="#" Classes="statusbtn"/>
+          <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
+                  Content="A−" Classes="statusbtn"/>
+          <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
+                  Content="{Binding Editor.FontSize}" Classes="statusbtn"/>
+          <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
+                  Content="A+" Classes="statusbtn"/>
+        </StackPanel>
         <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
                 Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <!-- Left segment: status messages, replaced by the go-to-line input (Ctrl+G) while open.
