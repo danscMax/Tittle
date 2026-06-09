@@ -12,6 +12,7 @@ using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
+using SeriousView.Features.Settings;
 using SeriousView.Platform;
 using SeriousView.Shared;
 
@@ -156,6 +157,25 @@ public partial class MainWindow : AppWindow
             OpenCommandPalette(vm);
     }
 
+    // Layout settings window (☰ ▸ Раскладка / palette). A single instance, kept open while the user toggles
+    // knobs and watches the chrome update live; reactivated rather than re-created.
+    private LayoutSettingsWindow? _layoutSettings;
+
+    private void OpenLayoutSettings()
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+        if (_layoutSettings is not null)
+        {
+            _layoutSettings.Activate();
+            return;
+        }
+
+        _layoutSettings = new LayoutSettingsWindow { DataContext = vm.Layout };
+        _layoutSettings.Closed += (_, _) => _layoutSettings = null;
+        _layoutSettings.Show(this);
+    }
+
     // Go-to-line input (status bar): Enter submits the jump, Esc closes.
     private void OnGoToLineKeyDown(object? sender, KeyEventArgs e)
     {
@@ -193,6 +213,7 @@ public partial class MainWindow : AppWindow
         DataContext = viewModel;
         RestoreWindow();
         WireOutlineSidebar(viewModel);
+        viewModel.LayoutSettingsRequested += OpenLayoutSettings;
     }
 
     // Restore the persisted outline width, follow live drags into a field, and expand/collapse the

@@ -94,6 +94,8 @@
                         IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <Separator/>
               <MenuItem Header="Перейти к строке…" InputGesture="Ctrl+G" Command="{Binding OpenGoToLineCommand}"/>
+              <Separator/>
+              <MenuItem Header="Раскладка…" Command="{Binding OpenLayoutSettingsCommand}"/>
             </MenuItem>
           </MenuFlyout>
         </Button.Flyout>

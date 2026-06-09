@@ -102,6 +102,15 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSearch() => SelectedTab?.OpenSearchCommand.Execute(null);
 
+    /// <summary>Raised when the user opens layout settings (☰ ▸ Раскладка or the palette); the window is
+    /// a view concern, so the shell's code-behind shows it.</summary>
+    public event Action? LayoutSettingsRequested;
+
+    /// <summary>Open the Settings ▸ Layout window — it binds to the shared <see cref="Layout"/>, so its
+    /// toggles persist and re-render the chrome live.</summary>
+    [RelayCommand]
+    private void OpenLayoutSettings() => LayoutSettingsRequested?.Invoke();
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, string[] args)
@@ -183,6 +192,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Тема: тёмная", SetThemeCommand, parameter: ThemeMode.Dark),
             new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
             new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
+            new("Настройки: раскладка…", OpenLayoutSettingsCommand),
         };
 
         if (SelectedTab is { IsMarkdown: true } tab)

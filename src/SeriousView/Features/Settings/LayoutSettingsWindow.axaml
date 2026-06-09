@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="using:SeriousView.Shared"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="320"
+        x:Class="SeriousView.Features.Settings.LayoutSettingsWindow"
+        x:DataType="shared:LayoutOptions"
+        Title="Раскладка"
+        Width="400" SizeToContent="Height" CanResize="False"
+        ShowInTaskbar="False" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+  <!-- A standalone top-level window (like the command palette): bound to the shared LayoutOptions, so every
+       toggle persists and re-renders the chrome live. Stays open (no click-away close) so the user can watch
+       the changes; Esc / Готово close it. -->
+  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="20">
+    <StackPanel Spacing="16">
+      <TextBlock Text="Раскладка интерфейса" FontSize="16" FontWeight="SemiBold"
+                 Foreground="{DynamicResource ChromeForegroundBrush}"/>
+
+      <CheckBox IsChecked="{Binding ShowOmnibar, Mode=TwoWay}"
+                Foreground="{DynamicResource ChromeForegroundBrush}"
+                Content="Омнибар (путь · открыть · палитра)"/>
+      <CheckBox IsChecked="{Binding ReadingMode, Mode=TwoWay}"
+                Foreground="{DynamicResource ChromeForegroundBrush}"
+                Content="Декоративный фон предпросмотра"/>
+
+      <StackPanel Spacing="6">
+        <TextBlock Text="Панель инструментов" FontSize="12.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <RadioButton GroupName="Toolbar" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Контекстная (в режиме «Исходник»)"
+                     IsChecked="{Binding ToolbarMode, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Contextual}"/>
+        <RadioButton GroupName="Toolbar" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Всегда показывать"
+                     IsChecked="{Binding ToolbarMode, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Fixed}"/>
+        <RadioButton GroupName="Toolbar" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Выключена"
+                     IsChecked="{Binding ToolbarMode, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Off}"/>
+      </StackPanel>
+
+      <Button Content="Готово" HorizontalAlignment="Right" Classes="accent"
+              AutomationProperties.Name="Закрыть настройки" Click="OnDone"/>
+    </StackPanel>
+  </Border>
+</Window>
