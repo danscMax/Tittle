@@ -97,7 +97,7 @@ in the **status bar** (chrome): an overlay floated over the editor won't repaint
 surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-**M7.5 (shell redesign) DONE; M8 (shell ergonomics) pending**: ☰ menu (default `MenuPlacement.Hidden`);
+**M7.5 (shell redesign) DONE; M8 (tabs ergonomics) core DONE**: ☰ menu (default `MenuPlacement.Hidden`);
 status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
 **resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,
 committed once on close); sidebar-panel PathIcon; single-instance file forwarding (Mutex + named pipe,
@@ -117,8 +117,15 @@ API). Then **M7.5 chrome COMPLETE** — phase 6 contextual editor toolbar (`Tool
 numbers; pure `ToolbarVisibilityConverter`; wrap/numbers relocate from the status bar with an Off-fallback,
 zoom stays) + phase 8 Settings ▸ Раскладка (☰/palette → a window bound to the shared `LayoutOptions`;
 ShowOmnibar/ReadingMode/ToolbarMode toggle the chrome live + persist; two-way `EnumRadioConverter`).
-Next: **M8** tab ergonomics or **M10** sync-scroll / active-heading. Feature spec source:
-`E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+Then **M8 tabs ergonomics core DONE**: reuse-tab on reopen (#11, pure `Core/Services/FilePathEquality`,
+`OpenPathAsync` activates the open tab); tab context menu (#25 close/others/right/all via a `ContextFlyout`,
+commands on the shell VM reached through a tab `Shell` back-ref — a flyout is a popup, so it can't walk the
+visual tree up to the shell); full-path tooltip (#30); copy path/name (#17, new `IClipboardService`); reveal
+in Explorer (#27, new `IShellService`, cross-platform `Process.Start` — explorer /select · open -R · xdg-open);
+tab drag-reorder (#18, live pointer gesture + `MoveTab`, which restores `SelectedTab` — the bound ListBox
+drops it on `ObservableCollection.Move`). Next: remaining **M8** polish (#28 open-error InfoBar, #24 button
+tooltips, #23 tab animation, #26 editor context menu) or **M10** sync-scroll / active-heading. Feature spec
+source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 

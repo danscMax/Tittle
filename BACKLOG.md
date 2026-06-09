@@ -79,16 +79,16 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 ---
 
-## M8 — Tabs ergonomics (what M7.5 doesn't cover) · effort M
+## M8 — Tabs ergonomics (what M7.5 doesn't cover) · effort M · **core DONE**
 
 | # | Item | Notes |
 |---|---|---|
-| 11 | Reuse existing tab when reopening the same file | Opens twice today (pairs with single-instance #11b). |
-| 18 | Tab drag-reorder | Original used native DnD + per-tab scroll restore + ←/→/Home/End nav. |
-| 25 | Tab context menu | Close / close others / close to right / close all (original `showTabMenu`). |
-| 30 | Tab tooltip with full path | Header is truncated. |
-| 17 | Copy file path / copy file name | |
-| 27 | "Reveal in explorer" via `IShellService` port | Core stays UI-free. |
+| 11 ✅ | Reuse existing tab when reopening the same file | DONE (`c58afc3`) — `OpenPathAsync` activates the open tab; pure `Core/Services/FilePathEquality`. |
+| 18 ✅ | Tab drag-reorder | DONE (`7982335`) — live reorder via a pointer gesture + `MoveTab`; restores selection (the ListBox drops it on `Move`). OS-DnD / arrow-key nav not ported. |
+| 25 ✅ | Tab context menu | DONE (`26bd884`) — close / others / right / all via a `ContextFlyout`; commands on the shell VM, reached through a tab `Shell` back-ref. |
+| 30 ✅ | Tab tooltip with full path | DONE (`26bd884`) — `ToolTip.Tip` = `FilePath`. |
+| 17 ✅ | Copy file path / copy file name | DONE (`e103206`) — new `IClipboardService` port. |
+| 27 ✅ | "Reveal in explorer" via `IShellService` port | DONE (`0611b9e`) — cross-platform `Process.Start` (explorer /select · open -R · xdg-open). |
 | 28 | Prominent open-error notification (InfoBar) | Status-bar-only is easy to miss. |
 | 24 | Button tooltips | |
 | 23 | Tab open/close animation | |
@@ -174,6 +174,7 @@ selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML ren
 **Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar,
 Ctrl+K palette, omnibar) and a tech-debt hardening pass are done. **Chosen direction: audit quick-wins + a11y**
 (background GC, 8 KB-head binary classification, accessible names + focus visuals; reduced-motion deferred to
-Av12). Remaining **M7.5** chrome: 6 contextual toolbar · 8 Settings▸Layout. Later: pull **M9 in-document
-search** forward (high value, reuses the palette seam) or knock out **M8 tab ergonomics** (reuse-tab-on-reopen
-#11, drag-reorder #18, context menu #25, full-path tooltip #30).
+Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, and **M8 core**
+(reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18). Next:
+remaining **M8** polish (#28 open-error InfoBar, #24 button tooltips, #23 tab animation, #26 editor context
+menu) or **M10** sync-scroll / active-heading.
