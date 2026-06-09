@@ -182,6 +182,32 @@
       </ListBox>
     </Border>
 
+    <!-- Contextual editor toolbar (M7.5 ф6): a thin source-mode row under the tabs. Shown per ToolbarMode
+         (Off never · Contextual in Source · Fixed always) via ToolbarVisibilityConverter; hosts Find + wrap +
+         numbers (zoom stays in the status bar). When ToolbarMode is Off the wrap/numbers fall back to the
+         status bar — never duplicated (the converter keeps them in exactly one place). -->
+    <Border DockPanel.Dock="Top" Background="{DynamicResource ChromeOverlayBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
+      <Border.IsVisible>
+        <MultiBinding Converter="{x:Static conv:ToolbarVisibilityConverter.Instance}" ConverterParameter="toolbar">
+          <Binding Path="Layout.ToolbarMode"/>
+          <Binding Path="SelectedTab.ShowSource" FallbackValue="False"/>
+          <Binding Path="HasTabs"/>
+        </MultiBinding>
+      </Border.IsVisible>
+      <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+        <Button Command="{Binding OpenSearchCommand}" ToolTip.Tip="Найти (Ctrl+F)"
+                AutomationProperties.Name="Найти" Classes="statusbtn">
+          <ui:SymbolIcon Symbol="Find" FontSize="15"/>
+        </Button>
+        <Border Width="1" Margin="6,2" Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
+        <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
+        <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
+      </StackPanel>
+    </Border>
+
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
          (lines · chars · language), divided by a thin separator. -->
     <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"
@@ -196,20 +222,31 @@
                    IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
-        <!-- Editor controls (wrap · numbers · zoom) — status bar, source view only (moved from the
-             title bar). Same commands as the keyboard shortcuts and the shared EditorOptions. -->
+        <!-- Zoom — always in the status bar in source mode (etalon: zoom lives only here). -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
                     VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}">
-          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                  AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
-          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                  AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
           <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
                   AutomationProperties.Name="Уменьшить шрифт" Content="A−" Classes="statusbtn"/>
           <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
                   AutomationProperties.Name="Размер шрифта" Content="{Binding Editor.FontSize}" Classes="statusbtn"/>
           <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
                   AutomationProperties.Name="Увеличить шрифт" Content="A+" Classes="statusbtn"/>
+        </StackPanel>
+        <!-- Wrap · numbers FALLBACK — shown here only when ToolbarMode is Off; otherwise they live in the
+             contextual toolbar above (the converter keeps them in exactly one place). -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,4,0"
+                    VerticalAlignment="Center">
+          <StackPanel.IsVisible>
+            <MultiBinding Converter="{x:Static conv:ToolbarVisibilityConverter.Instance}" ConverterParameter="statusfallback">
+              <Binding Path="Layout.ToolbarMode"/>
+              <Binding Path="SelectedTab.ShowSource" FallbackValue="False"/>
+              <Binding Path="HasTabs"/>
+            </MultiBinding>
+          </StackPanel.IsVisible>
+          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                  AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
+          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                  AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
         </StackPanel>
         <!-- Preview/source toggle (markdown only) — moved here from the title strip. Compact icon
              mirrors the current mode (eye = preview, {} = source); the tooltip names the action.
