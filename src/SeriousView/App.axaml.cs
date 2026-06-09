@@ -101,6 +101,7 @@ public partial class App : Application
         services.AddSingleton<Func<TopLevel?>>(_ => static () =>
             (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();

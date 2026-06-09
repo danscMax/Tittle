@@ -61,6 +61,17 @@ internal sealed class FakeThemeService : IThemeService
     public void ApplyCurrent() { /* no-op: the fake never touches the live Application */ }
 }
 
+internal sealed class FakeClipboardService : IClipboardService
+{
+    public string? LastText { get; private set; }
+
+    public Task SetTextAsync(string text)
+    {
+        LastText = text;
+        return Task.CompletedTask;
+    }
+}
+
 internal sealed class FakeRecentFilesStore : IRecentFilesStore
 {
     private readonly List<string> _items = new();

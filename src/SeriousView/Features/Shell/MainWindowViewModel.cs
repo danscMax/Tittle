@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IThemeService _theme;
     private readonly IRecentFilesStore _recent;
     private readonly IAppSettingsService _settings;
+    private readonly IClipboardService _clipboard;
     private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
     private bool _editorDirty;
 
@@ -114,13 +115,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
-        IRecentFilesStore recent, IAppSettingsService settings, string[] args)
+        IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard, string[] args)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
         _theme = theme;
         _recent = recent;
         _settings = settings;
+        _clipboard = clipboard;
 
         // Shared editor options, restored from settings. Persisted on change, but DEBOUNCED: a Ctrl+wheel
         // zoom spins ZoomIn/ZoomOut per notch, and each immediate _settings.Update did a synchronous
@@ -359,6 +361,23 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         Tabs.Clear();
         SelectedTab = null;
+    }
+
+    /// <summary>Copy the tab's full file path to the clipboard (tab context menu). No-op for a tab
+    /// without a backing file (the sample).</summary>
+    [RelayCommand]
+    private async Task CopyFilePath(DocumentTabViewModel? tab)
+    {
+        if (tab?.FilePath is { } path)
+            await _clipboard.SetTextAsync(path);
+    }
+
+    /// <summary>Copy the tab's file name to the clipboard (tab context menu). No-op when unsaved.</summary>
+    [RelayCommand]
+    private async Task CopyFileName(DocumentTabViewModel? tab)
+    {
+        if (tab?.FilePath is { } path)
+            await _clipboard.SetTextAsync(Path.GetFileName(path));
     }
 
     /// <summary>Activate the next tab, wrapping around (Ctrl+Tab).</summary>

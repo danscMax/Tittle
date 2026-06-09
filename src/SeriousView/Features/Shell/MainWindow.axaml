@@ -184,6 +184,9 @@
                   <MenuItem Header="Закрыть другие" Command="{Binding Shell.CloseOtherTabsCommand}" CommandParameter="{Binding}"/>
                   <MenuItem Header="Закрыть справа" Command="{Binding Shell.CloseTabsToRightCommand}" CommandParameter="{Binding}"/>
                   <MenuItem Header="Закрыть все" Command="{Binding Shell.CloseAllTabsCommand}"/>
+                  <Separator/>
+                  <MenuItem Header="Копировать путь" Command="{Binding Shell.CopyFilePathCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Копировать имя" Command="{Binding Shell.CopyFileNameCommand}" CommandParameter="{Binding}"/>
                 </MenuFlyout>
               </StackPanel.ContextFlyout>
               <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"

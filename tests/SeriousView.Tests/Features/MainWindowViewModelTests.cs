@@ -26,13 +26,15 @@ public class MainWindowViewModelTests
 
     private static MainWindowViewModel CreateVm(
         string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
-        IFileReader? fileReader = null, IAppSettingsService? settings = null)
+        IFileReader? fileReader = null, IAppSettingsService? settings = null,
+        IClipboardService? clipboard = null)
         => new(
             new FakeFileDialogService(dialogPath),
             fileReader ?? new FakeFileReader(content),
             new FakeThemeService(),
             new FakeRecentFilesStore(),
             settings ?? Holder(),
+            clipboard ?? new FakeClipboardService(),
             args ?? Array.Empty<string>());
 
     [AvaloniaFact]
@@ -134,7 +136,7 @@ public class MainWindowViewModelTests
         var theme = new FakeThemeService();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), theme,
-            new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
+            new FakeRecentFilesStore(), Holder(), new FakeClipboardService(), Array.Empty<string>());
 
         Assert.Equal(ThemeMode.Dark, vm.CurrentTheme);
 
@@ -151,7 +153,7 @@ public class MainWindowViewModelTests
         var theme = new FakeThemeService(); // starts Dark
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), theme,
-            new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
+            new FakeRecentFilesStore(), Holder(), new FakeClipboardService(), Array.Empty<string>());
 
         vm.SetThemeCommand.Execute(ThemeMode.Light);
 
@@ -232,7 +234,7 @@ public class MainWindowViewModelTests
         var recent = new FakeRecentFilesStore();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/doc.md"), new FakeFileReader("x"),
-            new FakeThemeService(), recent, Holder(), Array.Empty<string>());
+            new FakeThemeService(), recent, Holder(), new FakeClipboardService(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
@@ -245,7 +247,7 @@ public class MainWindowViewModelTests
         var recent = new FakeRecentFilesStore();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), new FakeThemeService(),
-            recent, Holder(), Array.Empty<string>());
+            recent, Holder(), new FakeClipboardService(), Array.Empty<string>());
         var dir = Path.Combine(Path.GetTempPath(), "docs");
         var path = Path.Combine(dir, "readme.md");
 
@@ -296,7 +298,7 @@ public class MainWindowViewModelTests
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/missing.txt"),
             new FakeFileReader(new FileNotFoundException()),
-            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
+            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), new FakeClipboardService(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
@@ -310,7 +312,7 @@ public class MainWindowViewModelTests
         var vm = new MainWindowViewModel(
             new FakeFileDialogService("/path/image.png"),
             new FakeFileReader(FileLoadResult.Binary(2048)),
-            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
+            new FakeThemeService(), new FakeRecentFilesStore(), Holder(), new FakeClipboardService(), Array.Empty<string>());
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
@@ -569,6 +571,42 @@ public class MainWindowViewModelTests
         Assert.Empty(vm.Tabs);
         Assert.Null(vm.SelectedTab);
         Assert.False(vm.HasTabs);
+    }
+
+    [AvaloniaFact]
+    public async Task CopyFilePath_PutsFullPathOnClipboard()
+    {
+        var clip = new FakeClipboardService();
+        var vm = CreateVm(content: "x", clipboard: clip);
+        await vm.OpenPathAsync("/docs/readme.md");
+
+        await vm.CopyFilePathCommand.ExecuteAsync(vm.SelectedTab);
+
+        Assert.Equal("/docs/readme.md", clip.LastText);
+    }
+
+    [AvaloniaFact]
+    public async Task CopyFileName_PutsFileNameOnClipboard()
+    {
+        var clip = new FakeClipboardService();
+        var vm = CreateVm(content: "x", clipboard: clip);
+        await vm.OpenPathAsync("/docs/readme.md");
+
+        await vm.CopyFileNameCommand.ExecuteAsync(vm.SelectedTab);
+
+        Assert.Equal("readme.md", clip.LastText);
+    }
+
+    [AvaloniaFact]
+    public async Task Copy_NoOp_WhenTabHasNoPath()
+    {
+        var clip = new FakeClipboardService();
+        var vm = CreateVm(clipboard: clip);
+        vm.OpenSampleCommand.Execute(null); // the sample tab has no FilePath
+
+        await vm.CopyFilePathCommand.ExecuteAsync(vm.SelectedTab);
+
+        Assert.Null(clip.LastText); // nothing copied
     }
 
     [AvaloniaFact]
