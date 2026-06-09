@@ -97,7 +97,17 @@ in the **status bar** (chrome): an overlay floated over the editor won't repaint
 surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-Next: M8 (tabs & shell ergonomics). Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`.
+**M7.5 (shell redesign) + M8 (shell ergonomics) in progress**: ☰ menu (default `MenuPlacement.Hidden`);
+status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
+**resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,
+committed once on close); sidebar-panel PathIcon; single-instance file forwarding (Mutex + named pipe,
+`CurrentUserOnly`-hardened); draggable title-bar; recent-file temp-path pruning. **Tab content is kept
+alive** — the body is an `ItemsControl` over `Tabs` with each tab's `DocumentView` toggled by `IsActive`
+(NOT a `ContentControl`), so switching tabs is a visibility flip, not a re-template — don't revert (project
+memory). A tech-debt audit also hardened the single-instance gate, debounced editor-zoom settings writes,
+cached TextMate `RegistryOptions` per theme, and virtualized the outline list.
+Next: finish M8 tab ergonomics (reuse-tab-on-reopen, drag-reorder, context menu) or pull **M9 in-doc search**
+forward. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 

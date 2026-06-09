@@ -35,11 +35,18 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
   (Ctrl+O/W, Ctrl+Tab, Ctrl+±/0 + wheel zoom, Ctrl+L, Alt+Z, Ctrl+G); shared `EditorOptions`;
   caret position in the status bar; auto-focus editor; go-to-line input in the status bar
 - **Dev tooling**: portable single-file build (`build.ps1/.bat` → `dist/SeriousView.exe`), dev run
-  (`run.ps1/.bat`), per-user file association (`install/uninstall-fileassoc.ps1/.bat`)
+  (`run.ps1/.bat`), per-user file association (`install/uninstall-fileassoc.ps1/.bat`), DPI-aware QA shots
+- **M7.5 shell (partial) + M8/shell ergonomics + tech-debt**: ☰ menu; status-bar preview/source toggle
+  (eye/`{}`) + wrap/numbers/zoom cluster; **resizable + persisted outline sidebar** (`GridSplitter` →
+  `LayoutSettings.OutlineWidth`); sidebar-panel icon; draggable title-bar; content padding; recent temp/dead
+  pruning; **single-instance** file-forward (hardened). **Tab content kept alive** (`ItemsControl` + `IsActive`,
+  no re-template on switch). Tech-debt audit: pipe ACL + race fixes, debounced zoom writes, cached TextMate
+  `RegistryOptions`, virtualized outline, dead-code removal. *(M7.5 4 Omnibar · 5 Ctrl+K palette · 6 contextual
+  toolbar · 8 Settings▸Layout still open.)*
 
 ---
 
-## ★ M7.5 — Shell redesign & customization · effort L · NEXT
+## ★ M7.5 — Shell redesign & customization · effort L · mostly done (4/5/6/8 remain)
 
 **Design locked** (100 mockups → synthesis → `combos`/`tools`/`custom` in `plans/shell-redesign/`).
 **Default layout = menu hidden behind ☰**; the whole chrome is driven by settings, not hard-coded.
@@ -63,12 +70,12 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 | Fix | What |
 |---|---|
-| go-to-line overlap | On welcome (no tab) the status text and go-to-line input both show and overlap — guard on `HasTabs`. |
-| Recent files ◐ | `OpenPathAsync` records any path with no validation → temp/dead files linger as raw long paths. Validate `File.Exists`, show **name + folder** (tooltip = full path), drop missing. **Display done (this commit): pure `RecentFileLabel` → name + folder + full-path tooltip, in the ☰ submenu and the welcome list (shared `RecentFileItem`). `File.Exists` drop-missing deferred with single-instance #11b.** |
-| Content padding | `DocumentView` preview & source have no padding — text hugs the edges. Add padding + readable max-width for preview. |
-| Draggable title-bar | Empty zone right of the tabs doesn't drag the window (the tab ListBox claims it). Make the empty area draggable. |
-| **Single-instance (#11b)** | File-open spawns a new process/window; needs single-instance + IPC to forward the path. **Also fixes the settings.json race** when multiple instances close. |
-| Window icon (#9) / brand | Drop the redundant brand text; add a real window/app icon (needs a brand asset). |
+| go-to-line overlap ✅ | Status text vs go-to-line input overlapped on welcome — guarded on `HasTabs` (`b37f4ba`). |
+| Recent files ✅ | name + folder display (tooltip = full path); **temp/dead-path pruning done** — pure `RecentFilePathPolicy` + `File.Exists` filter prune missing/`%Temp%` entries on load and never record them. |
+| Content padding ✅ | preview/source padded + readable column; decorative reading-mode background toggle. |
+| Draggable title-bar ✅ | empty title-strip zone now drags the window (hit-test-invisible chrome fill). |
+| **Single-instance (#11b) ✅** | file-open forwards to the running window as a new tab (per-user Mutex + named pipe, fail-open). **`CurrentUserOnly`-hardened + concurrency/race fixes** in the tech-debt audit (`c9bb766`). Also fixes the settings.json save race. |
+| Window icon (#9) / brand | Drop the redundant brand text; add a real window/app icon (needs a brand asset). **Still open.** |
 
 ---
 
@@ -159,6 +166,8 @@ selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML ren
 - Improvements 1–40 are fully placed. Ported-only features (search, sync-scroll, math, diagrams,
   export, live-reload, editing, + the pool) are M9–M16 and the ported pool.
 
-**Suggested next:** **M7.5** — it's the shell foundation everything else hangs off (menu/palette host
-future tools, the audit fixes are overdue, single-instance unblocks the file association). After it,
-pull **M9 search** forward (high value, reuses the palette seam).
+**Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar)
+and a tech-debt hardening pass are done. Choose: finish remaining **M7.5** chrome (4 Omnibar · 5 Ctrl+K
+palette · 6 contextual toolbar · 8 Settings▸Layout), or pull **M9 in-document search** forward (high value,
+reuses the future palette seam), or knock out **M8 tab ergonomics** (reuse-tab-on-reopen #11, drag-reorder
+#18, context menu #25, full-path tooltip #30).
