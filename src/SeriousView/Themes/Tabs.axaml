@@ -35,6 +35,7 @@
                     FontSize="10" Width="18" Height="18" Padding="0" Margin="2,0,8,0"
                     VerticalAlignment="Center" Opacity="0"
                     AutomationProperties.AutomationId="CloseTabButton"
+                    AutomationProperties.Name="Закрыть вкладку"
                     Background="Transparent" BorderThickness="0"
                     Command="{Binding $parent[ListBox].DataContext.CloseTabCommand}"
                     CommandParameter="{Binding}">

@@ -47,6 +47,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border x:Name="PART_Bg" Background="Transparent" Padding="{TemplateBinding Padding}"
+                BorderThickness="1" BorderBrush="Transparent"
                 CornerRadius="{DynamicResource ControlCornerRadius}">
           <ContentPresenter Content="{TemplateBinding Content}"
                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -61,11 +62,16 @@
   <Style Selector="Button.recent:pressed /template/ Border#PART_Bg">
     <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}" />
   </Style>
+  <!-- Keyboard focus ring: the custom template drops FluentAvalonia's focus adorner, so paint the
+       (always-present, transparent) 1px border with the accent when focused via the keyboard. -->
+  <Style Selector="Button.recent:focus-visible /template/ Border#PART_Bg">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+  </Style>
 
   <Style Selector="Button.outline-item">
     <Setter Property="Template">
       <ControlTemplate>
-        <Border x:Name="PART_Bg" Background="Transparent" Padding="{TemplateBinding Padding}" CornerRadius="4">
+        <Border x:Name="PART_Bg" Background="Transparent" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent" CornerRadius="4">
           <ContentPresenter Content="{TemplateBinding Content}"
                             Foreground="{TemplateBinding Foreground}"
                             FontSize="{TemplateBinding FontSize}"
@@ -80,6 +86,9 @@
   </Style>
   <Style Selector="Button.outline-item:pressed /template/ Border#PART_Bg">
     <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}" />
+  </Style>
+  <Style Selector="Button.outline-item:focus-visible /template/ Border#PART_Bg">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
 
   <!-- ☰ title-bar menu flyout: use the app's dark status-bar backing (and its submenus) instead of

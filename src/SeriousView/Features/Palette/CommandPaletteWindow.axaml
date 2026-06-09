@@ -31,6 +31,7 @@
           BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="6">
     <DockPanel>
       <TextBox x:Name="QueryBox" DockPanel.Dock="Top" Text="{Binding Query, Mode=TwoWay}"
+               AutomationProperties.Name="Поиск команды"
                Watermark="Команда…   ↑↓ выбрать · Enter выполнить · Esc закрыть"
                BorderThickness="0" Background="Transparent" FontSize="15" Padding="6,4" Margin="2,2,2,6"/>
       <ListBox x:Name="ResultsList" ItemsSource="{Binding Results}"

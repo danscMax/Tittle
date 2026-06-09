@@ -111,10 +111,12 @@
               Margin="8,6" Padding="3,1" VerticalAlignment="Center">
         <DockPanel>
           <Button DockPanel.Dock="Left" Classes="chrome-menu" ToolTip.Tip="Открыть файл (Ctrl+O)"
+                  AutomationProperties.Name="Открыть файл"
                   Command="{Binding OpenFileCommand}" Padding="6,3">
             <TextBlock Text="📂" FontSize="14"/>
           </Button>
           <Button DockPanel.Dock="Right" Classes="chrome-menu" ToolTip.Tip="Команды (Ctrl+K)"
+                  AutomationProperties.Name="Палитра команд"
                   Click="OnPaletteButtonClick" Padding="8,3">
             <TextBlock Text="⌘" FontSize="14"/>
           </Button>
@@ -199,15 +201,15 @@
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
                     VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}">
           <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                  Content="↵" Classes="statusbtn"/>
+                  AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
           <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                  Content="#" Classes="statusbtn"/>
+                  AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
           <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
-                  Content="A−" Classes="statusbtn"/>
+                  AutomationProperties.Name="Уменьшить шрифт" Content="A−" Classes="statusbtn"/>
           <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
-                  Content="{Binding Editor.FontSize}" Classes="statusbtn"/>
+                  AutomationProperties.Name="Размер шрифта" Content="{Binding Editor.FontSize}" Classes="statusbtn"/>
           <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
-                  Content="A+" Classes="statusbtn"/>
+                  AutomationProperties.Name="Увеличить шрифт" Content="A+" Classes="statusbtn"/>
         </StackPanel>
         <!-- Preview/source toggle (markdown only) — moved here from the title strip. Compact icon
              mirrors the current mode (eye = preview, {} = source); the tooltip names the action.
@@ -238,6 +240,7 @@
             <TextBlock Text="Перейти к строке:" VerticalAlignment="Center"
                        Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
             <TextBox x:Name="GoToLineBox" Width="72" Height="22" Padding="6,1" FontSize="11.5"
+                     AutomationProperties.Name="Номер строки"
                      Text="{Binding SelectedTab.GoToLineText}" VerticalAlignment="Center"/>
           </StackPanel>
         </Panel>
