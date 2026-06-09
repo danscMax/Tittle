@@ -84,7 +84,8 @@ inflates the `Height` getter by the title-bar height, so we measure that chrome 
 compensate on save to avoid per-launch drift; session (open files + active tab) reopened at startup
 when launched with no file arg (arg > session > welcome), **no `ISessionStore` port** (the holder is
 the seam). Unhandled exceptions logged to `%AppData%/SeriousView/crash.log` (`Platform/CrashLogger`
-+ pure `Core/Diagnostics/CrashLog`). Window icon (#9) deferred to a visual-polish pass.
++ pure `Core/Diagnostics/CrashLog`). Window icon (#9) done (`5a96163`): a flat book+quill icon (blue→teal
+on a dark squircle), wired as the exe `<ApplicationIcon>` + `Window.Icon`; `.ico`/`.png`/`.svg` in `Assets/`.
 **M7 (keyboard & editor controls) done**: a central tunnelling `KeyDown` dispatcher in `MainWindow`
 maps shortcuts to VM commands and runs *before* the focused AvaloniaEdit (which otherwise swallows
 letter-gestures via bubbling `KeyBindings`) — Ctrl+O/W, Ctrl+Tab/Shift+Tab tab nav, Ctrl+±/0 (+ NumPad)

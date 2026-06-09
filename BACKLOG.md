@@ -166,7 +166,7 @@ selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML ren
 - **Done — M5 reliability:** 31★ 32★ 33★ 34 35 36 37 38.
 - **Done — M6 persistence:** 21★ 22★ 39 40 (+ session restore).
 - **Done — M7 keyboard:** 12 13 14 15 16 19 20 29.
-- **M7.5 shell:** #9 window icon, draggable title-bar, recent-files fix, padding, go-to-line fix, single-instance(11b).
+- **M7.5 shell:** #9 window icon ✅ (`5a96163` — flat book+quill, exe `<ApplicationIcon>` + `Window.Icon`), draggable title-bar, recent-files fix, padding, go-to-line fix, single-instance(11b).
 - **M8 tabs:** 11 17 18 23 24 25 26 27 28 30.
 - Improvements 1–40 are fully placed. Ported-only features (search, sync-scroll, math, diagrams,
   export, live-reload, editing, + the pool) are M9–M16 and the ported pool.
