@@ -29,18 +29,19 @@ param(
     [switch]$NoOpen
 )
 
-chcp 65001 | Out-Null
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = 'Stop'
 
-$root    = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+$root = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+
+# Shared console UI + helpers (UTF-8 console, box glyphs, Write-Banner/Step/Ok/...,
+# Get-FileHashSHA256, Show-Notification). Keep ScriptKit.ps1 identical across repos.
+. (Join-Path $root 'ScriptKit.ps1')
+
 $project = Join-Path $root 'src\SeriousView\SeriousView.csproj'
 $outDir  = Join-Path $root 'dist'
 $start   = Get-Date
 
-Write-Host ''
-Write-Host "  SeriousView -- portable single-file  ($Rid)" -ForegroundColor Cyan
-Write-Host ''
+Write-Banner "SeriousView -- portable single-file" "Release  $Rid  single-file  self-contained"
 
 # Fresh output every time so a stale exe can never be mistaken for a new build.
 if (Test-Path -LiteralPath $outDir) { Remove-Item -LiteralPath $outDir -Recurse -Force }
@@ -58,11 +59,11 @@ $publishArgs = @(
 )
 if ($ReadyToRun) { $publishArgs += '-p:PublishReadyToRun=true' }
 
-Write-Host '  Publishing (first run restores the runtime pack -- can take a minute)...' -ForegroundColor DarkGray
+Write-Info 'Publishing (first run restores the runtime pack -- can take a minute)...'
 dotnet publish $project @publishArgs
 if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
-    Write-Host '  BUILD FAILED' -ForegroundColor Red
+    Write-Fail 'BUILD FAILED'
+    Show-Notification -Title 'SeriousView build' -Body 'Publish failed' -IsError
     exit $LASTEXITCODE
 }
 
@@ -71,19 +72,13 @@ Get-ChildItem -LiteralPath $outDir -Filter *.pdb -ErrorAction SilentlyContinue |
 
 $exe = Join-Path $outDir 'SeriousView.exe'
 if (-not (Test-Path -LiteralPath $exe)) {
-    Write-Host "  ERROR: expected $exe was not produced." -ForegroundColor Red
+    Write-Fail "expected $exe was not produced."
+    Show-Notification -Title 'SeriousView build' -Body 'Publish produced no exe' -IsError
     exit 1
 }
 
 $sizeMB = '{0:0.0} MB' -f ((Get-Item -LiteralPath $exe).Length / 1MB)
-# Get-FileHash isn't available in every PowerShell host here, so hash via .NET.
-$sha = & {
-    $algo = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $bytes = [System.IO.File]::ReadAllBytes($exe)
-        ([BitConverter]::ToString($algo.ComputeHash($bytes)) -replace '-', '')
-    } finally { $algo.Dispose() }
-}
+$sha    = Get-FileHashSHA256 -Path $exe
 $dur    = (Get-Date) - $start
 $time   = '{0}:{1:D2}' -f [math]::Floor($dur.TotalMinutes), $dur.Seconds
 
@@ -91,15 +86,17 @@ $time   = '{0}:{1:D2}' -f [math]::Floor($dur.TotalMinutes), $dur.Seconds
 $extra = Get-ChildItem -LiteralPath $outDir -File | Where-Object { $_.Name -ne 'SeriousView.exe' }
 
 Write-Host ''
-Write-Host "  DONE  --  $time" -ForegroundColor Green
-Write-Host "  $exe" -ForegroundColor White
-Write-Host "  size    $sizeMB" -ForegroundColor Gray
-Write-Host "  sha256  $sha" -ForegroundColor DarkGray
+Write-Ok "DONE  --  $time"
+Write-Host ("    " + $SK_TM + " " + $exe)                 -ForegroundColor White
+Write-Host ("    " + $SK_TM + " size    " + $sizeMB)      -ForegroundColor Gray
+Write-Host ("    " + $SK_TM + " sha256  " + $sha)         -ForegroundColor DarkGray
 if ($extra) {
-    Write-Host '  note: these files sit alongside the exe (not folded in):' -ForegroundColor Yellow
-    $extra | ForEach-Object { Write-Host "    $($_.Name)" -ForegroundColor Yellow }
+    Write-Warn 'these files sit alongside the exe (not folded in):'
+    $extra | ForEach-Object { Write-Info $_.Name }
 }
 Write-Host ''
+
+Show-Notification -Title 'SeriousView build' -Body "Done in $time -- $sizeMB" -IconPath $exe
 
 if (-not $NoOpen) {
     Start-Process explorer.exe -ArgumentList "/select,`"$exe`""
