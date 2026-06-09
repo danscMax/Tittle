@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
+using SeriousView.Features.Palette;
 using SeriousView.Platform;
 using SeriousView.Shared;
 
@@ -102,6 +103,14 @@ public partial class MainWindow : AppWindow
         var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
         var alt = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
 
+        // Ctrl+K opens the command palette — a separate top-level window, not a VM command.
+        if (ctrl && !shift && !alt && e.Key == Key.K)
+        {
+            OpenCommandPalette(vm);
+            e.Handled = true;
+            return;
+        }
+
         var command = (ctrl, shift, alt, e.Key) switch
         {
             (true, false, false, Key.O) => vm.OpenFileCommand,
@@ -127,6 +136,16 @@ public partial class MainWindow : AppWindow
         // Ctrl+G just opened the go-to-line input — move focus into it.
         if (e.Key == Key.G && vm.SelectedTab?.IsGoToLineOpen == true)
             Dispatcher.UIThread.Post(() => { GoToLineBox.Focus(); GoToLineBox.SelectAll(); });
+    }
+
+    // Open the Ctrl+K command palette as a fresh owned top-level window (rebuilt each time so it reflects
+    // the current commands / recent files / active tab). It closes itself on run / Esc / click-away.
+    private void OpenCommandPalette(MainWindowViewModel vm)
+    {
+        var paletteVm = new CommandPaletteViewModel(vm.BuildPaletteItems());
+        var window = new CommandPaletteWindow { DataContext = paletteVm };
+        paletteVm.Closed += window.Close;
+        window.Show(this);
     }
 
     // Go-to-line input (status bar): Enter submits the jump, Esc closes.

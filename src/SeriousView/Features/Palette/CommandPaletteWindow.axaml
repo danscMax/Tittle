@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:palette="using:SeriousView.Features.Palette"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="420"
+        x:Class="SeriousView.Features.Palette.CommandPaletteWindow"
+        x:DataType="palette:CommandPaletteViewModel"
+        Title="Команды"
+        Width="620" SizeToContent="Height" MaxHeight="480" CanResize="False"
+        ShowInTaskbar="False" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+  <!-- A separate top-level window (NOT a Popup/overlay): an overlay over AvaloniaEdit's GPU surface
+       won't repaint — see project memory. The card is drawn inside a transparent window so its rounded
+       corners + drop shadow show. -->
+  <Window.Styles>
+    <Style Selector="TextBlock.run">
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.run.hit">
+      <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </Window.Styles>
+
+  <!-- Solid surface: a standalone top-level window has no Mica backdrop, so the semi-transparent
+       ChromeOverlayBrush would show the desktop through it. EditorSurfaceBrush is opaque. -->
+  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="6">
+    <DockPanel>
+      <TextBox x:Name="QueryBox" DockPanel.Dock="Top" Text="{Binding Query, Mode=TwoWay}"
+               Watermark="Команда…   ↑↓ выбрать · Enter выполнить · Esc закрыть"
+               BorderThickness="0" Background="Transparent" FontSize="15" Padding="6,4" Margin="2,2,2,6"/>
+      <ListBox x:Name="ResultsList" ItemsSource="{Binding Results}"
+               SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+               Background="Transparent" BorderThickness="0" MaxHeight="400"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="palette:PaletteItem">
+            <Grid ColumnDefinitions="*,Auto">
+              <!-- Title with the fuzzy-matched characters highlighted (matched runs get the .hit class). -->
+              <ItemsControl Grid.Column="0" VerticalAlignment="Center"
+                            ItemsSource="{Binding ., Converter={x:Static palette:MatchHighlightConverter.Instance}}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="palette:TextRun">
+                    <TextBlock Text="{Binding Text}" Classes="run" Classes.hit="{Binding IsMatch}" FontSize="13.5"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Grid.Column="1" Text="{Binding Shortcut}" VerticalAlignment="Center"
+                         Foreground="{DynamicResource StatusBarForegroundBrush}" Opacity="0.55"
+                         FontSize="11.5" Margin="12,0,4,0"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+  </Border>
+</Window>

@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
+using SeriousView.Features.Palette;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
@@ -152,6 +153,39 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         _editorDirty = false;
         _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
+    }
+
+    /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active
+    /// markdown tab's view toggle and the recent files). Rebuilt per open so it reflects current state.</summary>
+    public IReadOnlyList<PaletteItem> BuildPaletteItems()
+    {
+        var items = new List<PaletteItem>
+        {
+            new("Открыть файл…", OpenFileCommand, "Ctrl+O"),
+            new("Открыть пример", OpenSampleCommand),
+            new("Закрыть вкладку", CloseActiveTabCommand, "Ctrl+W"),
+            new("Следующая вкладка", SelectNextTabCommand, "Ctrl+Tab"),
+            new("Предыдущая вкладка", SelectPreviousTabCommand, "Ctrl+Shift+Tab"),
+            new("Оглавление", ToggleOutlineCommand),
+            new("Декоративный фон", ToggleReadingModeCommand),
+            new("Перейти к строке…", OpenGoToLineCommand, "Ctrl+G"),
+            new("Перенос строк", ToggleWordWrapCommand, "Alt+Z"),
+            new("Номера строк", ToggleLineNumbersCommand, "Ctrl+L"),
+            new("Масштаб: больше", ZoomInCommand, "Ctrl++"),
+            new("Масштаб: меньше", ZoomOutCommand, "Ctrl+−"),
+            new("Масштаб: сбросить", ZoomResetCommand, "Ctrl+0"),
+            new("Тема: тёмная", SetThemeCommand, parameter: ThemeMode.Dark),
+            new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
+            new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
+        };
+
+        if (SelectedTab is { IsMarkdown: true } tab)
+            items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
+
+        foreach (var r in RecentItems)
+            items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
+
+        return items;
     }
 
     /// <summary>Reopens the documents from the saved session, silently skipping any that are
