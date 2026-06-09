@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Services;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
 using SeriousView.Shared;
@@ -253,12 +254,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenSample() => AddTab(DocumentTabViewModel.CreateSample());
 
-    /// <summary>Loads <paramref name="path"/> into a new active tab and records it as recent.
-    /// Real I/O failures become a friendly status message instead of a crash.</summary>
+    /// <summary>Loads <paramref name="path"/> into a new active tab and records it as recent. If the file
+    /// is already open, its existing tab is activated instead of loading a duplicate. Real I/O failures
+    /// become a friendly status message instead of a crash.</summary>
     public async Task OpenPathAsync(string path)
     {
         try
         {
+            // Reopening an already-open file just activates its tab — no duplicate. Every open path
+            // funnels through here (Ctrl+O, recent, drag-drop, single-instance forwarding), so this
+            // one check covers them all. RestoreSessionAsync deliberately bypasses this (empty list).
+            var existing = Tabs.FirstOrDefault(t => FilePathEquality.SameFile(t.FilePath, path));
+            if (existing is not null)
+            {
+                SelectedTab = existing;
+                _recent.Add(path);
+                return;
+            }
+
             var result = await _fileReader.LoadAsync(path);
             AddTab(DocumentTabViewModel.FromLoad(result, path));
             _recent.Add(path);

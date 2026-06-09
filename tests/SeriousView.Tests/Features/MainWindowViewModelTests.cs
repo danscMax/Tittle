@@ -190,6 +190,43 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task OpenPath_SameFileTwice_ReusesTab_NoDuplicate()
+    {
+        var vm = CreateVm(content: "x");
+        await vm.OpenPathAsync("/docs/readme.md");
+        var first = vm.SelectedTab!;
+        vm.OpenSampleCommand.Execute(null); // move the selection away
+
+        await vm.OpenPathAsync("/docs/readme.md"); // reopen the same file
+
+        Assert.Equal(2, vm.Tabs.Count);     // sample + readme — no second readme tab
+        Assert.Same(first, vm.SelectedTab); // the existing tab is re-activated
+    }
+
+    [AvaloniaFact]
+    public async Task OpenPath_SameFile_DifferentCase_ReusesTab()
+    {
+        var vm = CreateVm(content: "x");
+        await vm.OpenPathAsync("/docs/readme.md");
+        var first = vm.SelectedTab!;
+
+        await vm.OpenPathAsync("/docs/README.MD"); // same file, different case
+
+        Assert.Single(vm.Tabs);
+        Assert.Same(first, vm.SelectedTab);
+    }
+
+    [AvaloniaFact]
+    public async Task OpenPath_DifferentFiles_OpenSeparateTabs()
+    {
+        var vm = CreateVm(content: "x");
+        await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md");
+
+        Assert.Equal(2, vm.Tabs.Count);
+    }
+
+    [AvaloniaFact]
     public async Task OpenFile_RecordsRecentFile()
     {
         var recent = new FakeRecentFilesStore();
