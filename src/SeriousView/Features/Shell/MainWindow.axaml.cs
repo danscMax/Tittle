@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Reactive;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
@@ -40,6 +41,14 @@ public partial class MainWindow : AppWindow
     // width here and commit it to the (persisted) LayoutOptions once on close — routing every drag
     // pixel through Layout.PropertyChanged would rewrite settings.json continuously.
     private double _outlineWidth = LayoutOptions.DefaultOutlineWidth;
+
+    // Tab drag-reorder: the tab grabbed on press, the press point, and whether we've passed the movement
+    // threshold. The Tabs collection reorders live as the cursor crosses neighbours — the dragged tab is
+    // itself the visual feedback, so there's no separate insertion adorner.
+    private DocumentTabViewModel? _dragTab;
+    private Point _dragStart;
+    private bool _dragging;
+    private const double DragThreshold = 5;
 
     // The outline sidebar is column [0] of the body grid. A named ColumnDefinition gets no generated
     // code-behind field (it isn't a control), so reach it through the named grid instead.
@@ -75,6 +84,10 @@ public partial class MainWindow : AppWindow
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         // Go-to-line input (status bar): Enter jumps, Esc closes.
         GoToLineBox.KeyDown += OnGoToLineKeyDown;
+        // Tab drag-reorder. Tunnel so we observe the gesture before the ListBox's own pointer handling.
+        TabStrip.AddHandler(PointerPressedEvent, OnTabPointerPressed, RoutingStrategies.Tunnel);
+        TabStrip.AddHandler(PointerMovedEvent, OnTabPointerMoved, RoutingStrategies.Tunnel);
+        TabStrip.AddHandler(PointerReleasedEvent, OnTabPointerReleased, RoutingStrategies.Tunnel);
 #if DEBUG
         this.AttachDevTools();
 #endif
@@ -206,6 +219,71 @@ public partial class MainWindow : AppWindow
             vm.Editor.ZoomOut();
         e.Handled = true;
     }
+
+    // --- Tab drag-reorder (#18). Press a tab and drag horizontally; Tabs reorders live as the cursor
+    //     crosses each neighbour's midpoint. A plain click still selects, the close button still closes
+    //     (we skip presses on it), and a right-click still opens the context menu (left button only). ---
+
+    private void OnTabPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        _dragTab = null;
+        _dragging = false;
+        if (!e.GetCurrentPoint(TabStrip).Properties.IsLeftButtonPressed)
+            return;
+        // Leave the close button (and any future in-tab button) to its own click.
+        if (e.Source is Visual v && (v is Button || v.GetVisualAncestors().OfType<Button>().Any()))
+            return;
+        if (TabItemFrom(e.Source)?.DataContext is DocumentTabViewModel tab)
+        {
+            _dragTab = tab;
+            _dragStart = e.GetPosition(TabStrip);
+        }
+    }
+
+    private void OnTabPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_dragTab is null || DataContext is not MainWindowViewModel vm)
+            return;
+        if (!e.GetCurrentPoint(TabStrip).Properties.IsLeftButtonPressed)
+        {
+            _dragTab = null; // the button came up outside the strip
+            _dragging = false;
+            return;
+        }
+
+        var x = e.GetPosition(TabStrip).X;
+        if (!_dragging)
+        {
+            if (Math.Abs(x - _dragStart.X) < DragThreshold)
+                return;
+            _dragging = true; // crossed the threshold — this is a drag, not a click
+        }
+
+        vm.MoveTab(_dragTab, TargetIndexAt(x));
+    }
+
+    private void OnTabPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _dragTab = null;
+        _dragging = false;
+    }
+
+    // The slot the cursor is over: the first tab whose horizontal midpoint is right of the cursor, else
+    // the last. The tab strip uses a (non-virtualizing) StackPanel, so every container is realized.
+    private int TargetIndexAt(double x)
+    {
+        for (var i = 0; i < TabStrip.ItemCount; i++)
+        {
+            if (TabStrip.ContainerFromIndex(i) is Control c
+                && x < (c.TranslatePoint(default, TabStrip)?.X ?? 0) + c.Bounds.Width / 2)
+                return i;
+        }
+        return Math.Max(0, TabStrip.ItemCount - 1);
+    }
+
+    private static ListBoxItem? TabItemFrom(object? source)
+        => source as ListBoxItem
+           ?? (source as Visual)?.GetVisualAncestors().OfType<ListBoxItem>().FirstOrDefault();
 
     public MainWindow(MainWindowViewModel viewModel, IAppSettingsService settings) : this()
     {

@@ -161,7 +161,7 @@
     <Border DockPanel.Dock="Top" IsVisible="{Binding HasTabs}"
             Background="{DynamicResource ChromeOverlayBrush}"
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
-      <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+      <ListBox x:Name="TabStrip" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
                ItemContainerTheme="{StaticResource VsCodeTab}"
                Background="Transparent" BorderThickness="0" Padding="0"
                HorizontalAlignment="Left" VerticalAlignment="Bottom"

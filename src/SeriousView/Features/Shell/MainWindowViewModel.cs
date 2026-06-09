@@ -391,6 +391,29 @@ public partial class MainWindowViewModel : ViewModelBase
             _shell.RevealInExplorer(path);
     }
 
+    /// <summary>Move <paramref name="tab"/> to <paramref name="targetIndex"/> (tab drag-reorder, driven by
+    /// the view's pointer gesture). The same instance stays selected; the index is clamped to the
+    /// collection. A no-op when the tab isn't open or is already at the target.</summary>
+    public void MoveTab(DocumentTabViewModel tab, int targetIndex)
+    {
+        var from = Tabs.IndexOf(tab);
+        if (from < 0)
+            return;
+
+        var to = Math.Clamp(targetIndex, 0, Tabs.Count - 1);
+        if (to == from)
+            return;
+
+        // The bound ListBox drops its SelectedItem when the collection moves and writes that null back
+        // through the two-way binding, blanking the active tab. Capture and restore the selection so the
+        // dragged tab (and its shown content) survives the reorder. (No-op in headless VM tests, where
+        // there's no ListBox to clear it — hence this is covered by the drag visual check, not a unit test.)
+        var selected = SelectedTab;
+        Tabs.Move(from, to);
+        if (!ReferenceEquals(SelectedTab, selected))
+            SelectedTab = selected;
+    }
+
     /// <summary>Activate the next tab, wrapping around (Ctrl+Tab).</summary>
     [RelayCommand]
     private void SelectNextTab() => CycleTab(1);

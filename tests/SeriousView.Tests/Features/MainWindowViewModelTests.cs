@@ -635,6 +635,47 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void MoveTab_ReordersAndKeepsSelection()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // 0
+        vm.OpenSampleCommand.Execute(null); // 1
+        vm.OpenSampleCommand.Execute(null); // 2 (selected)
+        var (a, b, c) = (vm.Tabs[0], vm.Tabs[1], vm.Tabs[2]);
+        var selected = vm.SelectedTab!;
+
+        vm.MoveTab(a, 2); // drag the first tab to the end
+
+        Assert.Equal(new[] { b, c, a }, vm.Tabs);
+        Assert.Same(selected, vm.SelectedTab); // selection follows the instance, not the slot
+    }
+
+    [AvaloniaFact]
+    public void MoveTab_ClampsTargetIndex()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // 0
+        vm.OpenSampleCommand.Execute(null); // 1
+        var (a, b) = (vm.Tabs[0], vm.Tabs[1]);
+
+        vm.MoveTab(a, 99); // out of range → clamps to the last slot
+
+        Assert.Equal(new[] { b, a }, vm.Tabs);
+    }
+
+    [AvaloniaFact]
+    public void MoveTab_NoOp_ForUnknownTab()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
+        var orphan = DocumentTabViewModel.CreateSample(); // never added to Tabs
+
+        vm.MoveTab(orphan, 0); // must not throw or disturb the collection
+
+        Assert.Single(vm.Tabs);
+    }
+
+    [AvaloniaFact]
     public void OpenGoToLine_OpensOverlay_OnSourceTab()
     {
         var vm = CreateVm(content: "x", args: new[] { "/a.cs" }); // code → source view
