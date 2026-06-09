@@ -321,6 +321,46 @@ public partial class MainWindowViewModel : ViewModelBase
             CloseTab(SelectedTab);
     }
 
+    /// <summary>Close every tab except <paramref name="tab"/> (tab context menu); it becomes active.</summary>
+    [RelayCommand]
+    private void CloseOtherTabs(DocumentTabViewModel? tab)
+    {
+        if (tab is null || !Tabs.Contains(tab))
+            return;
+
+        foreach (var other in Tabs.Where(t => !ReferenceEquals(t, tab)).ToList())
+            Tabs.Remove(other);
+
+        SelectedTab = tab;
+    }
+
+    /// <summary>Close every tab to the right of <paramref name="tab"/> (tab context menu). If the active
+    /// tab was among those closed, the selection falls back to <paramref name="tab"/>.</summary>
+    [RelayCommand]
+    private void CloseTabsToRight(DocumentTabViewModel? tab)
+    {
+        if (tab is null)
+            return;
+
+        var index = Tabs.IndexOf(tab);
+        if (index < 0)
+            return;
+
+        for (var i = Tabs.Count - 1; i > index; i--)
+            Tabs.RemoveAt(i);
+
+        if (SelectedTab is null || !Tabs.Contains(SelectedTab))
+            SelectedTab = tab;
+    }
+
+    /// <summary>Close every tab (tab context menu).</summary>
+    [RelayCommand]
+    private void CloseAllTabs()
+    {
+        Tabs.Clear();
+        SelectedTab = null;
+    }
+
     /// <summary>Activate the next tab, wrapping around (Ctrl+Tab).</summary>
     [RelayCommand]
     private void SelectNextTab() => CycleTab(1);
@@ -357,6 +397,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         tab.Editor = Editor;   // share one editor-options instance across all tabs
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
+        tab.Shell = this;      // back-reference for the tab's context-menu commands
         Tabs.Add(tab);
         SelectedTab = tab;
     }

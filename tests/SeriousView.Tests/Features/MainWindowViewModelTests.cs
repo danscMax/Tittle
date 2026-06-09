@@ -499,6 +499,79 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void AddedTab_GetsShellBackReference()
+    {
+        var vm = CreateVm();
+
+        vm.OpenSampleCommand.Execute(null);
+
+        Assert.Same(vm, vm.Tabs[0].Shell); // wired in AddTab so the context menu can reach the shell
+    }
+
+    [AvaloniaFact]
+    public void CloseOtherTabs_KeepsOnlyTheTarget_AndSelectsIt()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // 0
+        vm.OpenSampleCommand.Execute(null); // 1
+        vm.OpenSampleCommand.Execute(null); // 2
+        var keep = vm.Tabs[1];
+
+        vm.CloseOtherTabsCommand.Execute(keep);
+
+        Assert.Single(vm.Tabs);
+        Assert.Same(keep, vm.Tabs[0]);
+        Assert.Same(keep, vm.SelectedTab);
+    }
+
+    [AvaloniaFact]
+    public void CloseTabsToRight_RemovesTabsAfterTarget_AndFixesSelection()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // 0
+        vm.OpenSampleCommand.Execute(null); // 1
+        vm.OpenSampleCommand.Execute(null); // 2 (selected)
+        var pivot = vm.Tabs[0];
+
+        vm.CloseTabsToRightCommand.Execute(pivot);
+
+        Assert.Single(vm.Tabs);             // only the pivot remains
+        Assert.Same(pivot, vm.Tabs[0]);
+        Assert.Same(pivot, vm.SelectedTab); // the removed selection fell back to the pivot
+    }
+
+    [AvaloniaFact]
+    public void CloseTabsToRight_KeepsSelection_WhenSelectedIsLeftOfPivot()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // 0
+        vm.OpenSampleCommand.Execute(null); // 1
+        vm.OpenSampleCommand.Execute(null); // 2
+        var left = vm.Tabs[0];
+        vm.SelectedTab = left;
+        var pivot = vm.Tabs[1];
+
+        vm.CloseTabsToRightCommand.Execute(pivot);
+
+        Assert.Equal(2, vm.Tabs.Count);    // 0 and 1 remain, 2 removed
+        Assert.Same(left, vm.SelectedTab); // selection (left of the pivot) is untouched
+    }
+
+    [AvaloniaFact]
+    public void CloseAllTabs_EmptiesAndDeselects()
+    {
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null);
+        vm.OpenSampleCommand.Execute(null);
+
+        vm.CloseAllTabsCommand.Execute(null);
+
+        Assert.Empty(vm.Tabs);
+        Assert.Null(vm.SelectedTab);
+        Assert.False(vm.HasTabs);
+    }
+
+    [AvaloniaFact]
     public void OpenGoToLine_OpensOverlay_OnSourceTab()
     {
         var vm = CreateVm(content: "x", args: new[] { "/a.cs" }); // code → source view

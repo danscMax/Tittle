@@ -174,7 +174,18 @@
         </ListBox.ItemsPanel>
         <ListBox.ItemTemplate>
           <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <StackPanel Orientation="Horizontal" Spacing="6">
+            <!-- Hover shows the full path (#30); right-click opens the tab context menu (#25). The menu's
+                 commands live on the shell VM and are reached via the tab's Shell back-reference — a
+                 context flyout is a popup, so its bindings can't walk the visual tree up to the shell. -->
+            <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding FilePath}">
+              <StackPanel.ContextFlyout>
+                <MenuFlyout>
+                  <MenuItem Header="Закрыть" Command="{Binding Shell.CloseTabCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть другие" Command="{Binding Shell.CloseOtherTabsCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть справа" Command="{Binding Shell.CloseTabsToRightCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть все" Command="{Binding Shell.CloseAllTabsCommand}"/>
+                </MenuFlyout>
+              </StackPanel.ContextFlyout>
               <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
                              Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
               <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>

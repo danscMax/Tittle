@@ -204,6 +204,13 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// added — same pattern as <see cref="Editor"/>. The preview binds to it; null in unit fixtures.</summary>
     public LayoutOptions? Layout { get; set; }
 
+    /// <summary>Back-reference to the owning shell, assigned when the tab is added (same pattern as
+    /// <see cref="Editor"/> / <see cref="Layout"/>). The tab's context menu binds the shell's tab
+    /// commands (close-others / close-to-right / close-all, and copy / reveal) through it — a context
+    /// flyout opens in a popup, so its bindings can't walk the visual tree up to the shell. Null in
+    /// unit fixtures that don't add the tab through the shell.</summary>
+    public MainWindowViewModel? Shell { get; set; }
+
     /// <summary>True for markdown files — drives whether a rendered preview is offered.</summary>
     public bool IsMarkdown => MarkdownFile.IsMarkdownExtension(GrammarExtension);
 
