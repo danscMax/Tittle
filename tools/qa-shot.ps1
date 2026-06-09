@@ -5,6 +5,10 @@
 # whole window (incl. status bar) is on-screen. Optionally clicks a button by
 # AutomationId (UI Automation) and/or resizes the window first.
 #
+# The process is made DPI-aware up front: without it CopyFromScreen uses logical
+# coordinates against a physical screen, so on a HiDPI display (e.g. 150%) only the
+# top-left ~2/3 is captured and the status bar at the bottom is clipped.
+#
 # Usage:
 #   pwsh -File tools/qa-shot.ps1 -Out shot.png
 #   pwsh -File tools/qa-shot.ps1 -Out light.png -ClickId ThemeButton
@@ -20,6 +24,7 @@ Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 public class SvWin {
+  [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
   [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr a, int x, int y, int cx, int cy, uint f);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);
@@ -28,6 +33,9 @@ public class SvWin {
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
 }
 "@
+# Opt into DPI awareness BEFORE any window/graphics call so GetWindowRect + CopyFromScreen
+# report and read true physical pixels (otherwise the bottom of the window is clipped at 150%).
+[SvWin]::SetProcessDPIAware() | Out-Null
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
