@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Styling;
@@ -56,6 +57,14 @@ public static class EditorBehavior
     // Per-editor TextMate state; weak keys so editors can be GC'd.
     private static readonly ConditionalWeakTable<TextEditor, EditorState> States = new();
 
+    // RegistryOptions for a given ThemeName is immutable, shareable grammar/theme manifest state — build
+    // it once per theme and reuse across editors and theme switches instead of reconstructing it (a
+    // grammar-catalog load) on every tab activation / theme change. Never disposed (only Installations are).
+    private static readonly ConcurrentDictionary<ThemeName, RegistryOptions> Registries = new();
+
+    private static RegistryOptions GetRegistry(ThemeName theme)
+        => Registries.GetOrAdd(theme, static t => new RegistryOptions(t));
+
     // SERIOUSVIEW_NOTM disables TextMate entirely (RAM isolation measurement).
     private static readonly bool TextMateDisabled =
         Environment.GetEnvironmentVariable("SERIOUSVIEW_NOTM") is not null;
@@ -102,7 +111,7 @@ public static class EditorBehavior
         if (States.TryGetValue(editor, out var existing))
             return existing;
 
-        var registry = new RegistryOptions(PickTheme(editor));
+        var registry = GetRegistry(PickTheme(editor));
         var installation = editor.InstallTextMate(registry);
         var state = new EditorState(registry, installation);
         States.Add(editor, state);
@@ -127,7 +136,7 @@ public static class EditorBehavior
         state.Installation.Dispose();
         States.Remove(editor);
 
-        var registry = new RegistryOptions(PickTheme(editor));
+        var registry = GetRegistry(PickTheme(editor));
         var fresh = new EditorState(registry, editor.InstallTextMate(registry));
         States.Add(editor, fresh);
         ApplyGrammar(fresh, grammar);

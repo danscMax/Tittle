@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
@@ -19,6 +20,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IThemeService _theme;
     private readonly IRecentFilesStore _recent;
     private readonly IAppSettingsService _settings;
+    private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
+    private bool _editorDirty;
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
@@ -103,10 +106,19 @@ public partial class MainWindowViewModel : ViewModelBase
         _recent = recent;
         _settings = settings;
 
-        // Shared editor options, restored from settings and persisted on every change.
+        // Shared editor options, restored from settings. Persisted on change, but DEBOUNCED: a Ctrl+wheel
+        // zoom spins ZoomIn/ZoomOut per notch, and each immediate _settings.Update did a synchronous
+        // JSON-serialize + temp-file + File.Replace on the UI thread. Coalesce a burst into one write
+        // (the in-memory Editor is still updated instantly); FlushEditorSettings() lands it on close.
         Editor = EditorOptions.FromSettings(_settings.Current.Editor);
+        _editorSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+        _editorSaveTimer.Tick += (_, _) => FlushEditorSettings();
         Editor.PropertyChanged += (_, _) =>
-            _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
+        {
+            _editorDirty = true;
+            _editorSaveTimer.Stop();
+            _editorSaveTimer.Start();
+        };
 
         // Shared shell-layout options, same restore-and-persist pattern. Drives the chrome in later phases.
         Layout = LayoutOptions.FromSettings(_settings.Current.Layout);
@@ -129,6 +141,17 @@ public partial class MainWindowViewModel : ViewModelBase
         else if (_settings.Current.Session is { OpenFiles.Count: > 0 } session)
             _ = RestoreSessionAsync(session);
         // Otherwise no tab is opened — the welcome view is shown while HasTabs is false.
+    }
+
+    /// <summary>Persist any pending (debounced) editor-option change immediately. Called by the coalescing
+    /// timer and by the window on close, so a zoom/wrap/line-number change is never lost.</summary>
+    public void FlushEditorSettings()
+    {
+        _editorSaveTimer.Stop();
+        if (!_editorDirty)
+            return;
+        _editorDirty = false;
+        _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
     }
 
     /// <summary>Reopens the documents from the saved session, silently skipping any that are

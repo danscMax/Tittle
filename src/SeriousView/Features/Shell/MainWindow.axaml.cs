@@ -335,6 +335,9 @@ public partial class MainWindow : AppWindow
         if (_settings is null)
             return;
 
+        // Land any debounced editor-option change (e.g. a last-moment zoom) before the window goes away.
+        (DataContext as MainWindowViewModel)?.FlushEditorSettings();
+
         var maximized = WindowState == WindowState.Maximized;
         // When maximized, Width/Height are the maximized rectangle — persist the tracked Normal bounds.
         var size = maximized && _haveNormal ? _normalSize : CurrentSize();

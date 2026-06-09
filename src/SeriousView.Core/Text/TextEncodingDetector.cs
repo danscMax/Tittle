@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Unicode;
 
 namespace SeriousView.Core.Text;
 
@@ -42,17 +43,7 @@ public static class TextEncodingDetector
             : (Encoding.GetEncoding(1251), "Windows-1251", 0);
     }
 
-    private static bool IsValidUtf8(byte[] bytes)
-    {
-        try
-        {
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)
-                .GetString(bytes);
-            return true;
-        }
-        catch (DecoderFallbackException)
-        {
-            return false;
-        }
-    }
+    // Validate UTF-8 well-formedness without materializing a (whole-file) throwaway string — Decode
+    // then does the single real decode. Same verdict as a strict throwing decoder, no allocation.
+    private static bool IsValidUtf8(byte[] bytes) => Utf8.IsValid(bytes);
 }

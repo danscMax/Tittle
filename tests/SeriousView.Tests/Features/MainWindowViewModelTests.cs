@@ -340,8 +340,10 @@ public class MainWindowViewModelTests
         var vm = CreateVm(settings: holder);
 
         vm.ZoomInCommand.Execute(null);
+        Assert.Equal(EditorOptions.DefaultFontSize + 1, vm.Editor.FontSize); // in-memory: immediate
 
-        Assert.Equal(EditorOptions.DefaultFontSize + 1, vm.Editor.FontSize);
+        // Persistence is debounced (a zoom burst coalesces into one write); flush lands it.
+        vm.FlushEditorSettings();
         Assert.Equal(EditorOptions.DefaultFontSize + 1, holder.Current.Editor!.FontSize); // persisted
     }
 
