@@ -4,10 +4,11 @@
     <OutputType>WinExe</OutputType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- RAM/size optimizations carried over from the PoC -->
+    <!-- Desktop tuning: workstation GC (ServerGC off) fits a UI app; background/concurrent GC is
+         left ON (the default) so Gen2 collections don't pause the UI thread on large documents.
+         InvariantGlobalization trims ICU (encodings still work via CodePagesEncodingProvider). -->
     <InvariantGlobalization>true</InvariantGlobalization>
     <ServerGarbageCollection>false</ServerGarbageCollection>
-    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredCompilation>true</TieredCompilation>
   </PropertyGroup>
 
