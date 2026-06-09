@@ -348,6 +348,24 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void SelectingTab_ActivatesExactlyOne()
+    {
+        // The shell keeps every tab's view alive and shows only the active one (IsActive), so exactly
+        // one tab must be active and it must follow the selection.
+        var vm = CreateVm();
+        vm.OpenSampleCommand.Execute(null); // tab 0
+        vm.OpenSampleCommand.Execute(null); // tab 1 (selected)
+        var (t0, t1) = (vm.Tabs[0], vm.Tabs[1]);
+
+        Assert.False(t0.IsActive);
+        Assert.True(t1.IsActive);
+
+        vm.SelectedTab = t0;
+        Assert.True(t0.IsActive);
+        Assert.False(t1.IsActive);
+    }
+
+    [AvaloniaFact]
     public void Editor_IsRestoredFromSettings()
     {
         var holder = Holder(new AppSettings { Editor = new EditorSettings(20, WordWrap: true, ShowLineNumbers: false) });

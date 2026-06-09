@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -46,10 +47,19 @@ public partial class DocumentView : UserControl
         {
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
+            _vm.PropertyChanged += OnVmPropertyChanged;
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
             Dispatcher.UIThread.Post(ActivateSource);
         }
+    }
+
+    // Tabs are kept alive (DataContext is set once), so focus must follow ACTIVATION: re-focus the
+    // editor when this tab becomes the active one.
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DocumentTabViewModel.IsActive) && _vm?.IsActive == true)
+            Dispatcher.UIThread.Post(ActivateSource);
     }
 
     // The go-to-line request is raised by the status-bar input (wired in MainWindow); scroll there.
@@ -73,7 +83,8 @@ public partial class DocumentView : UserControl
 
     private void ActivateSource()
     {
-        if (_vm is null)
+        // Only the active (visible) tab may take focus — never steal it to a hidden, kept-alive view.
+        if (_vm is null || !_vm.IsActive)
             return;
 
         UpdateCaret();
@@ -87,6 +98,7 @@ public partial class DocumentView : UserControl
         {
             _vm.NavigationRequested -= OnNavigationRequested;
             _vm.GoToLineRequested -= OnGoToLineRequested;
+            _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
         _vm = null;

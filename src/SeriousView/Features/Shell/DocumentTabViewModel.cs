@@ -25,6 +25,12 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _header;
 
+    /// <summary>True for the one tab whose body is shown. The shell keeps every open tab's DocumentView
+    /// realized and toggles its visibility on this flag, so switching tabs doesn't rebuild the editor /
+    /// TextMate / markdown render.</summary>
+    [ObservableProperty]
+    private bool _isActive;
+
     [ObservableProperty]
     private string? _filePath;
 

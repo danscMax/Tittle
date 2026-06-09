@@ -240,13 +240,22 @@
       <Panel Grid.Column="2">
         <!-- Welcome view shown when no tabs are open. -->
         <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
-        <ContentControl IsVisible="{Binding HasTabs}" Content="{Binding SelectedTab}">
-          <ContentControl.ContentTemplate>
+        <!-- Every open tab's DocumentView stays realized (overlapping in a Panel); only the active tab's
+             is visible. Switching tabs toggles IsActive instead of re-templating, so the editor + TextMate
+             install + the markdown visual tree survive across switches (no rebuild hitch on Ctrl+Tab). -->
+        <ItemsControl ItemsSource="{Binding Tabs}" IsVisible="{Binding HasTabs}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Panel/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:DocumentTabViewModel">
-              <controls:DocumentView/>
+              <controls:DocumentView IsVisible="{Binding IsActive}"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </DataTemplate>
-          </ContentControl.ContentTemplate>
-        </ContentControl>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </Panel>
     </Grid>
 

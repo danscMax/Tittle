@@ -298,6 +298,15 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedTab = tab;
     }
 
+    // Keep exactly one tab active so the body shows only its (kept-alive) DocumentView.
+    partial void OnSelectedTabChanged(DocumentTabViewModel? oldValue, DocumentTabViewModel? newValue)
+    {
+        if (oldValue is not null)
+            oldValue.IsActive = false;
+        if (newValue is not null)
+            newValue.IsActive = true;
+    }
+
     partial void OnSelectedTabChanged(DocumentTabViewModel? value)
     {
         Title = value is null ? "SeriousView" : value.Header + " — SeriousView";
