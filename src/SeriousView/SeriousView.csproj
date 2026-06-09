@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\seriousview.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <!-- Desktop tuning: workstation GC (ServerGC off) fits a UI app; background/concurrent GC is
          left ON (the default) so Gen2 collections don't pause the UI thread on large documents.
@@ -27,6 +28,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <!-- DevTools (F12) only in Debug builds -->
     <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,6 +13,7 @@
         x:Class="SeriousView.Features.Shell.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"
+        Icon="/Assets/seriousview.png"
         Width="1100" Height="750"
         Background="{DynamicResource WindowBackgroundBrush}"
         TransparencyLevelHint="None"
