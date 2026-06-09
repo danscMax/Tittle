@@ -17,7 +17,6 @@ public class DocumentTabViewModelTests
         Assert.Equal(DocumentViewMode.Preview, vm.ViewMode);
         Assert.True(vm.ShowPreview);
         Assert.False(vm.ShowSource);
-        Assert.Equal("Предпросмотр", vm.ViewModeLabel);
         Assert.True(vm.ToggleViewModeCommand.CanExecute(null));
     }
 
@@ -41,13 +40,11 @@ public class DocumentTabViewModelTests
         Assert.Equal(DocumentViewMode.Source, vm.ViewMode);
         Assert.True(vm.ShowSource);
         Assert.False(vm.ShowPreview);
-        Assert.Equal("Исходник", vm.ViewModeLabel);
 
         vm.ToggleViewModeCommand.Execute(null);
         Assert.Equal(DocumentViewMode.Preview, vm.ViewMode);
         Assert.True(vm.ShowPreview);
         Assert.False(vm.ShowSource);
-        Assert.Equal("Предпросмотр", vm.ViewModeLabel);
     }
 
     [Fact]

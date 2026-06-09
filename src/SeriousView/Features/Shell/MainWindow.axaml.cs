@@ -335,11 +335,6 @@ public partial class MainWindow : AppWindow
         if (_settings is null)
             return;
 
-        // Commit the last shown outline width once (its PropertyChanged hook persists the layout);
-        // the final Update below then reads the already-updated Current.Layout.
-        if (DataContext is MainWindowViewModel vm)
-            vm.Layout.OutlineWidth = LayoutOptions.ClampOutlineWidth(_outlineWidth);
-
         var maximized = WindowState == WindowState.Maximized;
         // When maximized, Width/Height are the maximized rectangle — persist the tracked Normal bounds.
         var size = maximized && _haveNormal ? _normalSize : CurrentSize();
@@ -349,11 +344,17 @@ public partial class MainWindow : AppWindow
         var w = Math.Max(1, size.Width - _chromeOffset.Width);
         var h = Math.Max(1, size.Height - _chromeOffset.Height);
 
-        var session = (DataContext as MainWindowViewModel)?.GetSession();
+        // One atomic write on close: fold the last shown outline width into the layout (tracked in a
+        // field so dragging the splitter never rewrites settings.json per pixel), plus window + session.
+        var vm = DataContext as MainWindowViewModel;
+        var layout = vm is not null
+            ? vm.Layout.ToSettings() with { OutlineWidth = LayoutOptions.ClampOutlineWidth(_outlineWidth) }
+            : _settings.Current.Layout;
         _settings.Update(_settings.Current with
         {
+            Layout = layout,
             Window = new WindowPlacement(w, h, pos.X, pos.Y, maximized),
-            Session = session,
+            Session = vm?.GetSession(),
         });
     }
 

@@ -31,7 +31,8 @@ public sealed class RecentFilesList
 
         _paths.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
         _paths.Insert(0, path);
-        while (_paths.Count > _cap)
+        // A single insert can overflow the cap by at most one, so one trim suffices.
+        if (_paths.Count > _cap)
             _paths.RemoveAt(_paths.Count - 1);
     }
 

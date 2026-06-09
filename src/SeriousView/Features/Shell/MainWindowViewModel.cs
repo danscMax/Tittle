@@ -22,9 +22,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
-    /// <summary>Recent file paths (surfaced by the welcome view).</summary>
-    public IReadOnlyList<string> RecentFiles => _recent.Items;
-
     public bool HasRecent => _recent.Items.Count > 0;
 
     /// <summary>Recent files projected for display (name + folder) with a self-contained open command —
@@ -117,14 +114,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
 
         Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
-        _theme.Changed += (_, _) =>
-        {
-            OnPropertyChanged(nameof(ThemeModeLabel));
-            OnPropertyChanged(nameof(CurrentTheme));
-        };
+        _theme.Changed += (_, _) => OnPropertyChanged(nameof(CurrentTheme));
         _recent.Changed += (_, _) =>
         {
-            OnPropertyChanged(nameof(RecentFiles));
             OnPropertyChanged(nameof(HasRecent));
             RefreshRecentItems();
         };
@@ -264,14 +256,6 @@ public partial class MainWindowViewModel : ViewModelBase
         var n = Tabs.Count;
         SelectedTab = Tabs[(Tabs.IndexOf(SelectedTab) + direction + n) % n];
     }
-
-    /// <summary>Label for the theme button, reflecting the current mode.</summary>
-    public string ThemeModeLabel => _theme.Mode switch
-    {
-        ThemeMode.Light => "Светлая",
-        ThemeMode.Auto => "Авто",
-        _ => "Тёмная",
-    };
 
     /// <summary>Current theme mode — drives the radio check-marks in the ☰ View ▸ Theme submenu.</summary>
     public ThemeMode CurrentTheme => _theme.Mode;

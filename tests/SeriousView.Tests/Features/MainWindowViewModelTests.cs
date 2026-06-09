@@ -129,24 +129,24 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public void ToggleTheme_CyclesThemeMode_AndUpdatesLabel()
+    public void ToggleTheme_CyclesThemeMode_AndUpdatesCurrent()
     {
         var theme = new FakeThemeService();
         var vm = new MainWindowViewModel(
             new FakeFileDialogService(null), new FakeFileReader("x"), theme,
             new FakeRecentFilesStore(), Holder(), Array.Empty<string>());
 
-        Assert.Equal("Тёмная", vm.ThemeModeLabel);
+        Assert.Equal(ThemeMode.Dark, vm.CurrentTheme);
 
         vm.ToggleThemeCommand.Execute(null);
 
         Assert.Equal(ThemeMode.Light, theme.Mode);
         Assert.Equal(1, theme.ChangeCount);
-        Assert.Equal("Светлая", vm.ThemeModeLabel);
+        Assert.Equal(ThemeMode.Light, vm.CurrentTheme);
     }
 
     [AvaloniaFact]
-    public void SetTheme_AppliesModeDirectly_AndUpdatesLabelAndCurrent()
+    public void SetTheme_AppliesModeDirectly_AndUpdatesCurrent()
     {
         var theme = new FakeThemeService(); // starts Dark
         var vm = new MainWindowViewModel(
@@ -157,7 +157,6 @@ public class MainWindowViewModelTests
 
         Assert.Equal(ThemeMode.Light, theme.Mode);
         Assert.Equal(ThemeMode.Light, vm.CurrentTheme);
-        Assert.Equal("Светлая", vm.ThemeModeLabel);
     }
 
     [AvaloniaFact]
@@ -201,7 +200,6 @@ public class MainWindowViewModelTests
         await vm.OpenFileCommand.ExecuteAsync(null);
 
         Assert.Contains("/path/doc.md", recent.Items);
-        Assert.Contains("/path/doc.md", vm.RecentFiles);
     }
 
     [AvaloniaFact]

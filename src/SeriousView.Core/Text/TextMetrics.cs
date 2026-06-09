@@ -7,5 +7,6 @@ public static class TextMetrics
     public static int LineCount(string text)
         => string.IsNullOrEmpty(text) ? 0 : text.AsSpan().Count('\n') + 1;
 
-    public static int CharCount(string text) => text.Length;
+    /// <summary>Character count; null-safe to match <see cref="LineCount"/>.</summary>
+    public static int CharCount(string? text) => text?.Length ?? 0;
 }

@@ -97,7 +97,6 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
-    [NotifyPropertyChangedFor(nameof(ViewModeLabel))]
     [NotifyPropertyChangedFor(nameof(ViewModeToggleTip))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
@@ -149,9 +148,6 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// (admonitions, task lists, footnotes). Cached: the document text is immutable.</summary>
     public string PreviewMarkdown =>
         _previewMarkdown ??= IsMarkdown ? MarkdownPreprocessor.Transform(DocumentText) : "";
-
-    /// <summary>Label for the preview/source toggle, reflecting the current mode.</summary>
-    public string ViewModeLabel => ViewMode == DocumentViewMode.Preview ? "Предпросмотр" : "Исходник";
 
     /// <summary>Tooltip for the status-bar view toggle — names the switch target (the action).</summary>
     public string ViewModeToggleTip =>

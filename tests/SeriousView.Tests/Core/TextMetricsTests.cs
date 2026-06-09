@@ -18,6 +18,7 @@ public class TextMetricsTests
     [InlineData("", 0)]
     [InlineData("abc", 3)]
     [InlineData("a\nb", 3)]
-    public void CharCount_CountsChars(string text, int expected)
+    [InlineData(null, 0)] // null-safe, matching LineCount
+    public void CharCount_CountsChars(string? text, int expected)
         => Assert.Equal(expected, TextMetrics.CharCount(text));
 }
