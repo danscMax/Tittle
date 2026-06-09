@@ -46,7 +46,7 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
 
 ---
 
-## ★ M7.5 — Shell redesign & customization · effort L · mostly done (4/5/6/8 remain)
+## ★ M7.5 — Shell redesign & customization · effort L · **DONE**
 
 **Design locked** (100 mockups → synthesis → `combos`/`tools`/`custom` in `plans/shell-redesign/`).
 **Default layout = menu hidden behind ☰**; the whole chrome is driven by settings, not hard-coded.
@@ -62,9 +62,9 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | 3 ✅ | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). **Done (this commit): ☰ replaces the wordmark; standard `MenuFlyout`/`MenuItem` (FA-themed) with Файл (Открыть/Пример/Недавние ▸/Закрыть) and Вид (Тема radio · Перенос/Номера checks · Перейти к строке); shortcut hints via `InputGesture`. Bar/TitleBar presets deferred to phase 8.** |
 | 4 ✅ | Omnibar | File path + 📂 Open + ⌘ palette entry, toggled by `ShowOmnibar`. **Done: centred inset field in the caption row (path · 📂 · ⌘); ☰ + tab strip reflowed below the caption; ⌘ shares the Ctrl+K palette seam.** |
 | 5 ✅ | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Done `653ef20`: top-level `CommandPaletteWindow` (NOT Popup/OverlayLayer — overlay over AvaloniaEdit won't repaint) + `FuzzyMatcher` (fzf-lite: `opfil`→`Open File`), with tests.** |
-| 6 | Contextual toolbar | Thin icon row under the tabs, shown only in **Source** mode (find/replace, wrap, line-numbers, indent, undo/redo). `Fixed` toolbar (Notepad++-style) is an opt-in preset. |
+| 6 ✅ | Contextual toolbar | Thin icon row under the tabs, driven by `ToolbarMode` (Off/Contextual/Fixed). **Done `83f2ef3`: Find + wrap + numbers; wrap/numbers relocated from the status bar with a fallback when Off (pure `ToolbarVisibilityConverter` keeps them in one place); zoom stays in the status bar. Replace/undo/redo/indent → M15 (editing).** |
 | 7 ◐ | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. **Done: theme is now ☰ Вид ▸ Тема (radio Тёмная/Светлая/Авто), standalone Тема button removed; Предпросмотр/Исходник already by the tabs. Palette entry pending phase 5.** |
-| 8 | Settings → Раскладка panel | Switches all the `Layout` knobs live (the in-app home for customization). |
+| 8 ✅ | Settings → Раскладка panel | **Done `42404ab`: ☰ ▸ Раскладка (+ palette) opens a top-level window bound to the shared `LayoutOptions` — ShowOmnibar/ReadingMode/ToolbarMode toggle the chrome live and persist; two-way `EnumRadioConverter`. Not-yet-built knobs (MenuPlacement Bar/TitleBar, ViewTogglePlacement, ShowRail) omitted until their chrome exists.** |
 
 **Fixes folded into M7.5 (found during the visual audit):**
 

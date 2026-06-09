@@ -97,7 +97,7 @@ in the **status bar** (chrome): an overlay floated over the editor won't repaint
 surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
 Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
 Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
-**M7.5 (shell redesign) + M8 (shell ergonomics) in progress**: ☰ menu (default `MenuPlacement.Hidden`);
+**M7.5 (shell redesign) DONE; M8 (shell ergonomics) pending**: ☰ menu (default `MenuPlacement.Hidden`);
 status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
 **resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,
 committed once on close); sidebar-panel PathIcon; single-instance file forwarding (Mutex + named pipe,
@@ -113,8 +113,12 @@ Done since: **audit quick-wins + a11y** (background GC, 8 KB-head binary classif
 `PrefersReduceMotion` API on 11) and **M9 in-document find** (Ctrl+F find bar, highlight-all via an
 `IBackgroundRenderer`, next/prev, case/regex, N/M counter, source-only; pure `Core/Text/TextSearch`).
 **Replace → M15** (editing + save), **preview text-highlight** a research item (Markdown.Avalonia has no
-API). Now unblocked: **M7.5 chrome 6** contextual toolbar (can host a find entry) **· 8** Settings▸Layout, or
-**M8** tab ergonomics. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+API). Then **M7.5 chrome COMPLETE** — phase 6 contextual editor toolbar (`ToolbarMode`-driven Find · wrap ·
+numbers; pure `ToolbarVisibilityConverter`; wrap/numbers relocate from the status bar with an Off-fallback,
+zoom stays) + phase 8 Settings ▸ Раскладка (☰/palette → a window bound to the shared `LayoutOptions`;
+ShowOmnibar/ReadingMode/ToolbarMode toggle the chrome live + persist; two-way `EnumRadioConverter`).
+Next: **M8** tab ergonomics or **M10** sync-scroll / active-heading. Feature spec source:
+`E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 
