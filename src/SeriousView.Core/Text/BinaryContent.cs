@@ -7,7 +7,8 @@ namespace SeriousView.Core.Text;
 /// BOM short-circuits to "text". The same heuristic git and editors use.</summary>
 public static class BinaryContent
 {
-    private const int ScanWindow = 8192;
+    /// <summary>Bytes the heuristic samples; a reader need only supply this many to classify.</summary>
+    public const int ScanWindow = 8192;
 
     public static bool IsProbablyBinary(byte[] bytes)
     {
