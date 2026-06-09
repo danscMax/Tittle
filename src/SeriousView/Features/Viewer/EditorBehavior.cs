@@ -84,6 +84,11 @@ public static class EditorBehavior
             editor.Document = new TextDocument(text);
         else if (editor.Document.Text != text)
             editor.Document.Text = text;
+
+        // Assigning the document leaves the caret at the document end; put it at the start so opening a
+        // file shows line 1 (and the first ↓ doesn't jump to the bottom). Text is one-way and immutable
+        // per tab, so this runs once on load — never on re-activation, so it can't fight the user's caret.
+        editor.CaretOffset = 0;
     }
 
     private static void OnGrammarExtensionChanged(TextEditor editor, AvaloniaPropertyChangedEventArgs e)
