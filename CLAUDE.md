@@ -101,13 +101,18 @@ Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
 status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
 **resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,
 committed once on close); sidebar-panel PathIcon; single-instance file forwarding (Mutex + named pipe,
-`CurrentUserOnly`-hardened); draggable title-bar; recent-file temp-path pruning. **Tab content is kept
+`CurrentUserOnly`-hardened); draggable title-bar; recent-file temp-path pruning; **Ctrl+K command palette**
+(top-level window + fzf-lite fuzzy match, `653ef20`); **omnibar header** (active path · 📂 open · ⌘ palette,
+toggled by `Layout.ShowOmnibar`). **Tab content is kept
 alive** — the body is an `ItemsControl` over `Tabs` with each tab's `DocumentView` toggled by `IsActive`
 (NOT a `ContentControl`), so switching tabs is a visibility flip, not a re-template — don't revert (project
 memory). A tech-debt audit also hardened the single-instance gate, debounced editor-zoom settings writes,
 cached TextMate `RegistryOptions` per theme, and virtualized the outline list.
-Next: finish M8 tab ergonomics (reuse-tab-on-reopen, drag-reorder, context menu) or pull **M9 in-doc search**
-forward. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+Next (chosen): **audit quick-wins + a11y** — background GC (drop `ConcurrentGarbageCollection=false`),
+8 KB-head binary classification, `AutomationProperties.Name` + keyboard focus visuals (reduced-motion
+deferred to the Av12 migration, no `PrefersReduceMotion` API on 11). Remaining M7.5 chrome: 6 contextual
+toolbar · 8 Settings▸Layout; then M8 tab ergonomics / **M9 in-doc search**. Feature spec source:
+`E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 

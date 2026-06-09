@@ -99,35 +99,30 @@
         </Button.Flyout>
       </Button>
 
-      <!-- Tab strip lives in the title bar; AllowInteractionInTitleBar so clicks select tabs
-           instead of dragging the window. Bottom-aligned so the accent line meets the body.
-           HorizontalAlignment=Left so the ListBox sizes to the tabs (not the whole star column) —
-           otherwise its empty interactive area right of the tabs would swallow the window drag when
-           a file is open (welcome drags fine because the ListBox is collapsed there). It still caps
-           at the column width and scrolls when the tabs overflow. -->
-      <ListBox Grid.Column="1" wnd:AppWindow.AllowInteractionInTitleBar="True"
-               IsVisible="{Binding HasTabs}"
-               ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-               ItemContainerTheme="{StaticResource VsCodeTab}"
-               Background="Transparent" BorderThickness="0" Padding="0"
-               HorizontalAlignment="Left" VerticalAlignment="Bottom"
-               ScrollViewer.HorizontalScrollBarVisibility="Auto"
-               ScrollViewer.VerticalScrollBarVisibility="Disabled">
-        <ListBox.ItemsPanel>
-          <ItemsPanelTemplate>
-            <StackPanel Orientation="Horizontal"/>
-          </ItemsPanelTemplate>
-        </ListBox.ItemsPanel>
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="vm:DocumentTabViewModel">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
-                             Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
-              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
-            </StackPanel>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
+      <!-- Omnibar (etalon header): active document path · 📂 Open · ⌘ palette, in a slim inset field.
+           Toggled by Layout.ShowOmnibar. AllowInteractionInTitleBar so its buttons click; the empty
+           title area around it (it is centred + width-capped) still drags the window. -->
+      <Border Grid.Column="1" x:Name="Omnibar" AutomationProperties.AutomationId="Omnibar"
+              IsVisible="{Binding Layout.ShowOmnibar}"
+              wnd:AppWindow.AllowInteractionInTitleBar="True"
+              Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="6"
+              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+              HorizontalAlignment="Center" MinWidth="340" MaxWidth="760"
+              Margin="8,6" Padding="3,1" VerticalAlignment="Center">
+        <DockPanel>
+          <Button DockPanel.Dock="Left" Classes="chrome-menu" ToolTip.Tip="Открыть файл (Ctrl+O)"
+                  Command="{Binding OpenFileCommand}" Padding="6,3">
+            <TextBlock Text="📂" FontSize="14"/>
+          </Button>
+          <Button DockPanel.Dock="Right" Classes="chrome-menu" ToolTip.Tip="Команды (Ctrl+K)"
+                  Click="OnPaletteButtonClick" Padding="8,3">
+            <TextBlock Text="⌘" FontSize="14"/>
+          </Button>
+          <TextBlock Text="{Binding SelectedTab.FilePath, FallbackValue=SeriousView, TargetNullValue=SeriousView}"
+                     VerticalAlignment="Center" Margin="8,0" TextTrimming="CharacterEllipsis"
+                     Foreground="{DynamicResource ChromeForegroundBrush}" Opacity="0.8" FontSize="12.5"/>
+        </DockPanel>
+      </Border>
 
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                   VerticalAlignment="Center" Margin="10,0"
@@ -155,6 +150,34 @@
       <Border Grid.Column="3" x:Name="CaptionReserve"/>
     </Grid>
     </Panel>
+    </Border>
+
+    <!-- Tab strip — moved out of the caption row (the etalon puts the omnibar there). Shown only when
+         tabs are open; the VsCodeTab theme draws the active-tab accent line meeting the body below. -->
+    <Border DockPanel.Dock="Top" IsVisible="{Binding HasTabs}"
+            Background="{DynamicResource ChromeOverlayBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
+      <ListBox ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+               ItemContainerTheme="{StaticResource VsCodeTab}"
+               Background="Transparent" BorderThickness="0" Padding="0"
+               HorizontalAlignment="Left" VerticalAlignment="Bottom"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
+                             Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
+              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
     </Border>
 
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics

@@ -148,6 +148,13 @@ public partial class MainWindow : AppWindow
         window.Show(this);
     }
 
+    // The omnibar ⌘ button opens the palette (same seam as Ctrl+K).
+    private void OnPaletteButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+            OpenCommandPalette(vm);
+    }
+
     // Go-to-line input (status bar): Enter submits the jump, Esc closes.
     private void OnGoToLineKeyDown(object? sender, KeyEventArgs e)
     {

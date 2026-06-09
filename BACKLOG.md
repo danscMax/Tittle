@@ -41,8 +41,8 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
   `LayoutSettings.OutlineWidth`); sidebar-panel icon; draggable title-bar; content padding; recent temp/dead
   pruning; **single-instance** file-forward (hardened). **Tab content kept alive** (`ItemsControl` + `IsActive`,
   no re-template on switch). Tech-debt audit: pipe ACL + race fixes, debounced zoom writes, cached TextMate
-  `RegistryOptions`, virtualized outline, dead-code removal. *(M7.5 4 Omnibar · 5 Ctrl+K palette · 6 contextual
-  toolbar · 8 Settings▸Layout still open.)*
+  `RegistryOptions`, virtualized outline, dead-code removal. *(M7.5 4 Omnibar ✅ · 5 Ctrl+K palette ✅ `653ef20`;
+  6 contextual toolbar · 8 Settings▸Layout still open.)*
 
 ---
 
@@ -60,8 +60,8 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | 1 ✅ | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. **Done `e21931b` (+ `LayoutOptions` seam `d2ee4d9`).** |
 | 2 ◐ | Chrome render by Layout | Rewrite `MainWindow.axaml` into conditional sections that read `Layout`. **Started: ☰ visibility binds `MenuPlacement==Hidden` via `EnumToBoolConverter` — first real consumer of `Layout`.** |
 | 3 ✅ | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). **Done (this commit): ☰ replaces the wordmark; standard `MenuFlyout`/`MenuItem` (FA-themed) with Файл (Открыть/Пример/Недавние ▸/Закрыть) and Вид (Тема radio · Перенос/Номера checks · Перейти к строке); shortcut hints via `InputGesture`. Bar/TitleBar presets deferred to phase 8.** |
-| 4 | Omnibar | File path + 📂 Open + ⌘ palette entry. Toggle via `ShowOmnibar`. |
-| 5 | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Decided (audit 2026-06-08): top-level `Window`, NOT Popup/OverlayLayer** — overlay over AvaloniaEdit won't repaint (go-to-line proved it; VS Code/Zed use a separate surface). **+ fuzzy-matching** (fzf-style: `opfil`→`Open File`) — fix the algorithm before the UI. |
+| 4 ✅ | Omnibar | File path + 📂 Open + ⌘ palette entry, toggled by `ShowOmnibar`. **Done: centred inset field in the caption row (path · 📂 · ⌘); ☰ + tab strip reflowed below the caption; ⌘ shares the Ctrl+K palette seam.** |
+| 5 ✅ | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Done `653ef20`: top-level `CommandPaletteWindow` (NOT Popup/OverlayLayer — overlay over AvaloniaEdit won't repaint) + `FuzzyMatcher` (fzf-lite: `opfil`→`Open File`), with tests.** |
 | 6 | Contextual toolbar | Thin icon row under the tabs, shown only in **Source** mode (find/replace, wrap, line-numbers, indent, undo/redo). `Fixed` toolbar (Notepad++-style) is an opt-in preset. |
 | 7 ◐ | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. **Done: theme is now ☰ Вид ▸ Тема (radio Тёмная/Светлая/Авто), standalone Тема button removed; Предпросмотр/Исходник already by the tabs. Palette entry pending phase 5.** |
 | 8 | Settings → Раскладка panel | Switches all the `Layout` knobs live (the in-app home for customization). |
@@ -166,8 +166,9 @@ selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML ren
 - Improvements 1–40 are fully placed. Ported-only features (search, sync-scroll, math, diagrams,
   export, live-reload, editing, + the pool) are M9–M16 and the ported pool.
 
-**Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar)
-and a tech-debt hardening pass are done. Choose: finish remaining **M7.5** chrome (4 Omnibar · 5 Ctrl+K
-palette · 6 contextual toolbar · 8 Settings▸Layout), or pull **M9 in-document search** forward (high value,
-reuses the future palette seam), or knock out **M8 tab ergonomics** (reuse-tab-on-reopen #11, drag-reorder
-#18, context menu #25, full-path tooltip #30).
+**Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar,
+Ctrl+K palette, omnibar) and a tech-debt hardening pass are done. **Chosen direction: audit quick-wins + a11y**
+(background GC, 8 KB-head binary classification, accessible names + focus visuals; reduced-motion deferred to
+Av12). Remaining **M7.5** chrome: 6 contextual toolbar · 8 Settings▸Layout. Later: pull **M9 in-document
+search** forward (high value, reuses the palette seam) or knock out **M8 tab ergonomics** (reuse-tab-on-reopen
+#11, drag-reorder #18, context menu #25, full-path tooltip #30).
