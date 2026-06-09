@@ -6,9 +6,61 @@
              xmlns:viewer="using:SeriousView.Features.Viewer"
              x:Class="SeriousView.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
-  <!-- One tab's body: source editor, rendered preview, and a notice overlay occupy the same
-       area, toggled by IsVisible (ShowSource / ShowPreview / ShowNotice are mutually exclusive). -->
-  <Panel>
+  <UserControl.Styles>
+    <!-- Find-bar controls: flat compact nav/close buttons; the regex toggle reddens on an invalid pattern. -->
+    <Style Selector="Button.findbtn">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="7,2"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="ToggleButton.findtoggle">
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="7,2"/>
+      <Setter Property="Margin" Value="2,0,0,0"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ToggleButton.findtoggle.invalid">
+      <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionCautionBrush}"/>
+    </Style>
+  </UserControl.Styles>
+  <!-- One tab's body: an optional find bar (Ctrl+F) docked on top, then the source editor, rendered
+       preview, and a notice overlay sharing the area (ShowSource / ShowPreview / ShowNotice exclusive). -->
+  <DockPanel>
+    <!-- Find bar — a chrome strip docked above the editor, NOT an overlay (an overlay over AvaloniaEdit's
+         GPU surface won't repaint — see project memory). Per-tab; shown on IsSearchOpen. -->
+    <Border DockPanel.Dock="Top" IsVisible="{Binding IsSearchOpen}"
+            Background="{DynamicResource ChromeBackgroundBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
+      <DockPanel LastChildFill="True">
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x2715;" ToolTip.Tip="Закрыть (Esc)"
+                AutomationProperties.Name="Закрыть поиск" Command="{Binding CloseSearchCommand}"/>
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x203A;" ToolTip.Tip="Следующее (Enter)"
+                AutomationProperties.Name="Следующее совпадение" Command="{Binding NextMatchCommand}"/>
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x2039;" ToolTip.Tip="Предыдущее (Shift+Enter)"
+                AutomationProperties.Name="Предыдущее совпадение" Command="{Binding PreviousMatchCommand}"/>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SearchStatus}" VerticalAlignment="Center"
+                   Margin="10,0,4,0" MinWidth="64" TextAlignment="Right" FontSize="12"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <ToggleButton DockPanel.Dock="Right" Classes="findtoggle" Content=".*" ToolTip.Tip="Регулярное выражение"
+                      AutomationProperties.Name="Регулярное выражение"
+                      Classes.invalid="{Binding SearchInvalidRegex}"
+                      IsChecked="{Binding SearchRegex, Mode=TwoWay}"/>
+        <ToggleButton DockPanel.Dock="Right" Classes="findtoggle" Content="Aa" ToolTip.Tip="Учитывать регистр"
+                      AutomationProperties.Name="Учитывать регистр"
+                      IsChecked="{Binding SearchCaseSensitive, Mode=TwoWay}"/>
+        <TextBox x:Name="SearchBox" Watermark="Найти" AutomationProperties.Name="Найти"
+                 Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+      </DockPanel>
+    </Border>
+
+    <Panel>
     <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
     <ae:TextEditor x:Name="Source"
                    IsVisible="{Binding ShowSource}"
@@ -60,5 +112,6 @@
                  HorizontalAlignment="Center" VerticalAlignment="Center"
                  Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
     </Border>
-  </Panel>
+    </Panel>
+  </DockPanel>
 </UserControl>

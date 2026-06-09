@@ -229,4 +229,107 @@ public class DocumentTabViewModelTests
         Assert.False(raised);
         Assert.False(vm.IsGoToLineOpen);
     }
+
+    [Fact]
+    public void OpenSearch_CodeFile_OpensTheBar()
+    {
+        var vm = DocumentTabViewModel.FromFile("alpha beta", "/a.cs");
+
+        vm.OpenSearchCommand.Execute(null);
+
+        Assert.True(vm.IsSearchOpen);
+    }
+
+    [Fact]
+    public void SearchQuery_ComputesMatches_AndJumpsToFirst()
+    {
+        var vm = DocumentTabViewModel.FromFile("alpha beta alpha gamma alpha", "/a.cs");
+
+        vm.SearchQuery = "alpha";
+
+        Assert.Equal(3, vm.SearchMatchCount);
+        Assert.Equal(0, vm.SearchCurrentIndex);
+        Assert.Equal("1 / 3", vm.SearchStatus);
+    }
+
+    [Fact]
+    public void NextAndPreviousMatch_CycleWithWrap()
+    {
+        var vm = DocumentTabViewModel.FromFile("x x x", "/a.cs"); // matches at 0, 2, 4
+        vm.SearchQuery = "x";
+        Assert.Equal(0, vm.SearchCurrentIndex);
+
+        vm.NextMatchCommand.Execute(null);
+        Assert.Equal(1, vm.SearchCurrentIndex);
+        vm.NextMatchCommand.Execute(null);
+        Assert.Equal(2, vm.SearchCurrentIndex);
+        vm.NextMatchCommand.Execute(null);
+        Assert.Equal(0, vm.SearchCurrentIndex);   // wrap to first
+
+        vm.PreviousMatchCommand.Execute(null);
+        Assert.Equal(2, vm.SearchCurrentIndex);   // wrap to last
+    }
+
+    [Fact]
+    public void ToggleSearchCaseSensitive_NarrowsMatches()
+    {
+        var vm = DocumentTabViewModel.FromFile("Foo foo FOO", "/a.cs");
+        vm.SearchQuery = "foo";
+        Assert.Equal(3, vm.SearchMatchCount); // case-insensitive by default
+
+        vm.ToggleSearchCaseSensitiveCommand.Execute(null);
+
+        Assert.True(vm.SearchCaseSensitive);
+        Assert.Equal(1, vm.SearchMatchCount);
+    }
+
+    [Fact]
+    public void SearchRegex_Invalid_FlagsError_AndClearsMatches()
+    {
+        var vm = DocumentTabViewModel.FromFile("anything", "/a.cs");
+        vm.SearchRegex = true;
+        vm.SearchQuery = "[unclosed";
+
+        Assert.True(vm.SearchInvalidRegex);
+        Assert.Equal(0, vm.SearchMatchCount);
+        Assert.Equal("ошибка", vm.SearchStatus);
+    }
+
+    [Fact]
+    public void OpenSearch_MarkdownInPreview_SwitchesToSource()
+    {
+        var vm = DocumentTabViewModel.FromFile("# Title\n\nfind me", "/doc.md");
+        Assert.Equal(DocumentViewMode.Preview, vm.ViewMode);
+
+        vm.OpenSearchCommand.Execute(null);
+
+        Assert.True(vm.IsSearchOpen);
+        Assert.Equal(DocumentViewMode.Source, vm.ViewMode); // find runs over the source → show it
+        Assert.True(vm.ShowSource);
+    }
+
+    [Fact]
+    public void OpenSearch_NoticeTab_DoesNotOpen()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Binary(2048), "/img.png");
+
+        vm.OpenSearchCommand.Execute(null);
+
+        Assert.False(vm.IsSearchOpen);
+    }
+
+    [Fact]
+    public void CloseSearch_ClearsMatchesAndState()
+    {
+        var vm = DocumentTabViewModel.FromFile("x x x", "/a.cs");
+        vm.SearchQuery = "x";
+        Assert.Equal(3, vm.SearchMatchCount);
+
+        vm.CloseSearchCommand.Execute(null);
+
+        Assert.False(vm.IsSearchOpen);
+        Assert.Equal(0, vm.SearchMatchCount);
+        Assert.Equal(-1, vm.SearchCurrentIndex);
+        Assert.Empty(vm.SearchMatches);
+    }
 }

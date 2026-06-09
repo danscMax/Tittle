@@ -122,6 +122,7 @@ public partial class MainWindow : AppWindow
             (true, false, false, Key.D0 or Key.NumPad0) => vm.ZoomResetCommand,
             (true, false, false, Key.L) => vm.ToggleLineNumbersCommand,
             (true, false, false, Key.G) => vm.OpenGoToLineCommand,
+            (true, false, false, Key.F) => vm.OpenSearchCommand,
             (false, false, true, Key.Z) => vm.ToggleWordWrapCommand,
             _ => (System.Windows.Input.ICommand?)null,
         };

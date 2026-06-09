@@ -55,7 +55,7 @@ Source of features: `E:\Scripts\Markdown Viewer`. Implement incrementally per ro
 | Markdown rendering (GFM, tables, footnotes, admonitions) | **DONE (M3)** — a View control (`Features/Viewer/DocumentView` hosts Markdown.Avalonia's `MarkdownScrollViewer`) + pure `Core/Text/MarkdownPreprocessor` (GitHub alerts → `:::` containers, task lists → glyphs, footnotes) + `Features/Viewer/AdmonitionBlockHandler` (`IContainerBlockHandler`). **No `IMarkdownRenderer` port** — it's a control, not a swappable service (YAGNI, §7). |
 | Code highlighting / decoration | `Features/Viewer` (EditorBehavior / TextMate) |
 | Diagrams (Mermaid/PlantUML), Math (KaTeX) | port `IDiagramRenderer` + `Features/Viewer` |
-| TOC / outline | **DONE (M4)** — pure `Core/Text/MarkdownOutline` (heading parse) + `Features/Viewer/OutlinePanel` sidebar; navigation scrolls the source editor by line, or the preview in place by walking the visual tree (`DocumentView`, no port). Search is still future (`Features/Search`). |
+| TOC / outline | **DONE (M4)** — pure `Core/Text/MarkdownOutline` (heading parse) + `Features/Viewer/OutlinePanel` sidebar; navigation scrolls the source editor by line, or the preview in place by walking the visual tree (`DocumentView`, no port). In-document **find is DONE (M9)** — pure `Core/Text/TextSearch` + a Ctrl+F find bar in `Features/Viewer/DocumentView` (source-only; an `IBackgroundRenderer` highlights matches). |
 | Sync-scroll | behaviour in `Features/Viewer` (no port) |
 | Export PDF/HTML | port `IExporter` + `Platform/` |
 | Theme presets | `Themes/` (+ optional `IThemePresetProvider`) |

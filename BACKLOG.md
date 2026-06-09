@@ -96,10 +96,15 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | 18b | Multi-file open dialog (`AllowMultiple`) | |
 | — | Tab "changed on disk" dirty dot | Pairs with M14 live-reload. |
 
-## M9 — In-document search (find / replace) · effort L · ported ★high-value
+## M9 — In-document search (find) · effort L · ported ★high-value · **find DONE**
 
-Find bar over preview + source, highlight all, next/prev (Enter/Shift+Enter), case + regex toggles
-(invalid-regex paints the toggle red). Core search logic + `Features/Search`. Can land early.
+**Find DONE** (source): Ctrl+F find bar (a chrome strip in `DocumentView`, NOT an overlay), highlight all
+(amber wash via an `IBackgroundRenderer`, current match outlined in the accent), next/prev (Enter/Shift+Enter),
+case + regex toggles (invalid regex reddens the `.*` toggle), an N/M counter; pure `Core/Text/TextSearch`;
+a markdown tab opens in Source to search; "Найти…" palette entry. **Replace → M15** (editing + save —
+replacing in-memory text you can't save is premature, like undo/redo). **Preview text-highlight deferred**
+(Markdown.Avalonia 11 exposes no search/highlight API; the rendered tree is opaque and Av11 has no
+`TextHighlighter` — a research item).
 
 ## M10 — Sync-scroll, active-heading, TOC polish · effort M · ported + polish
 

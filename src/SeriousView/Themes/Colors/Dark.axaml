@@ -38,6 +38,9 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#74A0FF" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
+    <!-- In-document search: amber wash behind every match (current one is outlined in the accent). -->
+    <SolidColorBrush x:Key="SearchMatchBrush" Color="#E2B341" Opacity="0.33" />
+
     <!-- Status bar — muted chrome tone (sits with the title bar, not a screaming accent). -->
     <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#20202A" />
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#B7B7C5" />

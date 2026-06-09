@@ -83,6 +83,115 @@ public partial class DocumentTabViewModel : ViewModelBase
         GoToLineText = "";
     }
 
+    // --- In-document find (Ctrl+F). Source only; matches are computed over DocumentText and the editor
+    //     highlights them. Per-tab, mirroring go-to-line. Replace is deferred to M15 (editing + save). ---
+
+    /// <summary>Find-bar visibility (Ctrl+F opens, Esc closes).</summary>
+    [ObservableProperty]
+    private bool _isSearchOpen;
+
+    [ObservableProperty]
+    private string _searchQuery = "";
+
+    [ObservableProperty]
+    private bool _searchCaseSensitive;
+
+    [ObservableProperty]
+    private bool _searchRegex;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SearchStatus))]
+    private int _searchMatchCount;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SearchStatus))]
+    private int _searchCurrentIndex = -1; // -1 = no current match
+
+    /// <summary>Regex mode is on but the pattern doesn't compile — the regex toggle goes red.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SearchStatus))]
+    private bool _searchInvalidRegex;
+
+    /// <summary>Find-bar counter: "3 / 12", or a short status when there's nothing to count.</summary>
+    public string SearchStatus =>
+        SearchMatchCount > 0 ? $"{SearchCurrentIndex + 1} / {SearchMatchCount}"
+        : SearchQuery.Length == 0 ? ""
+        : SearchInvalidRegex ? "ошибка"
+        : "нет совпадений";
+
+    private IReadOnlyList<MatchRange> _searchMatches = Array.Empty<MatchRange>();
+
+    /// <summary>Current match ranges, read by the view's highlight renderer.</summary>
+    public IReadOnlyList<MatchRange> SearchMatches => _searchMatches;
+
+    /// <summary>Matches / active index changed — the view re-highlights and (if a match is current)
+    /// scrolls the editor to it. Mirrors <see cref="GoToLineRequested"/>.</summary>
+    public event Action? SearchUpdated;
+
+    partial void OnSearchQueryChanged(string value) => RecomputeSearch();
+    partial void OnSearchCaseSensitiveChanged(bool value) => RecomputeSearch();
+    partial void OnSearchRegexChanged(bool value) => RecomputeSearch();
+
+    // Re-run the search and jump to the first match — incremental, as the user types or flips a toggle.
+    private void RecomputeSearch()
+    {
+        var outcome = TextSearch.FindAll(DocumentText, SearchQuery, SearchCaseSensitive, SearchRegex);
+        _searchMatches = outcome.Matches;
+        SearchInvalidRegex = SearchRegex && !outcome.PatternValid;
+        SearchMatchCount = _searchMatches.Count;
+        SearchCurrentIndex = _searchMatches.Count > 0 ? 0 : -1;
+        SearchUpdated?.Invoke();
+    }
+
+    /// <summary>Open the find bar. For a markdown tab in Preview, switch to Source first (find operates
+    /// over the source text, so matches must be visible there); a notice tab has nothing to search.</summary>
+    [RelayCommand]
+    private void OpenSearch()
+    {
+        if (ShowNotice)
+            return;
+        if (IsMarkdown && ViewMode == DocumentViewMode.Preview)
+            ViewMode = DocumentViewMode.Source;
+        IsSearchOpen = true;
+        RecomputeSearch();
+    }
+
+    [RelayCommand]
+    private void CloseSearch()
+    {
+        IsSearchOpen = false;
+        _searchMatches = Array.Empty<MatchRange>();
+        SearchMatchCount = 0;
+        SearchCurrentIndex = -1;
+        SearchInvalidRegex = false;
+        SearchUpdated?.Invoke(); // clear the highlights
+    }
+
+    [RelayCommand]
+    private void NextMatch() => StepSearch(forward: true);
+
+    [RelayCommand]
+    private void PreviousMatch() => StepSearch(forward: false);
+
+    // Move relative to the current match (its offset is the anchor), wrapping at the ends.
+    private void StepSearch(bool forward)
+    {
+        if (_searchMatches.Count == 0)
+            return;
+
+        var anchor = SearchCurrentIndex >= 0 ? _searchMatches[SearchCurrentIndex] : new MatchRange(-1, 0);
+        SearchCurrentIndex = forward
+            ? TextSearch.NextMatchIndex(_searchMatches, anchor.Offset)
+            : TextSearch.PreviousMatchIndex(_searchMatches, anchor.Offset + anchor.Length);
+        SearchUpdated?.Invoke();
+    }
+
+    [RelayCommand]
+    private void ToggleSearchCaseSensitive() => SearchCaseSensitive = !SearchCaseSensitive;
+
+    [RelayCommand]
+    private void ToggleSearchRegex() => SearchRegex = !SearchRegex;
+
     /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>
     public string DocumentText { get; }

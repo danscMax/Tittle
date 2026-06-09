@@ -108,11 +108,13 @@ alive** — the body is an `ItemsControl` over `Tabs` with each tab's `DocumentV
 (NOT a `ContentControl`), so switching tabs is a visibility flip, not a re-template — don't revert (project
 memory). A tech-debt audit also hardened the single-instance gate, debounced editor-zoom settings writes,
 cached TextMate `RegistryOptions` per theme, and virtualized the outline list.
-Next (chosen): **audit quick-wins + a11y** — background GC (drop `ConcurrentGarbageCollection=false`),
-8 KB-head binary classification, `AutomationProperties.Name` + keyboard focus visuals (reduced-motion
-deferred to the Av12 migration, no `PrefersReduceMotion` API on 11). Remaining M7.5 chrome: 6 contextual
-toolbar · 8 Settings▸Layout; then M8 tab ergonomics / **M9 in-doc search**. Feature spec source:
-`E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+Done since: **audit quick-wins + a11y** (background GC, 8 KB-head binary classification,
+`AutomationProperties.Name` + keyboard focus visuals; reduced-motion deferred to Av12 — no
+`PrefersReduceMotion` API on 11) and **M9 in-document find** (Ctrl+F find bar, highlight-all via an
+`IBackgroundRenderer`, next/prev, case/regex, N/M counter, source-only; pure `Core/Text/TextSearch`).
+**Replace → M15** (editing + save), **preview text-highlight** a research item (Markdown.Avalonia has no
+API). Now unblocked: **M7.5 chrome 6** contextual toolbar (can host a find entry) **· 8** Settings▸Layout, or
+**M8** tab ergonomics. Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 

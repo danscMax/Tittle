@@ -97,6 +97,11 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedTab.IsGoToLineOpen = true;
     }
 
+    /// <summary>Open the find bar on the active tab (Ctrl+F). The tab switches a markdown preview to
+    /// source so matches are visible; a binary/too-large/empty (notice) tab ignores it.</summary>
+    [RelayCommand]
+    private void OpenSearch() => SelectedTab?.OpenSearchCommand.Execute(null);
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, string[] args)
@@ -168,6 +173,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Предыдущая вкладка", SelectPreviousTabCommand, "Ctrl+Shift+Tab"),
             new("Оглавление", ToggleOutlineCommand),
             new("Декоративный фон", ToggleReadingModeCommand),
+            new("Найти…", OpenSearchCommand, "Ctrl+F"),
             new("Перейти к строке…", OpenGoToLineCommand, "Ctrl+G"),
             new("Перенос строк", ToggleWordWrapCommand, "Alt+Z"),
             new("Номера строк", ToggleLineNumbersCommand, "Ctrl+L"),

@@ -2,8 +2,11 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using AvaloniaEdit.Rendering;
 using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using MdEngine = Markdown.Avalonia.Markdown;
@@ -16,6 +19,8 @@ namespace SeriousView.Features.Viewer;
 public partial class DocumentView : UserControl
 {
     private DocumentTabViewModel? _vm;
+    private readonly SearchHighlightRenderer _searchRenderer = new();
+    private bool _searchRendererAttached;
 
     public DocumentView()
     {
@@ -34,6 +39,9 @@ public partial class DocumentView : UserControl
 
         // Relay the editor caret position to the active tab VM (shown in the status bar).
         Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+        // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
+        // central MainWindow dispatcher only opens it).
+        SearchBox.KeyDown += OnSearchBoxKeyDown;
 
         DataContextChanged += OnDataContextChanged;
         DetachedFromVisualTree += (_, _) => Unsubscribe();
@@ -47,6 +55,7 @@ public partial class DocumentView : UserControl
         {
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
+            _vm.SearchUpdated += OnSearchUpdated;
             _vm.PropertyChanged += OnVmPropertyChanged;
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
@@ -60,6 +69,25 @@ public partial class DocumentView : UserControl
     {
         if (e.PropertyName == nameof(DocumentTabViewModel.IsActive) && _vm?.IsActive == true)
             Dispatcher.UIThread.Post(ActivateSource);
+        else if (e.PropertyName == nameof(DocumentTabViewModel.IsSearchOpen))
+            Dispatcher.UIThread.Post(OnSearchOpenChanged);
+    }
+
+    // Find bar opened → focus + select the query box; closed → hand focus back to the editor.
+    private void OnSearchOpenChanged()
+    {
+        if (_vm is null)
+            return;
+
+        if (_vm.IsSearchOpen)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+        }
+        else if (_vm.ShowSource)
+        {
+            Source.TextArea.Focus();
+        }
     }
 
     // The go-to-line request is raised by the status-bar input (wired in MainWindow); scroll there.
@@ -68,6 +96,63 @@ public partial class DocumentView : UserControl
         ScrollSourceToLine(line);
         Source.TextArea.Focus();
     });
+
+    // The tab VM recomputed matches (or navigated): repaint the highlight layer with the themed brushes,
+    // then bring the current match into view. Deferred so a markdown preview→source switch is laid out.
+    private void OnSearchUpdated()
+    {
+        if (_vm is null)
+            return;
+
+        EnsureSearchRendererAttached();
+        var accent = TryBrush("AccentBrush");
+        _searchRenderer.Update(_vm.SearchMatches, _vm.SearchCurrentIndex, TryBrush("SearchMatchBrush"),
+            accent is null ? null : new Pen(accent, 1.4));
+        Source.TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
+
+        var i = _vm.SearchCurrentIndex;
+        if (i >= 0 && i < _vm.SearchMatches.Count)
+        {
+            var offset = _vm.SearchMatches[i].Offset;
+            Dispatcher.UIThread.Post(() =>
+            {
+                Source.TextArea.Caret.Offset = offset;
+                Source.TextArea.Caret.BringCaretToView();
+            });
+        }
+    }
+
+    private void EnsureSearchRendererAttached()
+    {
+        if (_searchRendererAttached)
+            return;
+        Source.TextArea.TextView.BackgroundRenderers.Add(_searchRenderer);
+        _searchRendererAttached = true;
+    }
+
+    private IBrush? TryBrush(string key)
+        => this.TryFindResource(key, ActualThemeVariant, out var value) ? value as IBrush : null;
+
+    private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_vm is null)
+            return;
+
+        switch (e.Key)
+        {
+            case Key.Enter:
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                    _vm.PreviousMatchCommand.Execute(null);
+                else
+                    _vm.NextMatchCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.Escape:
+                _vm.CloseSearchCommand.Execute(null);
+                e.Handled = true;
+                break;
+        }
+    }
 
     private void OnCaretPositionChanged(object? sender, EventArgs e) => UpdateCaret();
 
@@ -98,6 +183,7 @@ public partial class DocumentView : UserControl
         {
             _vm.NavigationRequested -= OnNavigationRequested;
             _vm.GoToLineRequested -= OnGoToLineRequested;
+            _vm.SearchUpdated -= OnSearchUpdated;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
