@@ -72,6 +72,13 @@ internal sealed class FakeClipboardService : IClipboardService
     }
 }
 
+internal sealed class FakeShellService : IShellService
+{
+    public List<string> Revealed { get; } = new();
+
+    public void RevealInExplorer(string filePath) => Revealed.Add(filePath);
+}
+
 internal sealed class FakeRecentFilesStore : IRecentFilesStore
 {
     private readonly List<string> _items = new();

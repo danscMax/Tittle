@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IRecentFilesStore _recent;
     private readonly IAppSettingsService _settings;
     private readonly IClipboardService _clipboard;
+    private readonly IShellService _shell;
     private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
     private bool _editorDirty;
 
@@ -115,7 +116,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
-        IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard, string[] args)
+        IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
+        IShellService shell, string[] args)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
@@ -123,6 +125,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _recent = recent;
         _settings = settings;
         _clipboard = clipboard;
+        _shell = shell;
 
         // Shared editor options, restored from settings. Persisted on change, but DEBOUNCED: a Ctrl+wheel
         // zoom spins ZoomIn/ZoomOut per notch, and each immediate _settings.Update did a synchronous
@@ -378,6 +381,14 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (tab?.FilePath is { } path)
             await _clipboard.SetTextAsync(Path.GetFileName(path));
+    }
+
+    /// <summary>Reveal the tab's file in the OS file manager (tab context menu). No-op when unsaved.</summary>
+    [RelayCommand]
+    private void RevealInExplorer(DocumentTabViewModel? tab)
+    {
+        if (tab?.FilePath is { } path)
+            _shell.RevealInExplorer(path);
     }
 
     /// <summary>Activate the next tab, wrapping around (Ctrl+Tab).</summary>

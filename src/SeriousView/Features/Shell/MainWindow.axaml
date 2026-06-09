@@ -187,6 +187,8 @@
                   <Separator/>
                   <MenuItem Header="Копировать путь" Command="{Binding Shell.CopyFilePathCommand}" CommandParameter="{Binding}"/>
                   <MenuItem Header="Копировать имя" Command="{Binding Shell.CopyFileNameCommand}" CommandParameter="{Binding}"/>
+                  <Separator/>
+                  <MenuItem Header="Показать в проводнике" Command="{Binding Shell.RevealInExplorerCommand}" CommandParameter="{Binding}"/>
                 </MenuFlyout>
               </StackPanel.ContextFlyout>
               <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
