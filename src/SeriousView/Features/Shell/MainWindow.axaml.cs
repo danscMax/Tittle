@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Settings;
+using SeriousView.Platform;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
@@ -207,10 +208,19 @@ public partial class MainWindow : AppWindow
         if (DataContext is not MainWindowViewModel vm || e.Data.GetFiles() is not { } files)
             return;
 
-        foreach (var file in files)
+        // async-void event handler: contain any throw (e.g. from TryGetLocalPath) so it can't escape
+        // to the global crash backstop. OpenPathAsync is itself guarded (surfaces a status message).
+        try
         {
-            if (file.TryGetLocalPath() is { } path)
-                await vm.OpenPathAsync(path);
+            foreach (var file in files)
+            {
+                if (file.TryGetLocalPath() is { } path)
+                    await vm.OpenPathAsync(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLogger.Write(ex, "Drop");
         }
     }
 #pragma warning restore CS0618

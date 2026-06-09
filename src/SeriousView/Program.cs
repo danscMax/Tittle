@@ -34,11 +34,23 @@ internal static class Program
         var gate = new SingleInstanceGate();
         if (!gate.IsPrimary)
         {
-            var forwarded = gate.TryForward(args);
-            gate.Dispose();
-            if (forwarded)
+            if (gate.TryForward(args))
+            {
+                gate.Dispose();
                 return;
-            gate = new SingleInstanceGate(); // primary vanished after the check — re-create as primary
+            }
+            // Forward failed: the primary may have vanished mid-shutdown (then we should take over), or
+            // it is alive but was momentarily unreachable. Re-create and re-check — if the re-created gate
+            // is still NOT primary, a live primary holds the mutex, so try forwarding once more rather than
+            // opening a deaf second window. Only fall through (become a best-effort extra instance) if we
+            // neither acquired the mutex nor could forward — fail-open, never lose the file.
+            gate.Dispose();
+            gate = new SingleInstanceGate();
+            if (!gate.IsPrimary && gate.TryForward(args))
+            {
+                gate.Dispose();
+                return;
+            }
         }
 
         Gate = gate;

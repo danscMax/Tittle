@@ -50,9 +50,18 @@ public partial class App : Application
             // Raised on the pipe background thread — hop to the UI thread for all VM/window work.
             Dispatcher.UIThread.Post(async () =>
             {
-                foreach (var path in paths)
-                    await vm.OpenPathAsync(path);
-                BringToFront(desktop.MainWindow); // activate even when paths was empty (no-arg launch)
+                // Guard the whole body: this is an async-void dispatcher callback, so an unguarded throw
+                // (e.g. from BringToFront/Activate) would escape only to the global crash backstop.
+                try
+                {
+                    foreach (var path in paths)
+                        await vm.OpenPathAsync(path);
+                    BringToFront(desktop.MainWindow); // activate even when paths was empty (no-arg launch)
+                }
+                catch (Exception ex)
+                {
+                    CrashLogger.Write(ex, "ForwardedOpen");
+                }
             });
         };
         gate.StartServer();

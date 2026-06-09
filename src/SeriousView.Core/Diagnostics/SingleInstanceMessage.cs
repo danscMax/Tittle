@@ -31,22 +31,15 @@ public static class SingleInstanceMessage
     }
 
     /// <summary>Decodes a payload from <see cref="Encode"/> back to the path list. Null / garbage /
-    /// wrong-header input yields an empty list (never throws — a malformed or hostile message must not
-    /// crash the running primary).</summary>
+    /// wrong-header input yields an empty list — a malformed or hostile message must not crash the
+    /// running primary. The shared UTF-8 decoder uses replacement fallback (never throws on invalid
+    /// bytes), and the header check below rejects anything not produced by <see cref="Encode"/>.</summary>
     public static IReadOnlyList<string> Decode(ReadOnlySpan<byte> payload)
     {
         if (payload.IsEmpty)
             return Array.Empty<string>();
 
-        string text;
-        try
-        {
-            text = Encoding.UTF8.GetString(payload).TrimEnd('\n', '\r');
-        }
-        catch
-        {
-            return Array.Empty<string>();
-        }
+        var text = Encoding.UTF8.GetString(payload).TrimEnd('\n', '\r');
 
         var parts = text.Split(Separator);
         if (parts.Length == 0 || parts[0] != Header)

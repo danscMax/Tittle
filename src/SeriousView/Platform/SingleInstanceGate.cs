@@ -22,7 +22,6 @@ public sealed class SingleInstanceGate : IDisposable
     private readonly Mutex? _mutex;
     private readonly bool _owns;
     private CancellationTokenSource? _serverCts;
-    private NamedPipeServerStream? _server;
     private volatile bool _disposed;
 
     public bool IsPrimary { get; }
@@ -53,19 +52,32 @@ public sealed class SingleInstanceGate : IDisposable
     /// is gone / mid-shutdown so the caller can fall back to launching its own window.</summary>
     public bool TryForward(IReadOnlyList<string> args)
     {
-        try
+        var payload = SingleInstanceMessage.Encode(args);
+        // The primary accepts one connection at a time and re-listens within milliseconds; a
+        // near-simultaneous second launch can momentarily find the single server instance busy and
+        // time out. Retry a few short connects before giving up — a genuinely gone primary surfaces
+        // as a non-timeout error and bails immediately. CurrentUserOnly matches the server's DACL.
+        for (var attempt = 0; attempt < 3; attempt++)
         {
-            using var client = new NamedPipeClientStream(".", _pipeName, PipeDirection.Out);
-            client.Connect(2000);
-            var payload = SingleInstanceMessage.Encode(args);
-            client.Write(payload, 0, payload.Length);
-            client.Flush();
-            return true;
+            try
+            {
+                using var client = new NamedPipeClientStream(
+                    ".", _pipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+                client.Connect(1000);
+                client.Write(payload, 0, payload.Length);
+                client.Flush();
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                // Server busy with another forward — retry.
+            }
+            catch
+            {
+                return false; // primary gone / pipe error — let the caller fall back to its own window
+            }
         }
-        catch
-        {
-            return false;
-        }
+        return false;
     }
 
     /// <summary>Primary: begin accepting forwarded messages on a background loop. Never throws.</summary>
@@ -90,10 +102,13 @@ public sealed class SingleInstanceGate : IDisposable
         {
             try
             {
+                // Asynchronous so the CancellationToken can unblock WaitForConnectionAsync/CopyToAsync on
+                // Dispose (cancellation is honored only for async pipes). CurrentUserOnly restricts the
+                // pipe DACL to the current user (Windows) / 0600 socket (Unix), rejecting other users and
+                // elevation levels — the BCL answer to a hostile local connector injecting file opens.
                 using var server = new NamedPipeServerStream(
                     _pipeName, PipeDirection.In, maxNumberOfServerInstances: 1,
-                    PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-                _server = server;
+                    PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(ct).ConfigureAwait(false);
 
                 using var ms = new MemoryStream();
@@ -112,10 +127,6 @@ public sealed class SingleInstanceGate : IDisposable
                 try { await Task.Delay(50, ct).ConfigureAwait(false); }
                 catch { break; }
             }
-            finally
-            {
-                _server = null;
-            }
         }
     }
 
@@ -124,8 +135,9 @@ public sealed class SingleInstanceGate : IDisposable
         if (_disposed)
             return;
         _disposed = true;
+        // Cancelling the CTS unblocks the async WaitForConnectionAsync/CopyToAsync and ends the loop
+        // (the pipe is created with PipeOptions.Asynchronous, so token cancellation is honored).
         try { _serverCts?.Cancel(); } catch { /* ignore */ }
-        try { _server?.Dispose(); } catch { /* unblock a pending WaitForConnectionAsync */ }
         try { _serverCts?.Dispose(); } catch { /* ignore */ }
         try { if (_owns) _mutex?.ReleaseMutex(); } catch { /* ignore */ }
         try { _mutex?.Dispose(); } catch { /* ignore */ }
