@@ -503,6 +503,18 @@ public class MainWindowViewModelTests
         Assert.Empty(vm.Tabs);
     }
 
+    [AvaloniaFact]
+    public async Task Palette_OffersReload_OnlyForFileBackedTabs()
+    {
+        var vm = CreateVm(content: "x");
+
+        vm.OpenSampleCommand.Execute(null);
+        Assert.DoesNotContain(vm.BuildPaletteItems(), i => i.Title.Contains("Перезагрузить с диска"));
+
+        await vm.OpenPathAsync("/docs/a.md");
+        Assert.Contains(vm.BuildPaletteItems(), i => i.Title.Contains("Перезагрузить с диска"));
+    }
+
     // --- M14: reload (C2 — auto for the active tab, manual command elsewhere) ---
 
     [AvaloniaFact]

@@ -373,6 +373,9 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedTab is { IsMarkdown: true } tab)
             items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
 
+        if (SelectedTab is { FilePath: not null } fileTab)
+            items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
+
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
 
