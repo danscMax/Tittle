@@ -302,6 +302,11 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>True when the document has at least one heading (drives the outline pane).</summary>
     public bool HasOutline => Outline.Count > 0;
 
+    /// <summary>True when the file changed (or vanished) on disk since this tab loaded it —
+    /// shown as the tab's dirty dot (M14). Reloading clears it by replacing the tab.</summary>
+    [ObservableProperty]
+    private bool _isChangedOnDisk;
+
     /// <summary>Ordinal of the heading currently at the top of the view, −1 above the first —
     /// written by <c>DocumentView</c> from the scroll position (like <see cref="CaretLine"/>).
     /// Drives the outline's active marker and the breadcrumbs (M10).</summary>

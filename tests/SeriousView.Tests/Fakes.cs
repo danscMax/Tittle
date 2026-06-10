@@ -44,6 +44,22 @@ internal sealed class FakeFileDialogService(params string?[]? paths) : IFileDial
         Task.FromResult<IReadOnlyList<string>>(paths?.OfType<string>().ToList() ?? []);
 }
 
+internal sealed class FakeDocumentWatcher : IDocumentWatcher
+{
+    public List<string> Watched { get; } = new();
+
+    public event Action<string, DocumentChangeKind>? Changed;
+
+    public void Watch(string path) => Watched.Add(path);
+
+    public void Unwatch(string path) => Watched.Remove(path);
+
+    /// <summary>Simulate a (debounced) file-system event — synchronous, same thread.</summary>
+    public void Raise(string path, DocumentChangeKind kind) => Changed?.Invoke(path, kind);
+
+    public void Dispose() { }
+}
+
 internal sealed class FakeThemeService : IThemeService
 {
     public ThemeMode Mode { get; private set; } = ThemeMode.Dark;

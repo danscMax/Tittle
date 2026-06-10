@@ -31,6 +31,9 @@ public partial class App : Application
 
             // Single-instance: route file opens forwarded from secondary launches into this window.
             WireSingleInstance(Program.Gate, desktop);
+
+            // Deterministic watcher teardown on the normal close path (M14 live-reload).
+            desktop.ShutdownRequested += (_, _) => Services.GetService<IDocumentWatcher>()?.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -107,6 +110,7 @@ public partial class App : Application
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<IRecentFilesStore, RecentFilesStore>();
+        services.AddSingleton<IDocumentWatcher, DocumentWatcher>();
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();

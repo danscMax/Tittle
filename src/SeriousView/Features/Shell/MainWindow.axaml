@@ -195,6 +195,11 @@
               <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
                              Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
               <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+              <!-- "Changed on disk" dot (M14): an external edit happened since this tab loaded. -->
+              <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                       Fill="{DynamicResource AccentBrush}"
+                       IsVisible="{Binding IsChangedOnDisk}"
+                       ToolTip.Tip="Файл изменён на диске"/>
             </StackPanel>
           </DataTemplate>
         </ListBox.ItemTemplate>

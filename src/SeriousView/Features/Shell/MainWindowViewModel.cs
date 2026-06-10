@@ -28,6 +28,46 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
     private bool _editorDirty;
 
+    // External-change watching (M14). The shadow list makes the diff work even for a Reset
+    // (CloseAllTabs clears the collection). Null watcher (tests without one) = no live-reload.
+    private readonly IDocumentWatcher? _watcher;
+    private readonly List<string> _watchedPaths = new();
+
+    /// <summary>Mirror the watcher's path set onto the current file-backed tabs (the
+    /// CollectionChanged funnel covers add/close/close-all/replace in one place).</summary>
+    private void SyncWatchedPaths()
+    {
+        if (_watcher is null)
+            return;
+
+        var current = Tabs.Where(t => t.FilePath is not null).Select(t => t.FilePath!).ToList();
+        foreach (var gone in _watchedPaths.Except(current, StringComparer.OrdinalIgnoreCase).ToList())
+        {
+            _watcher.Unwatch(gone);
+            _watchedPaths.Remove(gone);
+        }
+
+        foreach (var added in current.Except(_watchedPaths, StringComparer.OrdinalIgnoreCase).ToList())
+        {
+            _watcher.Watch(added);
+            _watchedPaths.Add(added);
+        }
+    }
+
+    /// <summary>A (debounced) external change arrived for <paramref name="path"/> — mark the tab.
+    /// A removed/renamed file keeps its tab and content (the last loaded text stays readable);
+    /// the error bar says why the dot won't clear.</summary>
+    private void HandleDocumentChanged(string path, DocumentChangeKind kind)
+    {
+        var tab = Tabs.FirstOrDefault(t => FilePathEquality.SameFile(t.FilePath, path));
+        if (tab is null)
+            return;
+
+        tab.IsChangedOnDisk = true;
+        if (kind == DocumentChangeKind.Removed)
+            ShowError($"Файл удалён или переименован: {Path.GetFileName(path)}");
+    }
+
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
 
     public bool HasRecent => _recent.Items.Count > 0;
@@ -161,7 +201,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
-        IShellService shell, string[] args)
+        IShellService shell, string[] args, IDocumentWatcher? documentWatcher = null)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
@@ -170,6 +210,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _settings = settings;
         _clipboard = clipboard;
         _shell = shell;
+        _watcher = documentWatcher;
+        if (_watcher is not null)
+            _watcher.Changed += (path, kind) =>
+                Dispatcher.UIThread.Post(() => HandleDocumentChanged(path, kind));
 
         // Shared editor options, restored from settings. Persisted on change, but DEBOUNCED: a Ctrl+wheel
         // zoom spins ZoomIn/ZoomOut per notch, and each immediate _settings.Update did a synchronous
@@ -190,7 +234,11 @@ public partial class MainWindowViewModel : ViewModelBase
         Layout.PropertyChanged += (_, _) =>
             _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
 
-        Tabs.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasTabs));
+        Tabs.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasTabs));
+            SyncWatchedPaths();
+        };
         _theme.Changed += (_, _) => OnPropertyChanged(nameof(CurrentTheme));
         _recent.Changed += (_, _) =>
         {

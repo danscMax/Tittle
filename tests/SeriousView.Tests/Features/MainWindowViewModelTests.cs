@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Services;
@@ -27,7 +28,8 @@ public class MainWindowViewModelTests
     private static MainWindowViewModel CreateVm(
         string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
         IFileReader? fileReader = null, IAppSettingsService? settings = null,
-        IClipboardService? clipboard = null, IShellService? shell = null)
+        IClipboardService? clipboard = null, IShellService? shell = null,
+        IDocumentWatcher? watcher = null)
         => new(
             new FakeFileDialogService(dialogPath),
             fileReader ?? new FakeFileReader(content),
@@ -36,7 +38,8 @@ public class MainWindowViewModelTests
             settings ?? Holder(),
             clipboard ?? new FakeClipboardService(),
             shell ?? new FakeShellService(),
-            args ?? Array.Empty<string>());
+            args ?? Array.Empty<string>(),
+            watcher);
 
     [AvaloniaFact]
     public void Startup_WithoutArgs_ShowsWelcome_NoTabs()
@@ -421,6 +424,82 @@ public class MainWindowViewModelTests
         Assert.True(vm.IsErrorBarOpen); // ...but no longer silently
         Assert.Contains("gone.md", vm.ErrorBarMessage);
         Assert.Contains("lost.md", vm.ErrorBarMessage);
+    }
+
+    // --- M14: external-change watching (C1 — watch lifecycle + the dirty dot) ---
+
+    [AvaloniaFact]
+    public async Task Watcher_FileBackedTabsAreWatched_TheSampleIsNot()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "x", args: new[] { "/docs/a.md" }, watcher: watcher);
+
+        Assert.Equal(new[] { "/docs/a.md" }, watcher.Watched);
+
+        vm.OpenSampleCommand.Execute(null); // path-less tab — nothing to watch
+        Assert.Equal(new[] { "/docs/a.md" }, watcher.Watched);
+
+        await vm.OpenPathAsync("/docs/b.md");
+        Assert.Equal(new[] { "/docs/a.md", "/docs/b.md" }, watcher.Watched);
+    }
+
+    [AvaloniaFact]
+    public async Task Watcher_ClosingTabs_Unwatches()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "x", watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md");
+
+        vm.CloseTabCommand.Execute(vm.Tabs[0]);
+        Assert.Equal(new[] { "/docs/b.md" }, watcher.Watched);
+
+        vm.CloseAllTabsCommand.Execute(null);
+        Assert.Empty(watcher.Watched);
+    }
+
+    [AvaloniaFact]
+    public async Task Watcher_Changed_SetsTheDirtyDot()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "x", watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        Assert.False(vm.Tabs[0].IsChangedOnDisk);
+
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs(); // the handler hops to the UI thread
+
+        Assert.True(vm.Tabs[0].IsChangedOnDisk);
+    }
+
+    [AvaloniaFact]
+    public async Task Watcher_Removed_DotPlusError_TabAndContentKept()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "keep me", watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Removed);
+        Dispatcher.UIThread.RunJobs();
+
+        var tab = Assert.Single(vm.Tabs);            // the tab is NOT closed
+        Assert.True(tab.IsChangedOnDisk);
+        Assert.Equal("keep me", tab.DocumentText);   // last-loaded content stays visible
+        Assert.True(vm.IsErrorBarOpen);
+        Assert.Contains("удал", vm.ErrorBarMessage);
+    }
+
+    [AvaloniaFact]
+    public void Watcher_EventForAnUnknownPath_IsANoOp()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(watcher: watcher);
+
+        watcher.Raise("/docs/ghost.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(vm.IsErrorBarOpen);
+        Assert.Empty(vm.Tabs);
     }
 
     [AvaloniaFact]
