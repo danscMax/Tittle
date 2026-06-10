@@ -668,6 +668,53 @@ public class MainWindowViewModelTests
             System.Linq.Enumerable.Select(vm.SelectedTab!.Outline, h => h.Text));
     }
 
+    // --- Ported: CSV/TSV as a sortable table ---
+
+    [AvaloniaFact]
+    public async Task CsvTab_ShowsTheTableByDefault_ToggleFallsBackToSource()
+    {
+        var vm = CreateVm(content: "name,age\nАня,30\nБорис,25");
+        await vm.OpenPathAsync("/data/people.csv");
+
+        var tab = vm.SelectedTab!;
+        Assert.True(tab.ShowCsvTable);
+        Assert.False(tab.ShowSource);
+        Assert.Equal(new[] { "name", "age" },
+            System.Linq.Enumerable.Select(tab.CsvTable!.Columns, c => c.Header));
+
+        tab.ToggleCsvViewCommand.Execute(null);
+
+        Assert.False(tab.ShowCsvTable);
+        Assert.True(tab.ShowSource);
+        Assert.False(vm.Editor.CsvAsTable); // becomes the persisted default
+    }
+
+    [AvaloniaFact]
+    public async Task CsvTable_SortsNumerically_AndReverses()
+    {
+        var vm = CreateVm(content: "name,age\nАня,30\nБорис,9\nВера,100");
+        await vm.OpenPathAsync("/data/people.csv");
+        var table = vm.SelectedTab!.CsvTable!;
+        var ageColumn = table.Columns[1];
+
+        table.SortByCommand.Execute(ageColumn);
+        Assert.Equal(new[] { "9", "30", "100" },
+            System.Linq.Enumerable.Select(table.Rows, r => r.Cells[1].Text)); // numeric, not "100"<"30"
+
+        table.SortByCommand.Execute(ageColumn);
+        Assert.Equal(new[] { "100", "30", "9" },
+            System.Linq.Enumerable.Select(table.Rows, r => r.Cells[1].Text)); // second click reverses
+    }
+
+    [AvaloniaFact]
+    public async Task BrokenCsv_FallsBackToTheSourceView()
+    {
+        var vm = CreateVm(content: "   ");
+        await vm.OpenPathAsync("/data/empty.csv");
+
+        Assert.False(vm.SelectedTab!.ShowCsvTable);
+    }
+
     // --- Ported: JSON pretty-print toggle ---
 
     [AvaloniaFact]

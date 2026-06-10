@@ -45,6 +45,17 @@
     <Style Selector="ItemsControl#BreadcrumbsList ContentPresenter:nth-child(1) TextBlock.crumb-sep">
       <Setter Property="IsVisible" Value="False"/>
     </Style>
+    <!-- CSV table header cells: flat, bold, sticky above the row scroller. -->
+    <Style Selector="Button.csv-header">
+      <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ChromeBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="0,0,1,1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="6,4"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
   </UserControl.Styles>
   <!-- One tab's body: an optional find bar (Ctrl+F) docked on top, then the source editor, rendered
        preview, and a notice overlay sharing the area (ShowSource / ShowPreview / ShowNotice exclusive). -->
@@ -164,6 +175,54 @@
         </md:MarkdownScrollViewer>
       </ScrollViewer>
     </Panel>
+
+    <!-- CSV/TSV table view (ported): sticky header row outside the vertical scroller, both
+         sharing one horizontal scroller so they pan together; rows are virtualized. -->
+    <ScrollViewer IsVisible="{Binding ShowCsvTable}" Background="{DynamicResource EditorSurfaceBrush}"
+                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                  Padding="12,8">
+      <DockPanel>
+        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding CsvTable.Columns}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:CompileBindings="False">
+              <Button Classes="csv-header" Width="{Binding Width}" Content="{Binding Header}"
+                      Command="{Binding $parent[ScrollViewer].DataContext.CsvTable.SortByCommand}"
+                      CommandParameter="{Binding}"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding CsvTable.Truncated, FallbackValue=False}"
+                   Text="Показаны первые 10 000 строк" Margin="2,6" FontSize="12"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding CsvTable.Rows}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:CompileBindings="False">
+                <ItemsControl ItemsSource="{Binding Cells}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:CompileBindings="False">
+                      <Border Width="{Binding Width}" Padding="6,3"
+                              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,1">
+                        <TextBlock Text="{Binding Text}" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+    </ScrollViewer>
 
     <!-- Notice overlay: binary / too-large / empty files (no editor, no preview).
          Text-only (no SymbolIcon) so it renders without the FluentAvalonia Symbols font. -->

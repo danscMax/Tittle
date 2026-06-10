@@ -39,4 +39,4 @@ public sealed record WindowPlacement(double Width, double Height, int X, int Y, 
 public sealed record SessionState(List<string> OpenFiles, int ActiveIndex);
 
 /// <summary>Editor display options shared across tabs (source view only).</summary>
-public sealed record EditorSettings(double FontSize, bool WordWrap, bool ShowLineNumbers, bool JsonPretty = false);
+public sealed record EditorSettings(double FontSize, bool WordWrap, bool ShowLineNumbers, bool JsonPretty = false, bool CsvAsTable = true);

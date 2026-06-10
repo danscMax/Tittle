@@ -290,6 +290,13 @@
         <!-- Preview/source toggle (markdown only) — moved here from the title strip. Compact icon
              mirrors the current mode (eye = preview, {} = source); the tooltip names the action.
              Sits just right of the divider, grouped with the editor controls. -->
+        <!-- Table/source toggle for delimited files (ported csv-as-table) — in the status bar,
+             which stays visible in both views (the contextual toolbar hides with the editor). -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.ToggleCsvViewCommand}"
+                ToolTip.Tip="Таблица / исходник" AutomationProperties.Name="Таблица или исходник"
+                Content="▦"
+                IsVisible="{Binding SelectedTab.CsvTable, FallbackValue=False, Converter={x:Static ObjectConverters.IsNotNull}}"/>
         <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
                 AutomationProperties.AutomationId="ViewModeButton"
                 IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"

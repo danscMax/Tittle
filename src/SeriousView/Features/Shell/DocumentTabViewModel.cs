@@ -217,6 +217,53 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>True for .json files — offers the display-only pretty-print toggle (ported).</summary>
     public bool IsJson => string.Equals(GrammarExtension, ".json", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Delimiter for tabular files, or null (drives the csv-as-table view; ported).</summary>
+    public char? Delimiter => GrammarExtension?.ToLowerInvariant() switch
+    {
+        ".csv" => ',',
+        ".tsv" => '\t',
+        _ => null,
+    };
+
+    private CsvTableViewModel? _csvTable;
+    private bool _csvTableBuilt;
+
+    /// <summary>Sortable table model for .csv/.tsv tabs; null when the file doesn't parse
+    /// (the source view shows instead). Cached: the document text is immutable.</summary>
+    public CsvTableViewModel? CsvTable
+    {
+        get
+        {
+            if (!_csvTableBuilt)
+            {
+                _csvTableBuilt = true;
+                if (Delimiter is { } delimiter
+                    && DelimitedTable.Parse(DocumentText, delimiter) is { } table)
+                    _csvTable = new CsvTableViewModel(table);
+            }
+
+            return _csvTable;
+        }
+    }
+
+    /// <summary>Per-tab table-vs-source choice; new tabs inherit the persisted default.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowCsvTable))]
+    [NotifyPropertyChangedFor(nameof(ShowSource))]
+    private bool _csvAsTableEnabled;
+
+    /// <summary>Show the table view (delimited file that parsed, table mode on).</summary>
+    public bool ShowCsvTable => !ShowNotice && CsvAsTableEnabled && CsvTable is not null;
+
+    /// <summary>Flip table ⟷ source for delimited tabs (and remember it as the default).</summary>
+    [RelayCommand]
+    private void ToggleCsvView()
+    {
+        CsvAsTableEnabled = !CsvAsTableEnabled;
+        if (Editor is not null)
+            Editor.CsvAsTable = CsvAsTableEnabled;
+    }
+
     /// <summary>Per-tab pretty-print state; new tabs inherit the persisted default from
     /// <see cref="Shared.EditorOptions.JsonPretty"/> when the shell adopts them.</summary>
     [ObservableProperty]
@@ -253,8 +300,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>Show the rendered markdown preview (markdown file in Preview mode, has content).</summary>
     public bool ShowPreview => !ShowNotice && IsMarkdown && ViewMode == DocumentViewMode.Preview;
 
-    /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode).</summary>
-    public bool ShowSource => !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source);
+    /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode),
+    /// unless the tab is showing its table view.</summary>
+    public bool ShowSource =>
+        !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
 
     /// <summary>Content classification from the loader (Text / Binary / TooLarge).</summary>
     public FileLoadKind Kind { get; }

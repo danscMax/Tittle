@@ -29,13 +29,17 @@ public partial class EditorOptions : ObservableObject
     [ObservableProperty]
     private bool _jsonPretty;
 
+    /// <summary>Default for new tabs: show .csv/.tsv as a sortable table (ported).</summary>
+    [ObservableProperty]
+    private bool _csvAsTable = true;
+
     public void ZoomIn() => FontSize = Math.Min(MaxFontSize, FontSize + Step);
     public void ZoomOut() => FontSize = Math.Max(MinFontSize, FontSize - Step);
     public void ResetZoom() => FontSize = DefaultFontSize;
     public void ToggleWordWrap() => WordWrap = !WordWrap;
     public void ToggleLineNumbers() => ShowLineNumbers = !ShowLineNumbers;
 
-    public EditorSettings ToSettings() => new(FontSize, WordWrap, ShowLineNumbers, JsonPretty);
+    public EditorSettings ToSettings() => new(FontSize, WordWrap, ShowLineNumbers, JsonPretty, CsvAsTable);
 
     /// <summary>Build options from persisted settings, clamping the font size defensively.</summary>
     public static EditorOptions FromSettings(EditorSettings? s) => s is null
@@ -46,5 +50,6 @@ public partial class EditorOptions : ObservableObject
             WordWrap = s.WordWrap,
             ShowLineNumbers = s.ShowLineNumbers,
             JsonPretty = s.JsonPretty,
+            CsvAsTable = s.CsvAsTable,
         };
 }

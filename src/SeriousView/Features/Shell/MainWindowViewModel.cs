@@ -672,7 +672,8 @@ public partial class MainWindowViewModel : ViewModelBase
         tab.Editor = Editor;   // share one editor-options instance across all tabs
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
         tab.Shell = this;      // back-reference for the tab's context-menu commands
-        tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty; // persisted default (ported)
+        tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty;        // persisted default (ported)
+        tab.CsvAsTableEnabled = tab.Delimiter is not null && Editor.CsvAsTable; // ditto
     }
 
     // Keep exactly one tab active so the body shows only its (kept-alive) DocumentView.
