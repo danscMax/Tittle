@@ -137,4 +137,56 @@ public class MarkdownOutlineTests
         Assert.Single(result);
         Assert.Equal("But this is", result[0].Text);
     }
+
+    // --- AncestorChain (breadcrumbs, M10) ---
+
+    [Fact]
+    public void AncestorChain_NestedHeading_FullChainTopFirst()
+    {
+        var outline = MarkdownOutline.Parse("# A\n## B\n### C");
+
+        var chain = MarkdownOutline.AncestorChain(outline, 2);
+
+        Assert.Equal(new[] { "A", "B", "C" }, System.Linq.Enumerable.Select(chain, h => h.Text));
+    }
+
+    [Fact]
+    public void AncestorChain_SkipsSameLevelSiblings()
+    {
+        var outline = MarkdownOutline.Parse("# A\n## B\n## C");
+
+        var chain = MarkdownOutline.AncestorChain(outline, 2);
+
+        Assert.Equal(new[] { "A", "C" }, System.Linq.Enumerable.Select(chain, h => h.Text));
+    }
+
+    [Fact]
+    public void AncestorChain_LevelJump_HasNoInvented_Intermediate()
+    {
+        var outline = MarkdownOutline.Parse("# A\n### C");
+
+        var chain = MarkdownOutline.AncestorChain(outline, 1);
+
+        Assert.Equal(new[] { "A", "C" }, System.Linq.Enumerable.Select(chain, h => h.Text));
+    }
+
+    [Fact]
+    public void AncestorChain_LaterTopLevel_ResetsTheChain()
+    {
+        var outline = MarkdownOutline.Parse("# A\n## B\n# C");
+
+        var chain = MarkdownOutline.AncestorChain(outline, 2);
+
+        var only = Assert.Single(chain);
+        Assert.Equal("C", only.Text);
+    }
+
+    [Fact]
+    public void AncestorChain_MinusOneOrOutOfRange_Empty()
+    {
+        var outline = MarkdownOutline.Parse("# A");
+
+        Assert.Empty(MarkdownOutline.AncestorChain(outline, -1));
+        Assert.Empty(MarkdownOutline.AncestorChain(outline, 5));
+    }
 }

@@ -332,4 +332,24 @@ public class DocumentTabViewModelTests
         Assert.Equal(-1, vm.SearchCurrentIndex);
         Assert.Empty(vm.SearchMatches);
     }
+
+    [Fact]
+    public void Breadcrumbs_FollowTheActiveHeading_AndNotify()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n## B\n### C", "/docs/d.md");
+        var raised = 0;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DocumentTabViewModel.Breadcrumbs))
+                raised++;
+        };
+
+        vm.ActiveHeadingOrdinal = 2;
+
+        Assert.Equal(1, raised);
+        Assert.Equal(new[] { "A", "B", "C" }, System.Linq.Enumerable.Select(vm.Breadcrumbs, h => h.Text));
+
+        vm.ActiveHeadingOrdinal = -1;
+        Assert.Empty(vm.Breadcrumbs);
+    }
 }

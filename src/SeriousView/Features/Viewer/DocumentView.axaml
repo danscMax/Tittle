@@ -28,6 +28,23 @@
       <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionCautionBrush}"/>
     </Style>
+    <!-- Breadcrumb segments: flat muted buttons that light up on hover; the separator before
+         the FIRST crumb is hidden (nth-child on the items' presenters). -->
+    <Style Selector="Button.crumb">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="5,2"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+    </Style>
+    <Style Selector="Button.crumb:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="ItemsControl#BreadcrumbsList ContentPresenter:nth-child(1) TextBlock.crumb-sep">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
   </UserControl.Styles>
   <!-- One tab's body: an optional find bar (Ctrl+F) docked on top, then the source editor, rendered
        preview, and a notice overlay sharing the area (ShowSource / ShowPreview / ShowNotice exclusive). -->
@@ -58,6 +75,35 @@
                  Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
       </DockPanel>
+    </Border>
+
+    <!-- Breadcrumbs (M10): ancestor chain of the active heading — a docked chrome strip (never
+         an overlay over the editor's GPU surface), shown in BOTH view modes whenever the doc
+         has an outline (stable height; the chain merely empties above the first heading).
+         Segments navigate via the same command as the outline. -->
+    <Border x:Name="BreadcrumbBar" DockPanel.Dock="Top" MinHeight="26"
+            IsVisible="{Binding HasOutline, FallbackValue=False}"
+            Background="{DynamicResource ChromeBackgroundBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="12,0">
+      <ItemsControl x:Name="BreadcrumbsList" ItemsSource="{Binding Breadcrumbs}"
+                    VerticalAlignment="Center" AutomationProperties.Name="Путь заголовков">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:CompileBindings="False">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Classes="crumb-sep" Text="›" Margin="3,0" VerticalAlignment="Center"
+                         Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+              <Button Classes="crumb" Content="{Binding Text}"
+                      Command="{Binding $parent[ItemsControl].DataContext.NavigateToHeadingCommand}"
+                      CommandParameter="{Binding}"/>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </Border>
 
     <Panel>

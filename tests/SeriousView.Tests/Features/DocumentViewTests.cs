@@ -8,6 +8,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
+using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using SeriousView.Features.Viewer;
 using SeriousView.Shared;
@@ -415,6 +416,50 @@ public class DocumentViewTests
         view.RecomputeActiveHeading();
 
         Assert.Equal(0, changes); // already 0 after startup; equal recomputes raise nothing
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Breadcrumbs_StripShows_ForMarkdownWithHeadings_NotForCode()
+    {
+        var md = DocumentTabViewModel.FromFile("# A\n## B", "/docs/a.md");
+        var cs = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
+
+        var window = new Window { Content = new DocumentView { DataContext = md } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var strip = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "BreadcrumbBar");
+        Assert.True(strip.IsVisible);
+        window.Close();
+
+        window = new Window { Content = new DocumentView { DataContext = cs } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        strip = window.GetVisualDescendants().OfType<Border>().First(b => b.Name == "BreadcrumbBar");
+        Assert.False(strip.IsVisible);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Breadcrumbs_RenderTheChain_AndNavigateOnClick()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n\n## B\n\n### C", "/docs/a.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.ActiveHeadingOrdinal = 2; // ### C → chain A › B › C
+        Dispatcher.UIThread.RunJobs();
+
+        var crumbs = window.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.Classes.Contains("crumb")).ToList();
+        Assert.Equal(new[] { "A", "B", "C" }, crumbs.Select(c => c.Content?.ToString()));
+
+        HeadingOutline? navigated = null;
+        vm.NavigationRequested += h => navigated = h;
+        crumbs[0].Command!.Execute(crumbs[0].CommandParameter);
+
+        Assert.Equal("A", navigated?.Text);
         window.Close();
     }
 

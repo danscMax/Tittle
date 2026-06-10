@@ -296,6 +296,13 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private int _activeHeadingOrdinal = -1;
 
+    /// <summary>Ancestor chain of the active heading (top-level first), shown as the
+    /// breadcrumbs strip. Empty above the first heading and for non-markdown.</summary>
+    public IReadOnlyList<HeadingOutline> Breadcrumbs =>
+        MarkdownOutline.AncestorChain(Outline, ActiveHeadingOrdinal);
+
+    partial void OnActiveHeadingOrdinalChanged(int value) => OnPropertyChanged(nameof(Breadcrumbs));
+
     /// <summary>Raised when the user picks a heading; the view scrolls preview/source to it.</summary>
     public event Action<HeadingOutline>? NavigationRequested;
 

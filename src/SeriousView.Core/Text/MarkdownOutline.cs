@@ -55,6 +55,31 @@ public static partial class MarkdownOutline
         return headings;
     }
 
+    /// <summary>Ancestor chain for breadcrumbs (M10): the active heading and, walking backwards,
+    /// the nearest heading of each strictly smaller level — top-level first. Empty for −1 /
+    /// out-of-range. Level jumps stay as authored (H1→H3 with no H2 yields [H1, H3]); a later
+    /// same-or-higher-level heading resets the chain naturally.</summary>
+    public static IReadOnlyList<HeadingOutline> AncestorChain(
+        IReadOnlyList<HeadingOutline> outline, int activeOrdinal)
+    {
+        if (activeOrdinal < 0 || activeOrdinal >= outline.Count)
+            return [];
+
+        var chain = new List<HeadingOutline> { outline[activeOrdinal] };
+        var minLevel = outline[activeOrdinal].Level;
+        for (var i = activeOrdinal - 1; i >= 0 && minLevel > 1; i--)
+        {
+            if (outline[i].Level < minLevel)
+            {
+                chain.Add(outline[i]);
+                minLevel = outline[i].Level;
+            }
+        }
+
+        chain.Reverse();
+        return chain;
+    }
+
     // Fenced code delimiter: ``` or ~~~ (3+), indented up to 3 spaces, optional info string after.
     [GeneratedRegex(@"^ {0,3}(`{3,}|~{3,})")]
     private static partial Regex Fence();
