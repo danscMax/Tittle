@@ -137,6 +137,111 @@ public class MarkdownPreprocessorTests
         Assert.Equal(md, MarkdownPreprocessor.Transform(md));
     }
 
+    // --- Wiki links [[name]] (M10) ---
+
+    private static string TransformWiki(string md, params string[] existing)
+        => MarkdownPreprocessor.Transform(md, name => System.Linq.Enumerable.Contains(existing, name));
+
+    [Fact]
+    public void Wiki_ResolvedName_BecomesAMarkdownLink()
+    {
+        Assert.Equal("see [note](wiki:note)", TransformWiki("see [[note]]", "note"));
+    }
+
+    [Fact]
+    public void Wiki_UnresolvedOrInvalid_StripsToPlainText()
+    {
+        Assert.Equal("see note", TransformWiki("see [[note]]"));
+        Assert.Equal("see ../evil", TransformWiki("see [[../evil]]", "../evil"));
+        Assert.Equal("see ^x", TransformWiki("see [[^x]]", "^x"));
+    }
+
+    [Fact]
+    public void Wiki_NullResolver_StripsToPlainText()
+    {
+        Assert.Equal("see note", MarkdownPreprocessor.Transform("see [[note]]", null));
+    }
+
+    [Fact]
+    public void Wiki_MultipleAndAdjacentTokens_OnOneLine()
+    {
+        Assert.Equal("[a](wiki:a) and [b](wiki:b)", TransformWiki("[[a]] and [[b]]", "a", "b"));
+        Assert.Equal("[a](wiki:a)[b](wiki:b)", TransformWiki("[[a]][[b]]", "a", "b"));
+    }
+
+    [Fact]
+    public void Wiki_PipeOrEmpty_LeftAsAuthored()
+    {
+        Assert.Equal("[[a|b]]", TransformWiki("[[a|b]]", "a"));
+        Assert.Equal("[[]]", TransformWiki("[[]]"));
+        Assert.Equal("[[  ]]", TransformWiki("[[  ]]"));
+    }
+
+    [Fact]
+    public void Wiki_NameIsTrimmed()
+    {
+        Assert.Equal("[note](wiki:note)", TransformWiki("[[ note ]]", "note"));
+    }
+
+    [Fact]
+    public void Wiki_EncodesSpacesAndCyrillic()
+    {
+        Assert.Equal("[doc with spaces](wiki:doc%20with%20spaces)",
+            TransformWiki("[[doc with spaces]]", "doc with spaces"));
+        Assert.StartsWith("[Заметка](wiki:%D0", TransformWiki("[[Заметка]]", "Заметка"));
+    }
+
+    [Fact]
+    public void Wiki_SkippedInsideFencesAndInlineCode()
+    {
+        Assert.Equal("```\n[[note]]\n```", TransformWiki("```\n[[note]]\n```", "note"));
+        Assert.Equal("a `[[note]]` b", TransformWiki("a `[[note]]` b", "note"));
+    }
+
+    [Fact]
+    public void Wiki_WorksInsideAdmonitionBodies()
+    {
+        var result = TransformWiki("> [!NOTE]\n> see [[note]]", "note");
+
+        Assert.Contains("see [note](wiki:note)", result);
+    }
+
+    [Fact]
+    public void Wiki_DoesNotTouchFootnotes_AndViceVersa()
+    {
+        var result = TransformWiki("X[^1] and [[note]]\n\n[^1]: def", "note");
+
+        Assert.Contains("[note](wiki:note)", result);
+        Assert.Contains("¹", result); // the footnote pass still ran
+    }
+
+    [Fact]
+    public void Wiki_SkipsLinkReferenceDefinitionLines()
+    {
+        const string md = "[ref]: http://example.com [[note]]";
+        Assert.Equal(md, TransformWiki(md, "note"));
+    }
+
+    [Fact]
+    public void Wiki_MemoizesTheResolver()
+    {
+        var calls = 0;
+        MarkdownPreprocessor.Transform("[[a]] then [[a]] again", _ =>
+        {
+            calls++;
+            return true;
+        });
+
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public void Wiki_OverlongLine_IsLeftAlone()
+    {
+        var line = "[[note]] " + new string('x', 10_001);
+        Assert.Equal(line, TransformWiki(line, "note"));
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;

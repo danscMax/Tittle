@@ -8,6 +8,8 @@ namespace SeriousView.Core.Text;
 /// <summary>Pure markdown text passes that bridge GitHub-flavoured syntax the renderer
 /// (Markdown.Avalonia) does not handle natively into forms it does, UI-free and testable:
 /// <list type="bullet">
+/// <item>Wiki links (<c>[[name]]</c>) → markdown links to <c>wiki:</c> URLs when the injected
+///   resolver knows the sibling note, else plain text (M10).</item>
 /// <item>GitHub alerts (<c>&gt; [!NOTE]</c> …) → <c>::: &lt;type&gt;</c> container blocks,
 ///   rendered as themed callouts by <c>AdmonitionBlockHandler</c>.</item>
 /// <item>GFM task lists (<c>- [x]</c> / <c>- [ ]</c>) → checkbox glyphs (the engine renders
@@ -17,9 +19,19 @@ namespace SeriousView.Core.Text;
 /// </list></summary>
 public static partial class MarkdownPreprocessor
 {
+    /// <summary>Per-line cap for the inline passes — keeps any regex worst case bounded on
+    /// hostile single-line documents; longer lines pass through untransformed.</summary>
+    private const int MaxInlineLineLength = 10_000;
+
     /// <summary>Apply all markdown-normalising passes. Returns the input unchanged when there
     /// is nothing to transform (plain markdown round-trips, modulo CRLF → LF normalisation).</summary>
-    public static string Transform(string? markdown)
+    public static string Transform(string? markdown) => Transform(markdown, null);
+
+    /// <summary>Full pipeline. <paramref name="wikiLinkResolver"/> receives a trimmed wiki name
+    /// (no <c>.md</c>) and answers whether a sibling note with that name exists; it must not
+    /// throw and is consulted once per distinct name (memoized). Null = nothing resolves, so
+    /// every <c>[[name]]</c> degrades to plain text.</summary>
+    public static string Transform(string? markdown, Func<string, bool>? wikiLinkResolver)
     {
         if (string.IsNullOrEmpty(markdown))
             return markdown ?? string.Empty;
@@ -27,11 +39,52 @@ public static partial class MarkdownPreprocessor
         var lines = new List<string>(
             markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
 
+        // Inline passes run first, in place (line count preserved → the fence bitmap stays
+        // valid) and before admonition re-wrapping so callout bodies get them too.
+        var regions = MarkdownCodeRegions.Scan(lines);
+        ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
+
         lines = ConvertFootnotes(lines);
         lines = ConvertAdmonitions(lines);
         ConvertTaskListsInPlace(lines);
 
         return string.Join("\n", lines);
+    }
+
+    // [[name]] → "[name](wiki:<encoded>)" when the resolver knows the note, else plain "name".
+    // [[a|b]] / [[ ]] don't match the token and stay as authored. Skips fenced lines, inline
+    // code spans, link-reference-definition lines and overlong lines.
+    private static void ConvertWikiLinksInPlace(
+        List<string> lines, MarkdownCodeRegions regions, Func<string, bool>? resolve)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
+                || !line.Contains("[[", StringComparison.Ordinal) || LinkRefDefLine().IsMatch(line))
+                continue;
+
+            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(line, WikiToken(), m =>
+            {
+                var name = m.Groups[1].Value.Trim();
+                if (name.Length == 0)
+                    return m.Value;
+                if (!WikiLink.IsValidName(name) || resolve?.Invoke(name) != true)
+                    return name;
+                return $"[{name}]({WikiLink.CreateUrl(name)})";
+            });
+        }
+    }
+
+    /// <summary>One resolver hit per distinct name per Transform — a note linked many times
+    /// costs one existence check.</summary>
+    private static Func<string, bool>? Memoize(Func<string, bool>? resolver)
+    {
+        if (resolver is null)
+            return null;
+
+        var known = new Dictionary<string, bool>(); // default comparer is ordinal
+        return name => known.TryGetValue(name, out var exists) ? exists : known[name] = resolver(name);
     }
 
     // Footnotes: pull out [^id]: definitions, replace [^id] references with superscript
@@ -163,4 +216,14 @@ public static partial class MarkdownPreprocessor
     // An inline footnote reference: [^id]. Capture (1) id.
     [GeneratedRegex(@"\[\^([^\]]+)\]")]
     private static partial Regex FootnoteRef();
+
+    // A wiki-link token: [[name]] — no nesting, no pipe, non-empty. Needs two literal '[',
+    // so it can never collide with footnote [^id] syntax.
+    [GeneratedRegex(@"\[\[([^\[\]|]+)\]\]")]
+    private static partial Regex WikiToken();
+
+    // A link-reference definition line ("[label]: dest") — skipped by the inline passes; the
+    // (?!\^) keeps footnote DEFINITION text eligible (it becomes visible «Сноски» content).
+    [GeneratedRegex(@"^ {0,3}\[(?!\^)[^\]]+\]:")]
+    private static partial Regex LinkRefDefLine();
 }
