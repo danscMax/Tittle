@@ -319,6 +319,8 @@ public partial class MainWindow : AppWindow
         RestoreWindow();
         WireOutlineSidebar(viewModel);
         viewModel.LayoutSettingsRequested += OpenLayoutSettings;
+        viewModel.StatsRequested += stats =>
+            new Features.Stats.StatsWindow { DataContext = stats }.ShowDialog(this);
     }
 
     // Restore the persisted outline width, follow live drags into a field, and expand/collapse the

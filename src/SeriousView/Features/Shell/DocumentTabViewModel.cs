@@ -410,6 +410,12 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isChangedOnDisk;
 
+    /// <summary>Status-bar text for the current editor selection («выдел.: N слов»), written
+    /// by <c>DocumentView</c> from the editor's selection (ported selection word count).
+    /// Empty when nothing is selected.</summary>
+    [ObservableProperty]
+    private string _selectionInfo = string.Empty;
+
     /// <summary>Current reading position, written by <c>DocumentView</c> per scroll event
     /// (the <see cref="CaretLine"/> pattern) — the shell hands it to a reload's fresh tab.</summary>
     public HeadingAnchor ReadingAnchor { get; set; } = new(-1, 0);

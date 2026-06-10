@@ -668,6 +668,23 @@ public class MainWindowViewModelTests
             System.Linq.Enumerable.Select(vm.SelectedTab!.Outline, h => h.Text));
     }
 
+    // --- Ported: document statistics ---
+
+    [AvaloniaFact]
+    public async Task ShowStats_RaisesComputedStatsForTheActiveTab()
+    {
+        var vm = CreateVm(content: "Раз два три. Четыре пять!");
+        await vm.OpenPathAsync("/docs/a.md");
+        TextStats? received = null;
+        vm.StatsRequested += s => received = s;
+
+        vm.ShowStatsCommand.Execute(null);
+
+        Assert.NotNull(received);
+        Assert.Equal(5, received!.Words);
+        Assert.Equal(2, received.Sentences);
+    }
+
     // --- Ported: smart typography for plain text (display-only) ---
 
     [AvaloniaFact]

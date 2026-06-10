@@ -256,6 +256,10 @@
                    IsVisible="{Binding HasTabs}"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Selection word count (ported) — empty text collapses to nothing. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.SelectionInfo, FallbackValue=''}"
+                   Margin="0,0,12,0" Foreground="{DynamicResource StatusBarForegroundBrush}"
+                   FontSize="11.5" Opacity="0.92" VerticalAlignment="Center"/>
         <!-- Caret position — only meaningful (and shown) while the source editor is visible. -->
         <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.CaretText}"
                    IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"

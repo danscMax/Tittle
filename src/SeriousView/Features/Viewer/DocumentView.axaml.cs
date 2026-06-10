@@ -51,6 +51,14 @@ public partial class DocumentView : UserControl
 
         // Relay the editor caret position to the active tab VM (shown in the status bar).
         Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+        // Selection word count for the status bar (ported).
+        Source.TextArea.SelectionChanged += (_, _) =>
+        {
+            if (_vm is null)
+                return;
+            var words = Core.Text.TextStatistics.CountWords(Source.SelectedText);
+            _vm.SelectionInfo = words > 0 ? $"выдел.: {words} сл." : string.Empty;
+        };
         // Scroll-spy (M10): track the heading at the viewport top in both modes.
         PreviewScroll.ScrollChanged += OnPreviewScrollChanged;
         Source.TextArea.TextView.ScrollOffsetChanged += OnSourceScrollChanged;

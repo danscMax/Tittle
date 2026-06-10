@@ -12,6 +12,7 @@ using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Export;
 using SeriousView.Core.Services;
+using SeriousView.Core.Text;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
 using SeriousView.Shared;
@@ -297,6 +298,18 @@ public partial class MainWindowViewModel : ViewModelBase
     /// a view concern, so the shell's code-behind shows it.</summary>
     public event Action? LayoutSettingsRequested;
 
+    /// <summary>Raised with the computed stats when the user asks for document statistics
+    /// (ported stats panel); the window is shown by the shell's code-behind.</summary>
+    public event Action<TextStats>? StatsRequested;
+
+    /// <summary>Show document statistics for the active tab (palette / menu).</summary>
+    [RelayCommand]
+    private void ShowStats()
+    {
+        if (SelectedTab is { } tab)
+            StatsRequested?.Invoke(TextStatistics.Compute(tab.DocumentText));
+    }
+
     /// <summary>Open the Settings ▸ Layout window — it binds to the shared <see cref="Layout"/>, so its
     /// toggles persist and re-render the chrome live.</summary>
     [RelayCommand]
@@ -384,6 +397,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Предыдущая вкладка", SelectPreviousTabCommand, "Ctrl+Shift+Tab"),
             new("Оглавление", ToggleOutlineCommand),
             new("Декоративный фон", ToggleReadingModeCommand),
+            new("Статистика документа", ShowStatsCommand),
             new("Найти…", OpenSearchCommand, "Ctrl+F"),
             new("Перейти к строке…", OpenGoToLineCommand, "Ctrl+G"),
             new("Перенос строк", ToggleWordWrapCommand, "Alt+Z"),
