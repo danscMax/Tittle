@@ -51,8 +51,18 @@ internal sealed class FakeFileReader : IFileReader
 
 internal sealed class FakeFileDialogService(params string?[]? paths) : IFileDialogService
 {
+    public string? SavePath { get; set; }
+
+    public int SaveCalls { get; private set; }
+
     public Task<IReadOnlyList<string>> PickFilesAsync() =>
         Task.FromResult<IReadOnlyList<string>>(paths?.OfType<string>().ToList() ?? []);
+
+    public Task<string?> SaveFileAsync(string suggestedFileName)
+    {
+        SaveCalls++;
+        return Task.FromResult(SavePath);
+    }
 }
 
 internal sealed class FakeDocumentWatcher : IDocumentWatcher

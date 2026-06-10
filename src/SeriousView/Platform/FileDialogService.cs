@@ -31,4 +31,21 @@ public sealed class FileDialogService : IFileDialogService
         // TryGetLocalPath returns null for virtual/cloud locations; only local files are loadable.
         return files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
     }
+
+    public async Task<string?> SaveFileAsync(string suggestedFileName)
+    {
+        var top = _topLevel();
+        if (top is null)
+            return null;
+
+        var file = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Экспорт в HTML",
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = "html",
+            FileTypeChoices = new[] { new FilePickerFileType("HTML") { Patterns = new[] { "*.html" } } },
+        });
+
+        return file?.TryGetLocalPath();
+    }
 }

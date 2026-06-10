@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
+using SeriousView.Core.Export;
 using SeriousView.Core.Services;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
@@ -80,6 +81,33 @@ public partial class MainWindowViewModel : ViewModelBase
     internal TimeSpan ReloadRetryDelay { get; set; } = TimeSpan.FromMilliseconds(150);
 
     private readonly HashSet<string> _reloadInFlight = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Export the active markdown tab as one self-contained HTML file (M13). The
+    /// theme follows the app (Auto reads as dark — our default); wiki links resolve against
+    /// the document's folder, exactly like the preview.</summary>
+    [RelayCommand]
+    private async Task ExportHtmlAsync()
+    {
+        if (SelectedTab is not { IsMarkdown: true } tab)
+            return;
+
+        var suggested = Path.GetFileNameWithoutExtension(tab.Header) + ".html";
+        var target = await _fileDialog.SaveFileAsync(suggested);
+        if (target is null)
+            return;
+
+        try
+        {
+            var dark = _theme.Mode != ThemeMode.Light;
+            var html = HtmlExporter.Export(tab.DocumentText, tab.Header, dark, tab.BuildWikiResolver());
+            await File.WriteAllTextAsync(target, html);
+            StatusText = $"Экспортировано: {Path.GetFileName(target)}";
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, target));
+        }
+    }
 
     /// <summary>Reload a tab from disk (tab context menu / the dirty dot / the palette).</summary>
     [RelayCommand]
@@ -372,7 +400,10 @@ public partial class MainWindowViewModel : ViewModelBase
         };
 
         if (SelectedTab is { IsMarkdown: true } tab)
+        {
             items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
+            items.Add(new PaletteItem("Экспорт в HTML…", ExportHtmlCommand));
+        }
 
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));

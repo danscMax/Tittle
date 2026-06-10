@@ -275,10 +275,10 @@ public partial class DocumentTabViewModel : ViewModelBase
             ? MarkdownPreprocessor.Transform(DocumentText, BuildWikiResolver())
             : "";
 
-    /// <summary>Wiki-name resolver for the preprocessor: a sibling <c>&lt;name&gt;.md</c> next
-    /// to this document. Null for path-less tabs (sample) — nothing resolves. File I/O lives
-    /// here in the UI layer; Core only sees the delegate.</summary>
-    private Func<string, bool>? BuildWikiResolver()
+    /// <summary>Wiki-name resolver for the preprocessor and the HTML exporter: a sibling
+    /// <c>&lt;name&gt;.md</c> next to this document. Null for path-less tabs (sample) — nothing
+    /// resolves. File I/O lives here in the UI layer; Core only sees the delegate.</summary>
+    internal Func<string, bool>? BuildWikiResolver()
         => AssetPathRoot is not { } root
             ? null
             : name => File.Exists(Path.Combine(root, name + ".md"));

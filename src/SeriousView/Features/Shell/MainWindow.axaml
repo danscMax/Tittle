@@ -71,6 +71,9 @@
                 </MenuItem.ItemContainerTheme>
               </MenuItem>
               <Separator/>
+              <MenuItem Header="Экспорт в HTML…" Command="{Binding ExportHtmlCommand}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <Separator/>
               <MenuItem Header="Закрыть вкладку" InputGesture="Ctrl+W" Command="{Binding CloseActiveTabCommand}"/>
             </MenuItem>
             <MenuItem Header="Вид">

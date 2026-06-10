@@ -643,6 +643,54 @@ public class MainWindowViewModelTests
         Assert.Equal(0, session.ActiveIndex);
     }
 
+    // --- M13: HTML export ---
+
+    [AvaloniaFact]
+    public async Task ExportHtml_WritesASelfContainedFile()
+    {
+        var target = Path.Combine(Directory.CreateTempSubdirectory("sv-export-").FullName, "out.html");
+        var dialog = new FakeFileDialogService(null) { SavePath = target };
+        var vm = new MainWindowViewModel(
+            dialog, new FakeFileReader("# Заголовок\n\nтекст"), new FakeThemeService(),
+            new FakeRecentFilesStore(), Holder(), new FakeClipboardService(), new FakeShellService(),
+            new[] { "/docs/a.md" });
+
+        await vm.ExportHtmlCommand.ExecuteAsync(null);
+
+        var html = File.ReadAllText(target);
+        Assert.StartsWith("<!DOCTYPE html>", html);
+        Assert.Contains("Заголовок", html);
+        Assert.Contains("Экспортировано", vm.StatusText);
+        Directory.Delete(Path.GetDirectoryName(target)!, recursive: true);
+    }
+
+    [AvaloniaFact]
+    public async Task ExportHtml_Cancelled_DoesNothing()
+    {
+        var dialog = new FakeFileDialogService(null) { SavePath = null };
+        var vm = new MainWindowViewModel(
+            dialog, new FakeFileReader("# T"), new FakeThemeService(), new FakeRecentFilesStore(),
+            Holder(), new FakeClipboardService(), new FakeShellService(), new[] { "/docs/a.md" });
+
+        await vm.ExportHtmlCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, dialog.SaveCalls);
+        Assert.False(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task ExportHtml_NonMarkdownTab_IsANoOp()
+    {
+        var dialog = new FakeFileDialogService(null) { SavePath = "C:/nope.html" };
+        var vm = new MainWindowViewModel(
+            dialog, new FakeFileReader("var x = 1;"), new FakeThemeService(), new FakeRecentFilesStore(),
+            Holder(), new FakeClipboardService(), new FakeShellService(), new[] { "/src/a.cs" });
+
+        await vm.ExportHtmlCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, dialog.SaveCalls); // the picker never opens for code tabs
+    }
+
     [AvaloniaFact]
     public void Startup_FileArg_BeatsSession()
     {
