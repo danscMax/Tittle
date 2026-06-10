@@ -36,6 +36,12 @@
     <PackageVersion Include="ColorDocument.Avalonia" Version="11.0.3" />
   </ItemGroup>
 
+  <ItemGroup Label="Math rendering (M11)">
+    <!-- Maintained fork of the dormant CSharpMath.Avalonia (0.5.1, pre-11): versions track the
+         Avalonia minor they target — 11.3.x for our line, 12.0.0 is the Av12 build. -->
+    <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="11.3.1" />
+  </ItemGroup>
+
   <ItemGroup Label="MVVM + DI">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />

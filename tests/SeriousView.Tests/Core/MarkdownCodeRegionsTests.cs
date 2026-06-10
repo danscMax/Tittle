@@ -86,6 +86,23 @@ public class MarkdownCodeRegionsTests
         Assert.False(r.IsFencedLine(99));
     }
 
+    [Fact]
+    public void Scan_MathContainer_IsAProtectedRegion()
+    {
+        // ::: math bodies carry raw LaTeX — the text passes must leave them alone (M11).
+        var r = Scan("text", "::: math", "E = mc^2", ":::", "after");
+
+        Assert.Equal(new[] { false, true, true, true, false }, Flags(r, 5));
+    }
+
+    [Fact]
+    public void Scan_OtherContainers_AreNotProtected()
+    {
+        var r = Scan("::: note", "body", ":::");
+
+        Assert.Equal(new[] { false, false, false }, Flags(r, 3));
+    }
+
     // --- ReplaceOutsideCode: inline-span masking ---
 
     private static readonly Regex Foo = new("foo");

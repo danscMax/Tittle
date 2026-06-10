@@ -1,0 +1,18 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:math="using:CSharpMath.Avalonia">
+
+  <!-- Block math (M11): the ::: math container rendered by AdmonitionBlockHandler's math
+       branch. The MathView's TextColor is a Color (not a brush) — it follows the theme via
+       the ChromeForegroundColor twin defined next to ChromeForegroundBrush. -->
+  <Style Selector="Border.math-block">
+    <Setter Property="Margin" Value="0,6" />
+    <Setter Property="Padding" Value="8,10" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+
+  <Style Selector="Border.math-block math|MathView">
+    <Setter Property="TextColor" Value="{DynamicResource ChromeForegroundColor}" />
+  </Style>
+
+</Styles>

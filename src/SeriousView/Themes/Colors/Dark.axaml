@@ -18,6 +18,8 @@
     <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#26262F" Opacity="0.72" />
     <SolidColorBrush x:Key="ChromeBorderBrush" Color="#393944" />
     <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#E7E7EF" />
+  <!-- Color twin for properties typed as Color, not IBrush (MathView.TextColor, M11). -->
+  <Color x:Key="ChromeForegroundColor">#E7E7EF</Color>
     <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#9A9AA8" />
 
     <!-- Subtle hover overlay for outline (TOC) items (reads on the chrome sidebar). -->

@@ -15,32 +15,19 @@ public sealed partial class MarkdownCodeRegions
     private MarkdownCodeRegions(bool[] fenced) => _fenced = fenced;
 
     /// <summary>Classify <paramref name="lines"/> in one forward pass. Fence delimiter lines
-    /// count as fenced too.</summary>
+    /// count as fenced too, and so do <c>::: math</c> container bodies — they carry raw LaTeX
+    /// the text passes must never rewrite (M11). Other containers stay transformable.</summary>
     public static MarkdownCodeRegions Scan(IReadOnlyList<string> lines)
     {
         var fenced = new bool[lines.Count];
         var inFence = false;
+        var inMath = false;
         var fenceChar = '\0';
         var openLength = 0;
 
         for (var i = 0; i < lines.Count; i++)
         {
-            if (!inFence)
-            {
-                var open = FenceOpen().Match(lines[i]);
-                if (!open.Success)
-                    continue;
-
-                var run = open.Groups["fence"].Value;
-                if (run[0] == '`' && open.Groups["info"].Value.Contains('`'))
-                    continue; // not a fence: backtick info strings may not contain backticks
-
-                inFence = true;
-                fenceChar = run[0];
-                openLength = run.Length;
-                fenced[i] = true;
-            }
-            else
+            if (inFence)
             {
                 fenced[i] = true;
                 var close = FenceClose().Match(lines[i]);
@@ -48,7 +35,36 @@ public sealed partial class MarkdownCodeRegions
                     && close.Groups["fence"].Value[0] == fenceChar
                     && close.Groups["fence"].Length >= openLength)
                     inFence = false;
+                continue;
             }
+
+            if (inMath)
+            {
+                fenced[i] = true;
+                if (ContainerClose().IsMatch(lines[i]))
+                    inMath = false;
+                continue;
+            }
+
+            if (MathContainerOpen().IsMatch(lines[i]))
+            {
+                fenced[i] = true;
+                inMath = true;
+                continue;
+            }
+
+            var open = FenceOpen().Match(lines[i]);
+            if (!open.Success)
+                continue;
+
+            var run = open.Groups["fence"].Value;
+            if (run[0] == '`' && open.Groups["info"].Value.Contains('`'))
+                continue; // not a fence: backtick info strings may not contain backticks
+
+            inFence = true;
+            fenceChar = run[0];
+            openLength = run.Length;
+            fenced[i] = true;
         }
 
         return new MarkdownCodeRegions(fenced);
@@ -103,4 +119,11 @@ public sealed partial class MarkdownCodeRegions
     // limitation of the line-based preprocessor.
     [GeneratedRegex(@"(?<!\\)(?<!`)(`+)(.+?)(?<!`)\1(?!`)")]
     private static partial Regex InlineCodeSpan();
+
+    // The math container emitted by the preprocessor's own math pass (M11).
+    [GeneratedRegex(@"^\s*::: math\s*$")]
+    private static partial Regex MathContainerOpen();
+
+    [GeneratedRegex(@"^\s*:::\s*$")]
+    private static partial Regex ContainerClose();
 }

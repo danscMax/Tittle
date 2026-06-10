@@ -29,6 +29,8 @@
         <StyleInclude Source="avares://SeriousView/Themes/Controls.axaml" />
         <!-- Markdown admonition callouts (GitHub alerts). -->
         <StyleInclude Source="avares://SeriousView/Themes/Admonitions.axaml" />
+        <!-- Block math (M11). -->
+        <StyleInclude Source="avares://SeriousView/Themes/Math.axaml" />
         <!-- Slim, theme-tinted scrollbars. -->
         <StyleInclude Source="avares://SeriousView/Themes/ScrollBars.axaml" />
     </Application.Styles>

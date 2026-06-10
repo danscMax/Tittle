@@ -327,6 +327,72 @@ public class MarkdownPreprocessorTests
         Assert.Contains("[!NOTE]", result);
     }
 
+    // --- Block math $$…$$ / \[…\] → ::: math containers (M11) ---
+
+    // Math bodies travel PERCENT-ENCODED inside the ::: math container — the renderer's
+    // container parser C-unescapes raw bodies (\f of \frac became a form feed), so the math
+    // handler Uri-decodes on the other end.
+    private static string MathContainer(string latex)
+        => "::: math\n" + System.Uri.EscapeDataString(latex) + "\n:::";
+
+    [Fact]
+    public void Math_MultilineDollarBlock_BecomesAMathContainer()
+    {
+        var result = MarkdownPreprocessor.Transform("text\n$$\nE = mc^2\n$$\nafter");
+
+        Assert.Contains(MathContainer("E = mc^2"), result);
+        Assert.DoesNotContain("$$", result);
+    }
+
+    [Fact]
+    public void Math_SingleLineDollarBlock_BecomesAMathContainer()
+    {
+        var result = MarkdownPreprocessor.Transform(@"$$E = mc^2$$");
+
+        Assert.Contains(MathContainer("E = mc^2"), result);
+    }
+
+    [Fact]
+    public void Math_BracketBlock_BecomesAMathContainer()
+    {
+        var multi = MarkdownPreprocessor.Transform("\\[\n\\frac{a}{b}\n\\]");
+        var single = MarkdownPreprocessor.Transform(@"\[x^2\]");
+
+        Assert.Contains(MathContainer("\\frac{a}{b}"), multi);
+        Assert.Contains(MathContainer("x^2"), single);
+    }
+
+    [Fact]
+    public void Math_SingleDollar_IsNotADelimiter()
+    {
+        const string md = "цена $5, а там $10 — не формулы";
+        Assert.Equal(md, MarkdownPreprocessor.Transform(md));
+    }
+
+    [Fact]
+    public void Math_InsideAFence_Unchanged()
+    {
+        const string md = "```\n$$\nE\n$$\n```";
+        Assert.Equal(md, MarkdownPreprocessor.Transform(md));
+    }
+
+    [Fact]
+    public void Math_UnclosedBlock_LeftAsAuthored()
+    {
+        const string md = "$$\nE = mc^2\nno closer";
+        Assert.Equal(md, MarkdownPreprocessor.Transform(md));
+    }
+
+    [Fact]
+    public void Math_Body_IsProtectedFromTheInlinePasses()
+    {
+        var result = MarkdownPreprocessor.Transform("$$\n_x_ + [[a]] - [x] step\n$$", _ => true);
+
+        // The encoded body still contains _x_ / [[a]] verbatim (percent-encoding leaves them),
+        // so this also proves the ::: math region guard kept the passes away.
+        Assert.Contains(MathContainer("_x_ + [[a]] - [x] step"), result);
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;

@@ -567,6 +567,35 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // --- M11: block math in the preview ---
+
+    [AvaloniaFact]
+    public void MathBlock_RendersAsANativeMathView()
+    {
+        var vm = DocumentTabViewModel.FromFile("# T\n\n$$\nE = mc^2\n$$\n\ntext", "/docs/m.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var math = window.GetVisualDescendants().OfType<CSharpMath.Avalonia.MathView>().First();
+        Assert.Null(math.ErrorMessage);
+        Assert.True(math.Bounds.Height > 0, "the formula should measure");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void MathBlock_GarbageLatex_ShowsAnInlineError_NoCrash()
+    {
+        var vm = DocumentTabViewModel.FromFile("$$\n\\frac{unclosed\n$$", "/docs/m.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var math = window.GetVisualDescendants().OfType<CSharpMath.Avalonia.MathView>().First();
+        Assert.NotNull(math.ErrorMessage); // surfaced inline by the control, never a crash
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
     {

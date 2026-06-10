@@ -43,7 +43,13 @@ public static partial class MarkdownPreprocessor
         // valid) and before admonition re-wrapping so callout bodies get them too. Wiki before
         // underscore: a [[my_note]] link resolves to its real file first, and the underscore
         // pass then sees its destination behind the link mask.
+        // Math first (M11): $$…$$ / \[…\] become ::: math containers, whose bodies the
+        // rescanned regions then flag as protected — raw LaTeX is never touched by the
+        // inline or legacy passes below.
         var regions = MarkdownCodeRegions.Scan(lines);
+        lines = ConvertMathBlocks(lines, regions);
+        regions = MarkdownCodeRegions.Scan(lines);
+
         ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
         ConvertUnderscoreEmphasisInPlace(lines, regions);
 
@@ -56,6 +62,76 @@ public static partial class MarkdownPreprocessor
         ConvertTaskListsInPlace(lines, regions);
 
         return string.Join("\n", lines);
+    }
+
+    // Block math: $$…$$ / \[…\] (single- or multi-line; a single $ is deliberately NOT a
+    // delimiter — too many false positives in prose) → ::: math containers rendered by the
+    // viewer's math handler. Unclosed blocks stay as authored; fenced lines are code.
+    private static List<string> ConvertMathBlocks(List<string> lines, MarkdownCodeRegions regions)
+    {
+        var result = new List<string>(lines.Count);
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (regions.IsFencedLine(i))
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            var single = SingleLineMath().Match(lines[i]);
+            if (single.Success)
+            {
+                var latex = (single.Groups[1].Success ? single.Groups[1] : single.Groups[2]).Value.Trim();
+                if (latex.Length > 0)
+                {
+                    AppendMathContainer(result, new[] { latex });
+                    continue;
+                }
+            }
+
+            var open = MathBlockOpen().Match(lines[i]);
+            if (!open.Success)
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            var bracketStyle = open.Groups[1].Value == @"\[";
+            var body = new List<string>();
+            var j = i + 1;
+            for (; j < lines.Count; j++)
+            {
+                if (!regions.IsFencedLine(j)
+                    && (bracketStyle ? BracketMathClose() : DollarMathClose()).IsMatch(lines[j]))
+                    break;
+                body.Add(lines[j]);
+            }
+
+            if (j >= lines.Count)
+            {
+                result.Add(lines[i]); // unclosed → leave as authored
+                continue;
+            }
+
+            AppendMathContainer(result, body);
+            i = j;
+        }
+
+        return result;
+    }
+
+    private static void AppendMathContainer(List<string> result, IReadOnlyList<string> body)
+    {
+        // Blank lines around the container so the engine parses it as its own block (the
+        // admonition shape). The LaTeX travels PERCENT-ENCODED as one opaque ASCII line: the
+        // engine's container parser is free to mangle raw bodies (escape handling, blank-line
+        // splitting, ::: inside a formula) — our math handler Uri-decodes on the other end,
+        // so the contract is ours on both sides.
+        result.Add(string.Empty);
+        result.Add("::: math");
+        result.Add(Uri.EscapeDataString(string.Join("\n", body).Trim()));
+        result.Add(":::");
+        result.Add(string.Empty);
     }
 
     // [[name]] → "[name](wiki:<encoded>)" when the resolver knows the note, else plain "name".
@@ -284,4 +360,18 @@ public static partial class MarkdownPreprocessor
     // Mask: an autolink "<scheme:…>".
     [GeneratedRegex(@"<[a-zA-Z][a-zA-Z0-9+.\-]*:[^<>\s]*>")]
     private static partial Regex AutoLink();
+
+    // A whole-line math block: $$latex$$ or \[latex\]. Capture (1)/(2) = the LaTeX.
+    [GeneratedRegex(@"^\s*(?:\$\$(.+?)\$\$|\\\[(.+?)\\\])\s*$")]
+    private static partial Regex SingleLineMath();
+
+    // A multi-line math opener: a line that is exactly $$ or \[. Capture (1) = the delimiter.
+    [GeneratedRegex(@"^\s*(\$\$|\\\[)\s*$")]
+    private static partial Regex MathBlockOpen();
+
+    [GeneratedRegex(@"^\s*\$\$\s*$")]
+    private static partial Regex DollarMathClose();
+
+    [GeneratedRegex(@"^\s*\\\]\s*$")]
+    private static partial Regex BracketMathClose();
 }

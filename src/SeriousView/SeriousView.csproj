@@ -24,6 +24,8 @@
     <PackageReference Include="TextMateSharp.Grammars" />
     <!-- Native markdown rendering (MarkdownScrollViewer). ColorText/ColorDocument come transitively. -->
     <PackageReference Include="Markdown.Avalonia" />
+    <!-- LaTeX block rendering in the preview (M11), no WebView. -->
+    <PackageReference Include="Sylinko.CSharpMath.Avalonia" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <!-- DevTools (F12) only in Debug builds -->

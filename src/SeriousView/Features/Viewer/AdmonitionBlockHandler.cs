@@ -20,6 +20,23 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
 
     public Border ProvideControl(string assetPathRoot, string blockName, string lines)
     {
+        // ::: math (from the preprocessor's $$…$$ / \[…\] pass, M11): a native LaTeX block.
+        // The body arrives percent-encoded (an opaque transport that survives whatever the
+        // container parser does to raw bodies) — decode it first. Parse errors render inline
+        // as the library's error text — never a crash on garbage.
+        if (string.Equals(blockName.Trim(), "math", StringComparison.OrdinalIgnoreCase))
+        {
+            var math = new CSharpMath.Avalonia.MathView
+            {
+                LaTeX = System.Uri.UnescapeDataString(lines.Trim()),
+                DisplayErrorInline = true,
+                FontSize = 18,
+            };
+            var mathBorder = new Border { Child = math };
+            mathBorder.Classes.Add("math-block");
+            return mathBorder;
+        }
+
         var type = NormalizeType(blockName);
 
         var title = new TextBlock { Text = TitleFor(type) };
