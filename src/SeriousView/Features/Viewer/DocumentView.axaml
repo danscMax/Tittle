@@ -174,6 +174,14 @@
           </md:MarkdownScrollViewer.Styles>
         </md:MarkdownScrollViewer>
       </ScrollViewer>
+      <!-- Back-to-top (ported): floats over the preview once it's scrolled a screen down.
+           Visibility is driven from OnPreviewScrollChanged in code-behind. -->
+      <Button x:Name="BackToTopButton" Content="↑" FontSize="16" Width="38" Height="38"
+              CornerRadius="19" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+              Margin="0,0,26,22" IsVisible="False" Click="OnBackToTopClick"
+              Background="{DynamicResource ChromeOverlayBrush}"
+              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+              ToolTip.Tip="Наверх" AutomationProperties.Name="Наверх"/>
     </Panel>
 
     <!-- CSV/TSV table view (ported): sticky header row outside the vertical scroller, both

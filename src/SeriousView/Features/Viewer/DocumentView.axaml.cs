@@ -232,7 +232,13 @@ public partial class DocumentView : UserControl
             if (CaptureFromPreview() is { } anchor)
                 _vm.ReadingAnchor = anchor; // live reading position, for reload restore (M14)
         }
+
+        // Back-to-top appears once the reader is a screen below the start (ported).
+        BackToTopButton.IsVisible = PreviewScroll.Offset.Y > PreviewScroll.Viewport.Height;
     }
+
+    private void OnBackToTopClick(object? sender, RoutedEventArgs e)
+        => PreviewScroll.Offset = PreviewScroll.Offset.WithY(0);
 
     /// <summary>Soft cap so a pathological multi-thousand-line fence can't materialise hundreds
     /// of thousands of pixels of text visuals at once (a capped block stays inner-scrollable).</summary>
