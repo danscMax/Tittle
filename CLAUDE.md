@@ -171,9 +171,15 @@ inline error); theme via a `ChromeForegroundColor` twin (MathView.TextColor is a
 self-contained themed file; wiki links → relative `name.md` hrefs (same token regex as the
 viewer); ☰ Файл ▸ «Экспорт в HTML…» + palette via `IFileDialogService.SaveFileAsync`. PDF/print/
 rich-text still open. **Standing goal: port EVERYTHING from `E:\Scripts\Markdown Viewer`** — the
-complete gap audit lives in BACKLOG's ported pool (code-view decorations, CSV-as-table, JSON
-pretty-print, code/text outlines, sortable tables, copy buttons, stats panel, HTML preview,
-settings import/export, themes, help, M12 diagrams, M15 editing…). Feature
+complete gap audit lives in BACKLOG's ported pool. **Ported batch DONE** (nine commits,
+`37b48fb`…`ac02b75`): JSON pretty-print toggle (display-only `SourceText` channel — raw
+`DocumentText` stays truth), code-symbol + plain-text outlines in the TOC panel, CSV/TSV as a
+sortable sticky-header table (▦ status-bar toggle), emoji `:name:`, smart typography for
+.txt/.log, stats window (F-stats + Russian Flesch) + selection word count, settings
+import/export, back-to-top button, F1 help window. **Pool still open**: cv-* code decorations,
+code breadcrumbs/minimap, section folding, indent guides, sortable preview tables, copy buttons
+on code blocks, collapsible sections, image lightbox, YAML front-matter, HTML preview, reading
+presets, dark-theme set, M12 diagrams, M13 beyond HTML, M15 editing, inline math. Feature
 spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions

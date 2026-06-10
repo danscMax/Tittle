@@ -124,10 +124,15 @@ line height; the infinite inner viewport clamped every click-scroll to 0). Heigh
 from a measured `VisualLine`; the preview swallows `RequestBringIntoView` (all navigation is
 explicit `Offset` writes).
 
-## M11 — Math rendering (LaTeX) · effort L · ported
+## M11 — Math rendering (LaTeX) · effort L · ported · **block math DONE**
 
-`$$…$$` / `\[…\]` / `\(…\)` (single `$` intentionally NOT a delimiter). Investigate
-**CSharpMath.Avalonia** (native, no WebView) vs alternatives. Re-verify the library before committing.
+**Block math DONE**: `$$…$$` / `\[…\]` (single `$` intentionally NOT a delimiter) — a pure
+preprocessor pass turns blocks into a `::: math` container with the LaTeX **percent-encoded**
+(opaque to the container parser); `AdmonitionBlockHandler` decodes and renders a native
+**Sylinko.CSharpMath.Avalonia** `MathView` (the maintained CSharpMath fork for Avalonia ≥11.3;
+original is dead at 0.5.1). Parse errors render inline (`DisplayErrorInline`) — no crashes on
+garbage. Fenced code is masked via `MarkdownCodeRegions`. **Still open**: inline `\(…\)`
+(Markdown.Avalonia exposes no inline-extension seam — research item, lives in the pool).
 
 ## M12 — Diagrams (Mermaid / PlantUML / charts) · effort XL · ported · ⚠ risk
 
@@ -173,25 +178,33 @@ Decide before starting; could stay deferred if SeriousView remains read-only.
 Full-port goal (2026-06-11): carry over ALL functionality from `E:\Scripts\Markdown Viewer`.
 Re-audited against its CLAUDE.md — the pool below is the complete gap list (✓-items moved out).
 
+**Ported batch DONE (2026-06-11)** — nine pool features, each its own commit + tests:
+**JSON pretty-print** toggle (`37b48fb` — display-only `SourceText` channel, raw `DocumentText`
+stays truth) · **code-symbol + plain-text outlines** for non-markdown tabs (`59d5005` —
+per-language regex `SymbolOutline` for .cs/.py/.js/… + `TextOutline` for `Глава N`/ALL-CAPS/`====`
+headings, feeding the same TOC panel) · **CSV/TSV as a sortable table** (`d7fe211` — RFC4180-light
+`DelimitedTable`, sticky header, numeric-aware click-to-sort, 10k-row cap, ▦ status-bar toggle) ·
+**emoji `:name:` shortcodes** (`b59093f`) · **smart typography** for .txt/.log (`6cea8bb` —
+display-only `--`→— `->`→→ `...`→… "x"→«x», code-line guard) · **stats window + selection word
+count** (`5f365e4` — words/chars/sentences/reading-time + Russian-adapted Flesch) · **settings
+import/export** (`c82d3bc` — whitelisted `AppSettings` via the source-gen JSON context, live
+re-apply on import) · **back-to-top button** in the preview (`7157c61`) · **help window** F1
+(`ac02b75` — shortcut reference, Esc closes).
+
 **Code-view** (non-markdown files): `cv-*` **decorations** (timestamps · uuid · ip/mac · email ·
 hashes · `file:line:col` paths · TODO/FIXME · log levels · HTML entities · units · dates, hover
-tooltips, 2000-char/line ReDoS guard) · **JSON pretty-print** toggle · **CSV/TSV as table**
-(sortable, sticky header, rainbow column tint, 10k-row cap) · **code outline** (per-language
-symbol regex → breadcrumbs + minimap) · **text-file outline + section folding** (`Глава N` /
-ALL-CAPS / `====` headings; fold-all button) · **smart typography** (display-only, code-line
-guard) · **indent guides** · URL autolinking in code.
+tooltips, 2000-char/line ReDoS guard) · code **breadcrumbs + minimap** (symbol outline is in —
+these are its remaining consumers) · **section folding** for text files (fold-all button) ·
+**indent guides** · URL autolinking in code.
 
 **Markdown extras**: sortable tables (click-to-sort, like `setupTables`) · copy buttons on code
 blocks · collapsible heading sections (`.collapse-icon`) · bookmarks per heading · TOC unread
-marks (`md-visited-*`) · back-to-top button · emoji `:name:` shortcodes · image lightbox/zoom ·
-YAML front-matter panel · checkbox click-to-toggle (write-back guarded by `fencedCodeRanges` —
-needs M15 save).
+marks (`md-visited-*`) · image lightbox/zoom · YAML front-matter panel · checkbox click-to-toggle
+(write-back guarded by `fencedCodeRanges` — needs M15 save).
 
-**Chrome/tools**: **stats panel** (words/chars/sentences + Russian-adapted Flesch) · selection
-word count in the status bar · scroll-% + line:col cursor info for code view (we have caret for
-source already) · **HTML-fragment preview** (Alt+H on selection) · whole-file HTML render toggle ·
-**settings import/export** (whitelisted keys) · reading presets · **multiple dark themes**
-(`DARK_THEMES` set) · **help modal** · drop-overlay polish.
+**Chrome/tools**: scroll-% + line:col cursor info for code view (we have caret for source
+already) · **HTML-fragment preview** (Alt+H on selection) · whole-file HTML render toggle ·
+reading presets · **multiple dark themes** (`DARK_THEMES` set) · drop-overlay polish.
 
 **Bigger ported milestones still open**: M12 diagrams (Mermaid — JS-only, PlantUML — external
 service, MUST stay opt-in/gated like the original's `plantumlAuto:false`; Chart.js blocks),
@@ -223,6 +236,9 @@ which shipped with M14 live-reload. Done since: **all of M10** (toggle-position 
 `HeadingAnchors`, active-heading scroll-spy + outline marker, TOC/Ctrl+G land-at-top, markdown
 breadcrumbs, wiki-links `[[name]]`, conservative `_underscore_` italics), the giant-fence preview
 fix (`f06eba5`), the **preprocessor fence-guard retrofit** (`b50e801` — legacy passes no longer
-transform inside ``` fences), and **all of M14** (live-reload + dirty dot + position-preserving
-reload). Next: **M11** math (CSharpMath-fork spike first), then **M13** export
-(self-contained HTML via Markdig — approved new dependency).
+transform inside ``` fences), **all of M14** (live-reload + dirty dot + position-preserving
+reload), **M11 block math** (Sylinko.CSharpMath fork), **M13 HTML export** (Markdig), and the
+**nine-feature ported batch** (JSON pretty · outlines · CSV table · emoji · typography · stats ·
+settings import/export · back-to-top · help — see the pool section). Next: keep draining the
+ported pool (cv-* decorations, markdown extras, chrome/tools), then the big open milestones
+(M12 diagrams · M13 beyond HTML · M15 editing).
