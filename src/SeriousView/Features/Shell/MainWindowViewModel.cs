@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -53,6 +54,49 @@ public partial class MainWindowViewModel : ViewModelBase
     /// active (the tab's own metrics show on the right), or a read-error message.</summary>
     [ObservableProperty]
     private string _statusText = WelcomeHint;
+
+    /// <summary>Message in the error InfoBar (#28) — a load failure surfaced prominently (the
+    /// status-bar text alone is easy to miss). Auto-dismissed; the bar's own ✕ closes it too.</summary>
+    [ObservableProperty]
+    private string? _errorBarMessage;
+
+    /// <summary>Whether the error InfoBar is shown. Two-way: the InfoBar's close button writes false.</summary>
+    [ObservableProperty]
+    private bool _isErrorBarOpen;
+
+    private CancellationTokenSource? _errorBarCts;
+
+    /// <summary>Auto-dismiss delay for the error InfoBar; tests shorten it.</summary>
+    internal TimeSpan ErrorBarAutoDismissDelay { get; set; } = TimeSpan.FromSeconds(7);
+
+    /// <summary>The pending auto-dismiss, for tests to await. A superseded timer completes
+    /// without touching the bar (its token is cancelled by the newer error).</summary>
+    internal Task? ErrorBarDismissal { get; private set; }
+
+    /// <summary>Show <paramref name="message"/> in the error InfoBar and (re)start its auto-dismiss.</summary>
+    private void ShowError(string message)
+    {
+        _errorBarCts?.Cancel();
+        _errorBarCts?.Dispose();
+        var cts = _errorBarCts = new CancellationTokenSource();
+        ErrorBarMessage = message;
+        IsErrorBarOpen = true;
+        ErrorBarDismissal = AutoDismissErrorBarAsync(cts.Token);
+    }
+
+    private async Task AutoDismissErrorBarAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(ErrorBarAutoDismissDelay, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return; // superseded by a newer error — its own timer owns the bar now
+        }
+
+        IsErrorBarOpen = false;
+    }
 
     /// <summary>Whether the user has the outline pane turned on (per-window, persists across tabs).</summary>
     [ObservableProperty]
@@ -210,10 +254,12 @@ public partial class MainWindowViewModel : ViewModelBase
         return items;
     }
 
-    /// <summary>Reopens the documents from the saved session, silently skipping any that are
-    /// gone/unreadable (no error is surfaced for a restore), then selects the saved tab.</summary>
+    /// <summary>Reopens the documents from the saved session, skipping any that are gone/unreadable
+    /// (restore is best-effort), then selects the saved tab. The skipped files are reported in one
+    /// summary error bar (#28) — tabs must not vanish silently between launches.</summary>
     private async Task RestoreSessionAsync(SessionState session)
     {
+        var missing = new List<string>();
         foreach (var path in session.OpenFiles)
         {
             try
@@ -223,12 +269,17 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             catch
             {
-                // Skip files that no longer exist or can't be read — restore is best-effort.
+                missing.Add(Path.GetFileName(path));
             }
         }
 
         if (Tabs.Count > 0)
             SelectedTab = Tabs[Math.Clamp(session.ActiveIndex, 0, Tabs.Count - 1)];
+
+        if (missing.Count > 0)
+            ShowError(missing.Count == 1
+                ? $"Не удалось открыть файл из прошлой сессии: {missing[0]}"
+                : $"Не удалось открыть файлы из прошлой сессии: {string.Join(", ", missing)}");
     }
 
     /// <summary>Snapshot of the open file-backed tabs and the active one, for session persistence.</summary>
@@ -282,7 +333,9 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusText = DescribeError(ex, path);
+            var message = DescribeError(ex, path);
+            StatusText = message; // the status bar keeps the message for context...
+            ShowError(message);   // ...but the InfoBar is what gets noticed (#28)
         }
     }
 

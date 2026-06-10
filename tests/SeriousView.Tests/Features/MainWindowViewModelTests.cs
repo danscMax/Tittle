@@ -364,6 +364,66 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task OpenFile_Error_ShowsErrorBar_AndStatusText()
+    {
+        var vm = CreateVm(dialogPath: "/path/missing.txt",
+            fileReader: new FakeFileReader(new FileNotFoundException()));
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsErrorBarOpen);
+        Assert.Equal("Файл не найден: missing.txt", vm.ErrorBarMessage);
+        Assert.Equal("Файл не найден: missing.txt", vm.StatusText); // the status bar keeps duplicating
+    }
+
+    [AvaloniaFact]
+    public async Task ErrorBar_AutoDismisses_AfterDelay()
+    {
+        var vm = CreateVm(dialogPath: "/path/missing.txt",
+            fileReader: new FakeFileReader(new FileNotFoundException()));
+        vm.ErrorBarAutoDismissDelay = TimeSpan.FromMilliseconds(30);
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+        Assert.True(vm.IsErrorBarOpen);
+
+        await vm.ErrorBarDismissal!;
+        Assert.False(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task ErrorBar_NewError_ReplacesMessage_AndOutlivesTheOldTimer()
+    {
+        var vm = CreateVm(fileReader: new FakeFileReader(new FileNotFoundException()));
+
+        await vm.OpenPathAsync("/one.txt");
+        var firstDismissal = vm.ErrorBarDismissal;
+        await vm.OpenPathAsync("/two.txt");
+
+        Assert.True(vm.IsErrorBarOpen);
+        Assert.Contains("two.txt", vm.ErrorBarMessage);
+
+        await firstDismissal!; // the superseded timer must not close the newer message
+        Assert.True(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public void Startup_Session_MissingFiles_SurfaceOneSummaryError()
+    {
+        var files = new Dictionary<string, string> { ["/a.md"] = "# A" };
+        var settings = Holder(new AppSettings
+        {
+            Session = new SessionState(new() { "/a.md", "/gone.md", "/lost.md" }, 0),
+        });
+
+        var vm = CreateVm(fileReader: new FakeFileReader(files), settings: settings);
+
+        Assert.Single(vm.Tabs); // restore still skips the missing tabs...
+        Assert.True(vm.IsErrorBarOpen); // ...but no longer silently
+        Assert.Contains("gone.md", vm.ErrorBarMessage);
+        Assert.Contains("lost.md", vm.ErrorBarMessage);
+    }
+
+    [AvaloniaFact]
     public void Startup_FileArg_BeatsSession()
     {
         var settings = Holder(new AppSettings { Session = new SessionState(new() { "/a.md", "/b.md" }, 0) });

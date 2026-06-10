@@ -227,6 +227,14 @@
       </StackPanel>
     </Border>
 
+    <!-- Open-error InfoBar (#28): a prominent strip above the content — the status-bar message
+         alone is easy to miss. The VM auto-dismisses it after ~7 s; the built-in ✕ writes
+         IsOpen=false back through the two-way binding. -->
+    <ui:InfoBar DockPanel.Dock="Top" Severity="Error" IsClosable="True"
+                IsOpen="{Binding IsErrorBarOpen, Mode=TwoWay}"
+                Message="{Binding ErrorBarMessage}"
+                AutomationProperties.Name="Ошибка открытия файла"/>
+
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
          (lines · chars · language), divided by a thin separator. -->
     <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"
