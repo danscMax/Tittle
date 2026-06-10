@@ -36,7 +36,16 @@ public partial class DocumentView : UserControl
         //  - render ::: admonition-* containers (from the Core preprocessor) as callouts.
         if (Preview.Engine is MdEngine engine)
         {
-            engine.HyperlinkCommand = SafeHyperlinkCommand.Instance;
+            // wiki: links open the sibling note via the shell (M10); everything else stays on
+            // the safe http/https/mailto policy. Providers read _vm live (DataContext-tracked).
+            engine.HyperlinkCommand = new WikiHyperlinkCommand(
+                () => _vm?.AssetPathRoot,
+                path =>
+                {
+                    if (_vm?.Shell is { } shell)
+                        _ = shell.OpenPathAsync(path);
+                },
+                SafeHyperlinkCommand.Instance);
             engine.ContainerBlockHandler = new AdmonitionBlockHandler(engine);
         }
 

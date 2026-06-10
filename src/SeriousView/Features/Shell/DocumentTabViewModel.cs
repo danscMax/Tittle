@@ -267,9 +267,21 @@ public partial class DocumentTabViewModel : ViewModelBase
 
     /// <summary>Markdown handed to the renderer — empty for non-markdown files so the
     /// (hidden) preview never parses code as markdown. Run through the Core preprocessor
-    /// (admonitions, task lists, footnotes). Cached: the document text is immutable.</summary>
+    /// (wiki links, admonitions, task lists, footnotes). Cached: the document text is
+    /// immutable, so wiki-link existence snapshots once per tab (the click-time command
+    /// re-checks; M14 live-reload will refresh naturally).</summary>
     public string PreviewMarkdown =>
-        _previewMarkdown ??= IsMarkdown ? MarkdownPreprocessor.Transform(DocumentText) : "";
+        _previewMarkdown ??= IsMarkdown
+            ? MarkdownPreprocessor.Transform(DocumentText, BuildWikiResolver())
+            : "";
+
+    /// <summary>Wiki-name resolver for the preprocessor: a sibling <c>&lt;name&gt;.md</c> next
+    /// to this document. Null for path-less tabs (sample) — nothing resolves. File I/O lives
+    /// here in the UI layer; Core only sees the delegate.</summary>
+    private Func<string, bool>? BuildWikiResolver()
+        => AssetPathRoot is not { } root
+            ? null
+            : name => File.Exists(Path.Combine(root, name + ".md"));
 
     /// <summary>Tooltip for the status-bar view toggle — names the switch target (the action).</summary>
     public string ViewModeToggleTip =>

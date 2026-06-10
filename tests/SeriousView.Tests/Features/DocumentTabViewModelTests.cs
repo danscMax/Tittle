@@ -334,6 +334,25 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void PreviewMarkdown_ResolvesWikiLinks_AgainstSiblingNotes()
+    {
+        var root = System.IO.Directory.CreateTempSubdirectory("sv-tab-wiki-").FullName;
+        try
+        {
+            System.IO.File.WriteAllText(Path.Combine(root, "note.md"), "# n");
+
+            var with = DocumentTabViewModel.FromFile("see [[note]] and [[gone]]", Path.Combine(root, "doc.md"));
+
+            Assert.Contains("[note](wiki:note)", with.PreviewMarkdown);
+            Assert.Contains("and gone", with.PreviewMarkdown); // missing sibling → plain text
+        }
+        finally
+        {
+            System.IO.Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Breadcrumbs_FollowTheActiveHeading_AndNotify()
     {
         var vm = DocumentTabViewModel.FromFile("# A\n## B\n### C", "/docs/d.md");
