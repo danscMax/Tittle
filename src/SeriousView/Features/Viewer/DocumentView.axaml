@@ -110,7 +110,7 @@
     <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
     <ae:TextEditor x:Name="Source"
                    IsVisible="{Binding ShowSource}"
-                   viewer:EditorBehavior.Text="{Binding DocumentText}"
+                   viewer:EditorBehavior.Text="{Binding SourceText}"
                    viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
                    viewer:EditorBehavior.SuppressHighlight="{Binding HighlightSuppressed}"
                    Background="{DynamicResource EditorSurfaceBrush}"

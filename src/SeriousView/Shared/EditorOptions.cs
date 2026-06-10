@@ -25,13 +25,17 @@ public partial class EditorOptions : ObservableObject
     [ObservableProperty]
     private bool _showLineNumbers = true;
 
+    /// <summary>Default for new tabs: pretty-print .json sources (display-only; ported).</summary>
+    [ObservableProperty]
+    private bool _jsonPretty;
+
     public void ZoomIn() => FontSize = Math.Min(MaxFontSize, FontSize + Step);
     public void ZoomOut() => FontSize = Math.Max(MinFontSize, FontSize - Step);
     public void ResetZoom() => FontSize = DefaultFontSize;
     public void ToggleWordWrap() => WordWrap = !WordWrap;
     public void ToggleLineNumbers() => ShowLineNumbers = !ShowLineNumbers;
 
-    public EditorSettings ToSettings() => new(FontSize, WordWrap, ShowLineNumbers);
+    public EditorSettings ToSettings() => new(FontSize, WordWrap, ShowLineNumbers, JsonPretty);
 
     /// <summary>Build options from persisted settings, clamping the font size defensively.</summary>
     public static EditorOptions FromSettings(EditorSettings? s) => s is null
@@ -41,5 +45,6 @@ public partial class EditorOptions : ObservableObject
             FontSize = Math.Clamp(s.FontSize, MinFontSize, MaxFontSize),
             WordWrap = s.WordWrap,
             ShowLineNumbers = s.ShowLineNumbers,
+            JsonPretty = s.JsonPretty,
         };
 }

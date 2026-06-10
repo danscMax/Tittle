@@ -643,6 +643,45 @@ public class MainWindowViewModelTests
         Assert.Equal(0, session.ActiveIndex);
     }
 
+    // --- Ported: JSON pretty-print toggle ---
+
+    [AvaloniaFact]
+    public async Task JsonTab_InheritsThePersistedDefault_AndFormats()
+    {
+        var settings = Holder(new AppSettings { Editor = new EditorSettings(14, false, true, JsonPretty: true) });
+        var vm = CreateVm(content: "{\"a\":1}", settings: settings);
+
+        await vm.OpenPathAsync("/data/x.json");
+
+        Assert.True(vm.SelectedTab!.JsonPrettyEnabled);
+        Assert.Contains("\"a\": 1", vm.SelectedTab.SourceText);
+        Assert.Equal("{\"a\":1}", vm.SelectedTab.DocumentText); // raw text untouched
+    }
+
+    [AvaloniaFact]
+    public async Task ToggleJsonPretty_Flips_AndPersistsTheDefault()
+    {
+        var vm = CreateVm(content: "{\"a\":1}");
+        await vm.OpenPathAsync("/data/x.json");
+        Assert.Equal("{\"a\":1}", vm.SelectedTab!.SourceText); // default off
+
+        vm.SelectedTab.ToggleJsonPrettyCommand.Execute(null);
+
+        Assert.Contains("\"a\": 1", vm.SelectedTab.SourceText);
+        Assert.True(vm.Editor.JsonPretty); // becomes the new-tab default (persisted)
+    }
+
+    [AvaloniaFact]
+    public async Task JsonPretty_BrokenJson_FallsBackToRaw()
+    {
+        var settings = Holder(new AppSettings { Editor = new EditorSettings(14, false, true, JsonPretty: true) });
+        var vm = CreateVm(content: "{broken", settings: settings);
+
+        await vm.OpenPathAsync("/data/x.json");
+
+        Assert.Equal("{broken", vm.SelectedTab!.SourceText);
+    }
+
     // --- M13: HTML export ---
 
     [AvaloniaFact]

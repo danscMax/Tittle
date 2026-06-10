@@ -214,6 +214,34 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>True for markdown files — drives whether a rendered preview is offered.</summary>
     public bool IsMarkdown => MarkdownFile.IsMarkdownExtension(GrammarExtension);
 
+    /// <summary>True for .json files — offers the display-only pretty-print toggle (ported).</summary>
+    public bool IsJson => string.Equals(GrammarExtension, ".json", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Per-tab pretty-print state; new tabs inherit the persisted default from
+    /// <see cref="Shared.EditorOptions.JsonPretty"/> when the shell adopts them.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceText))]
+    private bool _jsonPrettyEnabled;
+
+    private string? _prettyJson;
+
+    /// <summary>What the source editor shows: the document text, or its display-only
+    /// pretty-printed form for JSON tabs (raw text is the single source of truth — exports,
+    /// reload and search still see the file as written).</summary>
+    public string SourceText =>
+        IsJson && JsonPrettyEnabled
+            ? _prettyJson ??= JsonPrettyPrinter.TryFormat(DocumentText) ?? DocumentText
+            : DocumentText;
+
+    /// <summary>Toggle pretty-print for this tab (and remember it as the default).</summary>
+    [RelayCommand]
+    private void ToggleJsonPretty()
+    {
+        JsonPrettyEnabled = !JsonPrettyEnabled;
+        if (Editor is not null)
+            Editor.JsonPretty = JsonPrettyEnabled;
+    }
+
     /// <summary>Preview vs source. Defaults to Preview; only meaningful for markdown
     /// (for code files <see cref="ShowSource"/> short-circuits to true regardless).</summary>
     [ObservableProperty]

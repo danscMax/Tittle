@@ -165,9 +165,7 @@ public partial class MainWindowViewModel : ViewModelBase
         if (index < 0)
             return;
 
-        newTab.Editor = Editor;
-        newTab.Layout = Layout;
-        newTab.Shell = this;
+        AdoptTab(newTab);
         var wasSelected = ReferenceEquals(SelectedTab, oldTab);
         Tabs[index] = newTab;
         if (wasSelected || SelectedTab is null)
@@ -407,6 +405,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
+
+        if (SelectedTab is { IsJson: true } jsonTab)
+            items.Add(new PaletteItem("Форматировать JSON (вкл/выкл)", jsonTab.ToggleJsonPrettyCommand));
 
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
@@ -660,11 +661,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void AddTab(DocumentTabViewModel tab)
     {
+        AdoptTab(tab);
+        Tabs.Add(tab);
+        SelectedTab = tab;
+    }
+
+    /// <summary>Shared-state wiring every tab gets, whether added or swapped in by a reload.</summary>
+    private void AdoptTab(DocumentTabViewModel tab)
+    {
         tab.Editor = Editor;   // share one editor-options instance across all tabs
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
         tab.Shell = this;      // back-reference for the tab's context-menu commands
-        Tabs.Add(tab);
-        SelectedTab = tab;
+        tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty; // persisted default (ported)
     }
 
     // Keep exactly one tab active so the body shows only its (kept-alive) DocumentView.
