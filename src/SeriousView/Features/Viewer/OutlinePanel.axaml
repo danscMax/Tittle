@@ -39,15 +39,30 @@
       </ItemsControl.ItemsPanel>
       <ItemsControl.ItemTemplate>
         <DataTemplate x:CompileBindings="False">
-          <Button Classes="outline-item"
-                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                  Background="Transparent" BorderThickness="0" Padding="8,4"
-                  FontSize="12.5"
-                  Foreground="{DynamicResource ChromeForegroundBrush}"
-                  Margin="{Binding Level, Converter={x:Static conv:LevelToIndentConverter.Instance}}"
-                  Content="{Binding Text}"
-                  Command="{Binding $parent[ItemsControl].DataContext.SelectedTab.NavigateToHeadingCommand}"
-                  CommandParameter="{Binding}"/>
+          <!-- The 6px marker column is FIXED so the text never shifts when the marker moves;
+               only the 3px accent bar toggles visibility (active heading scroll-spy, M10). -->
+          <Grid ColumnDefinitions="6,*"
+                Margin="{Binding Level, Converter={x:Static conv:LevelToIndentConverter.Instance}}">
+            <Border Grid.Column="0" Classes="active-marker" Width="3" CornerRadius="1.5"
+                    Margin="0,5" HorizontalAlignment="Left"
+                    Background="{DynamicResource AccentBrush}">
+              <Border.IsVisible>
+                <MultiBinding Converter="{x:Static conv:OrdinalMatchConverter.Instance}">
+                  <Binding Path="Ordinal"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab.ActiveHeadingOrdinal"
+                           FallbackValue="-1"/>
+                </MultiBinding>
+              </Border.IsVisible>
+            </Border>
+            <Button Grid.Column="1" Classes="outline-item"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                    Background="Transparent" BorderThickness="0" Padding="8,4"
+                    FontSize="12.5"
+                    Foreground="{DynamicResource ChromeForegroundBrush}"
+                    Content="{Binding Text}"
+                    Command="{Binding $parent[ItemsControl].DataContext.SelectedTab.NavigateToHeadingCommand}"
+                    CommandParameter="{Binding}"/>
+          </Grid>
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
