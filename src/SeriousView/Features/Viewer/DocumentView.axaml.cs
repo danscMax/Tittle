@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -226,15 +228,37 @@ public partial class DocumentView : UserControl
         Dispatcher.UIThread.Post(() => ScrollSourceToLine(heading.Line));
     }
 
-    /// <summary>Scroll the preview to the <paramref name="ordinal"/>-th heading by walking the
-    /// visual tree (Markdown.Avalonia exposes no scroll API). Returns false if not found.</summary>
+    /// <summary>Content-space Y of every preview heading, by walking the rendered tree
+    /// (Markdown.Avalonia exposes no scroll/heading API). Scroll-invariant: viewport-relative
+    /// TranslatePoint plus the current Offset. Null while the preview hasn't laid out. Index
+    /// order matches <see cref="DocumentTabViewModel.Outline"/> — the same contract the M4
+    /// navigation has relied on (both walks skip admonition-nested headings).</summary>
+    private List<double>? ComputePreviewHeadingTops()
+    {
+        var offsetY = PreviewScroll.Offset.Y;
+        var tops = new List<double>();
+        foreach (var heading in Preview.GetVisualDescendants().OfType<Control>().Where(IsTopLevelHeading))
+        {
+            if (heading.TranslatePoint(default, PreviewScroll) is not { } p)
+                return null;
+            tops.Add(p.Y + offsetY);
+        }
+
+        return tops.Count == 0 ? null : tops;
+    }
+
+    /// <summary>Scroll the preview so the <paramref name="ordinal"/>-th heading sits at the
+    /// viewport top, inset by the scroller's own top padding (the document-start look).
+    /// BringIntoView was rejected — coming from above it parks the heading at the BOTTOM edge.
+    /// Returns false when the preview has no laid-out headings yet.</summary>
     private bool TryScrollPreviewToHeading(int ordinal)
     {
-        var headings = Preview.GetVisualDescendants().OfType<Control>().Where(IsTopLevelHeading).ToList();
-        if (ordinal < 0 || ordinal >= headings.Count)
+        if (ComputePreviewHeadingTops() is not { } tops || ordinal < 0 || ordinal >= tops.Count)
             return false;
 
-        headings[ordinal].BringIntoView();
+        var max = Math.Max(0, PreviewScroll.Extent.Height - PreviewScroll.Viewport.Height);
+        var target = Math.Clamp(tops[ordinal] - PreviewScroll.Padding.Top, 0, max);
+        PreviewScroll.Offset = PreviewScroll.Offset.WithY(target);
         return true;
     }
 
@@ -246,11 +270,23 @@ public partial class DocumentView : UserControl
                                       or "Heading4" or "Heading5" or "Heading6")
         && !control.GetVisualAncestors().OfType<Border>().Any(b => b.Classes.Contains("admonition"));
 
+    // The editor's template ScrollViewer (cached — the view is kept alive, the template applies
+    // once). TextEditor.ScrollToVerticalOffset proved a silent no-op here, so scrolling goes
+    // straight to the scroller; it clamps the offset itself.
+    private ScrollViewer? _sourceScroller;
+
+    private ScrollViewer? SourceScroller =>
+        _sourceScroller ??= Source.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+
     private void ScrollSourceToLine(int line1Based)
     {
         var caret = Source.TextArea.Caret;
         caret.Line = line1Based;
         caret.Column = 1;
-        caret.BringCaretToView();
+        // Land the line at the viewport TOP: ScrollToLine centers it (VisualYPosition.LineMiddle)
+        // and BringCaretToView only nudges the nearest edge — neither reads as "go to" (M10).
+        var top = Math.Max(0, Source.TextArea.TextView.GetVisualTopByDocumentLine(line1Based));
+        if (SourceScroller is { } scroller)
+            scroller.Offset = scroller.Offset.WithY(top);
     }
 }

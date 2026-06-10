@@ -1,5 +1,9 @@
+using System;
 using System.Linq;
+using System.Text;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -125,6 +129,114 @@ public class DocumentViewTests
     }
     // NB: auto-focus (#29) can't be asserted headlessly (the headless window isn't activated, so
     // Focus() leaves IsFocused false) — it's verified live instead (keyboard scrolls without a click).
+
+    /// <summary>~5 H1 headings with 20 paragraphs between — long enough that every heading
+    /// needs real scrolling in a 400px-tall window (used by the M10 scroll tests).</summary>
+    private static string LongMarkdown()
+    {
+        var sb = new StringBuilder();
+        for (var h = 0; h < 5; h++)
+        {
+            sb.AppendLine($"# Heading {h}");
+            sb.AppendLine();
+            for (var p = 0; p < 20; p++)
+            {
+                sb.AppendLine($"Paragraph {h}.{p} with enough words to take a visible line.");
+                sb.AppendLine();
+            }
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>Replica of the view's heading walk: content-space Y per heading ordinal.</summary>
+    private static System.Collections.Generic.List<double> PreviewHeadingTops(ScrollViewer scroll, Window window)
+        => window.GetVisualDescendants().OfType<Control>()
+            .Where(c => c.Classes.Any(cl => cl.StartsWith("Heading", StringComparison.Ordinal)))
+            .Select(c => c.TranslatePoint(default, scroll)!.Value.Y + scroll.Offset.Y)
+            .ToList();
+
+    private static ScrollViewer PreviewScrollOf(Window window)
+        => window.GetVisualDescendants().OfType<ScrollViewer>().First(s => s.Name == "PreviewScroll");
+
+    /// <summary>Window for scroll tests: small enough that the long fixture overflows. The
+    /// scrollbars are forced Hidden — an overflowing headless window otherwise materialises the
+    /// FluentAvalonia scrollbar chevron FontIcons, and shaping their embedded Symbols font
+    /// crashes headless (project memory). Hidden bars are never measured; Offset/Extent (and so
+    /// all scroll maths) keep working.</summary>
+    private static Window CreateScrollTestWindow(DocumentTabViewModel vm)
+    {
+        var view = new DocumentView { DataContext = vm };
+        view.PreviewScroll.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        view.PreviewScroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        view.Source.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        view.Source.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        return new Window { Width = 800, Height = 400, Content = view };
+    }
+
+    [AvaloniaFact]
+    public void NavigateToHeading_Preview_ScrollsHeadingToTheTop()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[2]);
+        Dispatcher.UIThread.RunJobs();
+
+        var scroll = PreviewScrollOf(window);
+        var tops = PreviewHeadingTops(scroll, window);
+        Assert.True(scroll.Offset.Y > 0);
+        // The heading sits Padding.Top below the viewport top (the document-start look).
+        Assert.True(Math.Abs(scroll.Offset.Y - (tops[2] - scroll.Padding.Top)) <= 1,
+            $"offset {scroll.Offset.Y:0.##} vs expected {tops[2] - scroll.Padding.Top:0.##}");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void NavigateToHeading_Source_LineLandsAtTheViewportTop()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.ViewMode = DocumentViewMode.Source;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[3]);
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.Equal(vm.Outline[3].Line, editor.TextArea.Caret.Line);
+        var expected = editor.TextArea.TextView.GetVisualTopByDocumentLine(vm.Outline[3].Line);
+        Assert.True(Math.Abs(editor.VerticalOffset - expected) <= 1,
+            $"offset {editor.VerticalOffset:0.##} vs line top {expected:0.##}, " +
+            $"extent {editor.ExtentHeight:0.##}, viewport {editor.ViewportHeight:0.##}");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void NavigateToHeading_FirstHeading_ClampsToZeroOffset()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[3]); // scroll away first
+        Dispatcher.UIThread.RunJobs();
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[0]); // back to the top heading
+        Dispatcher.UIThread.RunJobs();
+
+        var scroll = PreviewScrollOf(window);
+        var tops = PreviewHeadingTops(scroll, window);
+        // The first heading carries its own top margin, so "top of document" means the clamped
+        // formula value (a few px), not a literal zero.
+        var expected = Math.Max(0, tops[0] - scroll.Padding.Top);
+        Assert.True(Math.Abs(scroll.Offset.Y - expected) <= 1,
+            $"offset {scroll.Offset.Y:0.##} vs expected {expected:0.##}");
+        Assert.True(scroll.Offset.Y <= 10, $"offset {scroll.Offset.Y:0.##} should be ~document top");
+        window.Close();
+    }
 
     [AvaloniaFact]
     public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
