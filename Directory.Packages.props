@@ -42,6 +42,11 @@
     <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="11.3.1" />
   </ItemGroup>
 
+  <ItemGroup Label="Export (M13)">
+    <!-- CommonMark+GFM to HTML for the self-contained export. Zero dependencies. -->
+    <PackageVersion Include="Markdig" Version="1.2.0" />
+  </ItemGroup>
+
   <ItemGroup Label="MVVM + DI">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />

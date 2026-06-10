@@ -9,6 +9,8 @@
   <ItemGroup>
     <!-- Legacy code pages (Windows-1251 etc.) for encoding detection. -->
     <PackageReference Include="System.Text.Encoding.CodePages" />
+    <!-- Markdown → HTML for the self-contained export (M13). Pure, UI-free. -->
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 
 </Project>

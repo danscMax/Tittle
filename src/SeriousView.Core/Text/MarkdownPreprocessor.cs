@@ -342,6 +342,10 @@ public static partial class MarkdownPreprocessor
     [GeneratedRegex(@"\[\[([^\[\]|]+)\]\]")]
     private static partial Regex WikiToken();
 
+    /// <summary>The wiki-link token, shared with the HTML exporter (M13) so the two wiki
+    /// passes can never drift apart. Group 1 = the name.</summary>
+    internal static Regex WikiTokenRegex => WikiToken();
+
     // A link-reference definition line ("[label]: dest") — skipped by the inline passes; the
     // (?!\^) keeps footnote DEFINITION text eligible (it becomes visible «Сноски» content).
     [GeneratedRegex(@"^ {0,3}\[(?!\^)[^\]]+\]:")]
