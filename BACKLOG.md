@@ -79,7 +79,7 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 ---
 
-## M8 — Tabs ergonomics (what M7.5 doesn't cover) · effort M · **core DONE**
+## M8 — Tabs ergonomics (what M7.5 doesn't cover) · effort M · **DONE** (dirty dot → M14)
 
 | # | Item | Notes |
 |---|---|---|
@@ -89,11 +89,11 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | 30 ✅ | Tab tooltip with full path | DONE (`26bd884`) — `ToolTip.Tip` = `FilePath`. |
 | 17 ✅ | Copy file path / copy file name | DONE (`e103206`) — new `IClipboardService` port. |
 | 27 ✅ | "Reveal in explorer" via `IShellService` port | DONE (`0611b9e`) — cross-platform `Process.Start` (explorer /select · open -R · xdg-open). |
-| 28 | Prominent open-error notification (InfoBar) | Status-bar-only is easy to miss. |
-| 24 | Button tooltips | |
-| 23 | Tab open/close animation | |
-| 26 | Editor context menu (copy / select all) | |
-| 18b | Multi-file open dialog (`AllowMultiple`) | |
+| 28 ✅ | Prominent open-error notification (InfoBar) | DONE (`642eeef`) — FluentAvalonia `InfoBar` (Error) above the content; 7 s auto-dismiss (a newer error supersedes the timer) + ✕ via a two-way `IsOpen`; session restore aggregates skipped files into one summary instead of silence. |
+| 24 ✅ | Button tooltips | DONE (`84267cc`) — the tab ✕ was the last control without a tip; menu items keep none by design (headers are the label). |
+| 23 ✅ | Tab open animation | DONE (`526cbd5`) — 180 ms entrance fade via `ContainerPrepared`, skipped while drag-reordering (Move() recreates containers); opacity-only (no RenderTransform animator on Av11); close stays instant by design. |
+| 26 ✅ | Editor context menu (copy / select all) | DONE (`54de229`) — `ContextFlyout` on the source editor: Копировать (disabled w/o selection) · Выделить всё · Найти…; click handlers (flyout content gets no DataContext until shown) + `InternalsVisibleTo` for the headless enabled-state test. |
+| 18b ✅ | Multi-file open dialog (`AllowMultiple`) | DONE (`c082e33`) — `PickFilesAsync` returns every picked local path; `OpenFileAsync` funnels each through `OpenPathAsync` (pipe/args already handled lists). |
 | — | Tab "changed on disk" dirty dot | Pairs with M14 live-reload. |
 
 ## M9 — In-document search (find) · effort L · ported ★high-value · **find DONE**
@@ -174,7 +174,9 @@ selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML ren
 **Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar,
 Ctrl+K palette, omnibar) and a tech-debt hardening pass are done. **Chosen direction: audit quick-wins + a11y**
 (background GC, 8 KB-head binary classification, accessible names + focus visuals; reduced-motion deferred to
-Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, and **M8 core**
-(reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18). Next:
-remaining **M8** polish (#28 open-error InfoBar, #24 button tooltips, #23 tab animation, #26 editor context
-menu) or **M10** sync-scroll / active-heading.
+Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, **M8 core**
+(reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18), and the
+**M8 polish** (#28 open-error InfoBar + session-restore summary, #24 ✕ tooltip, #23 tab entrance fade,
+#26 editor context menu, #18b multi-file open) — M8 is closed except the "changed on disk" dirty dot,
+which ships with M14 live-reload. Next: **M10** sync-scroll / active-heading, or M14 if live-reload
+feels more valuable day-to-day.

@@ -124,8 +124,17 @@ commands on the shell VM reached through a tab `Shell` back-ref — a flyout is 
 visual tree up to the shell); full-path tooltip (#30); copy path/name (#17, new `IClipboardService`); reveal
 in Explorer (#27, new `IShellService`, cross-platform `Process.Start` — explorer /select · open -R · xdg-open);
 tab drag-reorder (#18, live pointer gesture + `MoveTab`, which restores `SelectedTab` — the bound ListBox
-drops it on `ObservableCollection.Move`). Next: remaining **M8** polish (#28 open-error InfoBar, #24 button
-tooltips, #23 tab animation, #26 editor context menu) or **M10** sync-scroll / active-heading. Feature spec
+drops it on `ObservableCollection.Move`). **M8 polish DONE** (M8 closed; only the "changed on disk" dirty dot
+remains, paired with M14): open-error **InfoBar** (#28, FluentAvalonia `InfoBar` Severity=Error above the
+content, 7 s auto-dismiss via cancellable `Task.Delay` — a newer error supersedes the timer — plus two-way
+`IsOpen` ✕; session restore now aggregates skipped files into one summary message instead of dropping tabs
+silently); ✕-tab tooltip (#24); tab entrance fade (#23, 180 ms via `ContainerPrepared`, skipped while
+drag-reordering because `Move()` recreates containers; opacity-only — Av11 keyframes can't animate the
+composite `RenderTransform`); editor context menu (#26, `ContextFlyout` on the source editor — Копировать
+disabled w/o selection · Выделить всё · Найти…; click handlers, NOT bindings: flyout content gets a
+DataContext only once shown, which headless can't do — `InternalsVisibleTo` lets tests drive the refresh);
+multi-file open (#18b, `PickFilesAsync` + `AllowMultiple`, each path funnels through `OpenPathAsync`).
+Next: **M10** sync-scroll / active-heading (or M14 live-reload). Feature spec
 source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
