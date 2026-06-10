@@ -96,8 +96,7 @@ position shows in the status bar (relayed from `Caret.PositionChanged`); the sou
 on tab activation (must focus `Source.TextArea`, not the `TextEditor` wrapper). Go-to-line input lives
 in the **status bar** (chrome): an overlay floated over the editor won't repaint over AvaloniaEdit's GPU
 surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
-Known gaps (deferred): `_underscore_` emphasis (use `*asterisks*`), Math/KaTeX,
-Mermaid/diagrams, in-doc search, export, active-heading highlight on scroll.
+Known gaps (deferred): Math/KaTeX, Mermaid/diagrams, export, split-view live sync.
 **M7.5 (shell redesign) DONE; M8 (tabs ergonomics) core DONE**: ☰ menu (default `MenuPlacement.Hidden`);
 status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
 **resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,
@@ -134,7 +133,27 @@ composite `RenderTransform`); editor context menu (#26, `ContextFlyout` on the s
 disabled w/o selection · Выделить всё · Найти…; click handlers, NOT bindings: flyout content gets a
 DataContext only once shown, which headless can't do — `InternalsVisibleTo` lets tests drive the refresh);
 multi-file open (#18b, `PickFilesAsync` + `AllowMultiple`, each path funnels through `OpenPathAsync`).
-Next: **M10** sync-scroll / active-heading (or M14 live-reload). Feature spec
+**M10 DONE** (each its own commit, TDD): pure `Core/Text/HeadingAnchors` (position ↔ nearest-heading
+anchor + fraction; zero headings → proportional); **position sync on the preview↔source toggle**
+(viewport-top probe, Background-priority restore + one-shot LayoutUpdated retry, TOC jumps cancel
+pending syncs, caret never moves on sync); **active-heading scroll-spy in both modes**
+(`ActiveHeadingOrdinal` written by `DocumentView` like CaretLine; preview = cached content-space
+heading Ys invalidated only on extent change, source = first visible line) driving a 3px accent
+marker in the outline (`OrdinalMatchConverter`, fixed marker column) and a **breadcrumbs strip**
+(`MarkdownOutline.AncestorChain`, markdown-only, both modes, segments navigate); **TOC/Ctrl+G land
+at the viewport top** (direct `PreviewScroll.Offset`; source via the editor's template ScrollViewer —
+`ScrollToLine` centers and `TextEditor.ScrollToVerticalOffset` is a silent no-op); **wiki-links**
+(`[[name]]` → `wiki:` link when a sibling `name.md` exists — resolver injected into the Core
+preprocessor, existence snapshots once per tab until M14; `WikiHyperlinkCommand` opens via
+`Shell.OpenPathAsync`, traversal-safe, http/https/mailto fallback untouched); **conservative
+`_underscore_` italics** (display-only, word-boundary, fences/inline-code/URLs masked via the new
+fence-aware `Core/Text/MarkdownCodeRegions`; `__x__` stays — the renderer underlines it natively).
+Plus the **giant-fence preview fix** (`f06eba5`): embedded SyntaxHigh AvaloniaEdit editors can't size
+under our infinite-height outer scroll (estimates ~2× real line height; infinite inner viewport
+clamped click-scrolls to 0) — heights pinned from a measured `VisualLine`, preview swallows
+`RequestBringIntoView` (see project memory). Legacy preprocessor passes are still fence-blind
+(pre-existing; `MarkdownCodeRegions` makes the retrofit one guard per pass).
+Next: **M14** live-reload + dirty dot, **M11** math, or **M13** export. Feature spec
 source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions

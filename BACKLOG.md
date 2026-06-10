@@ -106,16 +106,23 @@ replacing in-memory text you can't save is premature, like undo/redo). **Preview
 (Markdown.Avalonia 11 exposes no search/highlight API; the rendered tree is opaque and Av11 has no
 `TextHighlighter` — a research item).
 
-## M10 — Sync-scroll, active-heading, TOC polish · effort M · ported + polish
+## M10 — Sync-scroll, active-heading, TOC polish · effort M · **DONE**
 
 | Item | Notes |
 |---|---|
-| Sync-scroll source ↔ preview | **Heading-anchor based** (original abandoned percentage — drifted on long docs). |
-| Active-heading highlight in the outline | Markdown.Avalonia `HeaderScrolled`. |
-| TOC nav: scroll heading to top | M4 `BringIntoView` lands at the edge. |
-| Breadcrumbs (markdown + code) | Original had heading breadcrumbs + a minimap. |
-| Wiki-links `[[name]]` | Small preprocessor add. |
-| `_underscore_` emphasis | Renderer gap; risky text transform — evaluate. |
+| Sync-scroll ✅ | DONE (`59e10b7`) — **position sync on the preview↔source TOGGLE** (no split-view in this app): viewport-top anchored as (nearest heading + fraction to the next) via pure `Core/Text/HeadingAnchors` (`9a2c416`); sync only scrolls, never moves the caret; Background-priority restore + one-shot LayoutUpdated retry; TOC jumps cancel pending syncs. Zero headings degrades to proportional. |
+| Active-heading highlight ✅ | DONE (`bb2abfb` + `14d3f8b`) — `ActiveHeadingOrdinal` written by the view from scroll in BOTH modes (preview: cached content-space heading Ys, invalidated only on extent change; source: first visible line); 3px accent bar in a fixed marker column via `OrdinalMatchConverter`. NB: Markdown.Avalonia `HeaderScrolled` EXISTS but is wired to the inner ScrollViewer we disable — own geometry instead. |
+| TOC nav to top ✅ | DONE (`151ee60`) — preview via direct `PreviewScroll.Offset` (BringIntoView parked headings at the BOTTOM edge), source via the editor's template ScrollViewer + `GetVisualTopByDocumentLine` (`ScrollToLine` centers; `TextEditor.ScrollToVerticalOffset` is a silent no-op). Ctrl+G inherits land-at-top. |
+| Breadcrumbs ✅ | DONE (`c46ee7c`) — markdown-only ancestor chain (`MarkdownOutline.AncestorChain`) as a chrome strip under the find bar, both view modes, segments navigate. Code breadcrumbs + minimap stay in the ported pool (need per-language symbol outlines). |
+| Wiki-links ✅ | DONE (`c2140a8` + `c670e6d`) — `[[name]]` → link when a sibling `name.md` exists (resolver injected into the preprocessor; existence snapshots once per tab until M14), else plain text; click opens via `Shell.OpenPathAsync` through `WikiHyperlinkCommand` (traversal-safe, `wiki:` never reaches Process.Start; http/https/mailto policy untouched). Outline shows raw `[[name]]` (accepted). |
+| `_underscore_` ✅ | DONE (`f8e42a4`) — conservative display-only pass `_x_`→`*x*` (word-boundary flanks, no intraword, fences/inline code/link URLs masked); `__x__` deliberately untouched — the renderer renders it as UNDERLINE natively. |
+| Split-view live sync | NEW backlog item (out of M10 by decision): a side-by-side layout with live mutual scrolling. `HeadingAnchors` is the ready seam — capture in one pane → `ToPosition` in the other per scroll tick + a re-entrancy latch. |
+
+Also fixed here (`f06eba5`): giant fenced code blocks in the preview — embedded AvaloniaEdit editors
+can't size themselves under our infinite-height outer-scroll layout (estimates read ~2× the real
+line height; the infinite inner viewport clamped every click-scroll to 0). Heights are now pinned
+from a measured `VisualLine`; the preview swallows `RequestBringIntoView` (all navigation is
+explicit `Offset` writes).
 
 ## M11 — Math rendering (LaTeX) · effort L · ported
 
@@ -178,5 +185,10 @@ Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout)
 (reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18), and the
 **M8 polish** (#28 open-error InfoBar + session-restore summary, #24 ✕ tooltip, #23 tab entrance fade,
 #26 editor context menu, #18b multi-file open) — M8 is closed except the "changed on disk" dirty dot,
-which ships with M14 live-reload. Next: **M10** sync-scroll / active-heading, or M14 if live-reload
-feels more valuable day-to-day.
+which ships with M14 live-reload. Done since: **all of M10** (toggle-position sync via pure
+`HeadingAnchors`, active-heading scroll-spy + outline marker, TOC/Ctrl+G land-at-top, markdown
+breadcrumbs, wiki-links `[[name]]`, conservative `_underscore_` italics) + the giant-fence preview
+fix (`f06eba5`). Next candidates: **M14** live-reload (+ the dirty dot; also refreshes the
+wiki-link existence snapshot), **M11** math (CSharpMath research first), **M13** export
+(self-contained HTML first), or the preprocessor fence-guard retrofit (legacy passes still
+transform inside ``` fences — `MarkdownCodeRegions` makes it a one-guard-per-pass change).
