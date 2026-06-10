@@ -35,6 +35,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Headless UI tests drive view internals (e.g. flyout state refresh) that can't be
+         reached by showing popups (FluentAvalonia Symbols font can't shape headless). -->
+    <InternalsVisibleTo Include="SeriousView.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SeriousView.Core\SeriousView.Core.csproj" />
   </ItemGroup>
 

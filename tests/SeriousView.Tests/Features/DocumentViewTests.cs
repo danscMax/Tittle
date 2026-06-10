@@ -125,4 +125,81 @@ public class DocumentViewTests
     }
     // NB: auto-focus (#29) can't be asserted headlessly (the headless window isn't activated, so
     // Focus() leaves IsFocused false) — it's verified live instead (keyboard scrolls without a click).
+
+    [AvaloniaFact]
+    public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
+    {
+        var vm = DocumentTabViewModel.FromFile("hello", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var flyout = Assert.IsType<MenuFlyout>(editor.ContextFlyout);
+        var headers = flyout.Items.OfType<MenuItem>().Select(i => i.Header?.ToString()).ToList();
+        Assert.Equal(new[] { "Копировать", "Выделить всё", "Найти…" }, headers);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_EditorMenu_CopyEnablement_FollowsSelection()
+    {
+        var vm = DocumentTabViewModel.FromFile("hello", "/src/a.cs");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var flyout = (MenuFlyout)editor.ContextFlyout!;
+        var copy = flyout.Items.OfType<MenuItem>().First();
+
+        // What flyout Opening calls — showing the real popup shapes the FluentAvalonia
+        // Symbols font, which crashes headless (see project memory).
+        view.RefreshEditorMenu();
+        Assert.False(copy.IsEnabled); // no selection yet
+
+        editor.SelectAll();
+        view.RefreshEditorMenu();
+        Assert.True(copy.IsEnabled);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_EditorMenu_SelectAll_SelectsWholeDocument()
+    {
+        var vm = DocumentTabViewModel.FromFile("hello", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var flyout = (MenuFlyout)editor.ContextFlyout!;
+        var selectAll = flyout.Items.OfType<MenuItem>().First(i => (string?)i.Header == "Выделить всё");
+
+        selectAll.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("hello".Length, editor.SelectionLength);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_EditorMenu_Find_OpensTheSearchBar()
+    {
+        var vm = DocumentTabViewModel.FromFile("hello", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var flyout = (MenuFlyout)editor.ContextFlyout!;
+        var find = flyout.Items.OfType<MenuItem>().First(i => (string?)i.Header == "Найти…");
+
+        find.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(vm.IsSearchOpen);
+        window.Close();
+    }
 }

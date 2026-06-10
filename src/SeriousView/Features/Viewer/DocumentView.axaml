@@ -73,7 +73,19 @@
                    ShowLineNumbers="{Binding Editor.ShowLineNumbers, FallbackValue=True}"
                    WordWrap="{Binding Editor.WordWrap, FallbackValue=False}"
                    HorizontalScrollBarVisibility="Auto"
-                   VerticalScrollBarVisibility="Auto"/>
+                   VerticalScrollBarVisibility="Auto">
+      <!-- Right-click menu (#26): the viewer is read-only, so just clipboard + find.
+           Copy/SelectAll go straight to the editor (code-behind); Найти reuses the tab's
+           Ctrl+F seam. Copy's enabled state refreshes on Opening (see ctor). -->
+      <ae:TextEditor.ContextFlyout>
+        <MenuFlyout>
+          <MenuItem x:Name="EditorCopyItem" Header="Копировать" InputGesture="Ctrl+C" Click="OnEditorCopyClick"/>
+          <MenuItem Header="Выделить всё" InputGesture="Ctrl+A" Click="OnEditorSelectAllClick"/>
+          <Separator/>
+          <MenuItem Header="Найти…" InputGesture="Ctrl+F" Click="OnEditorFindClick"/>
+        </MenuFlyout>
+      </ae:TextEditor.ContextFlyout>
+    </ae:TextEditor>
 
     <!-- Rendered markdown preview: one full-width field with a soft, barely-there accent glow behind
          the text (toggled by «Декоративный фон»). Markdown.Avalonia's own scrollbar can't be themed

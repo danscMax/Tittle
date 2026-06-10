@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -42,6 +43,9 @@ public partial class DocumentView : UserControl
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
+        // Editor context menu (#26): grey out «Копировать» while nothing is selected.
+        if (Source.ContextFlyout is MenuFlyout editorMenu)
+            editorMenu.Opening += (_, _) => RefreshEditorMenu();
 
         DataContextChanged += OnDataContextChanged;
         DetachedFromVisualTree += (_, _) => Unsubscribe();
@@ -153,6 +157,20 @@ public partial class DocumentView : UserControl
                 break;
         }
     }
+
+    // Editor context-menu actions (#26) — the editor itself owns clipboard/selection; Найти
+    // reuses the tab VM's Ctrl+F seam. Click handlers (not bindings): flyout content only
+    // inherits a DataContext once shown, which headless tests can't do.
+    private void OnEditorCopyClick(object? sender, RoutedEventArgs e) => Source.Copy();
+
+    private void OnEditorSelectAllClick(object? sender, RoutedEventArgs e) => Source.SelectAll();
+
+    private void OnEditorFindClick(object? sender, RoutedEventArgs e) => _vm?.OpenSearchCommand.Execute(null);
+
+    /// <summary>Sync «Копировать»'s enabled state with the selection — called on flyout Opening;
+    /// internal so headless tests can drive it (showing the popup shapes the FluentAvalonia
+    /// Symbols font, which crashes headless).</summary>
+    internal void RefreshEditorMenu() => EditorCopyItem.IsEnabled = Source.SelectionLength > 0;
 
     private void OnCaretPositionChanged(object? sender, EventArgs e) => UpdateCaret();
 
