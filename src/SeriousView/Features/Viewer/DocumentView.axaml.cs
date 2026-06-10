@@ -83,6 +83,25 @@ public partial class DocumentView : UserControl
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
             Dispatcher.UIThread.Post(ActivateSource);
+
+            // A reload's replacement tab carries the old tab's reading position (M14): consume
+            // the one-shot anchor and apply it once the fresh view has laid out. The generation
+            // guard lets an explicit TOC jump arriving in between win.
+            if (_vm.RestoreAnchor is { } restore)
+            {
+                _vm.RestoreAnchor = null;
+                var vm = _vm;
+                var gen = ++_syncGeneration;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (gen != _syncGeneration || !ReferenceEquals(vm, _vm))
+                        return;
+                    if (vm.ShowPreview)
+                        ApplyToPreview(restore, retryAfterLayout: true);
+                    else
+                        ApplyToSource(restore);
+                }, DispatcherPriority.Background);
+            }
         }
     }
 
@@ -200,7 +219,11 @@ public partial class DocumentView : UserControl
             FixupEmbeddedCodeEditors();
         }
         if (_vm is { IsActive: true, ShowPreview: true })
+        {
             RecomputeActiveHeading();
+            if (CaptureFromPreview() is { } anchor)
+                _vm.ReadingAnchor = anchor; // live reading position, for reload restore (M14)
+        }
     }
 
     /// <summary>Soft cap so a pathological multi-thousand-line fence can't materialise hundreds
@@ -251,7 +274,10 @@ public partial class DocumentView : UserControl
     private void OnSourceScrollChanged(object? sender, EventArgs e)
     {
         if (_vm is { IsActive: true, ShowSource: true })
+        {
             RecomputeActiveHeading();
+            _vm.ReadingAnchor = CaptureFromSource();
+        }
     }
 
     /// <summary>Scroll-spy recompute — a binary search over cached positions, cheap enough to

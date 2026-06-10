@@ -112,7 +112,8 @@ public partial class MainWindowViewModel : ViewModelBase
             }
 
             var fresh = DocumentTabViewModel.FromLoad(result, path);
-            fresh.ViewMode = tab.ViewMode; // the reader's preview/source choice survives
+            fresh.ViewMode = tab.ViewMode;          // the reader's preview/source choice survives
+            fresh.RestoreAnchor = tab.ReadingAnchor; // ...and so does the reading position (C3)
             ReplaceTab(tab, fresh);
             // After the swap: selecting the fresh tab blanks StatusText, so write it last.
             StatusText = $"Файл обновлён: {Path.GetFileName(path)}";

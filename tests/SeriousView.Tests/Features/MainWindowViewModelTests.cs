@@ -8,6 +8,7 @@ using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Services;
 using SeriousView.Core.Settings;
+using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
 using SeriousView.Shared;
 using Xunit;
@@ -603,6 +604,23 @@ public class MainWindowViewModelTests
 
         Assert.Equal("# new", vm.Tabs[0].DocumentText);
         Assert.False(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task Reload_HandsTheReadingAnchorToTheFreshTab()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "# old" };
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: new FakeFileReader(map), watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        vm.Tabs[0].ReadingAnchor = new HeadingAnchor(1, 0.5); // written by the view in real life
+
+        map["/docs/a.md"] = "# new";
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+        await vm.PendingReload!;
+
+        Assert.Equal(new HeadingAnchor(1, 0.5), vm.Tabs[0].RestoreAnchor);
     }
 
     [AvaloniaFact]

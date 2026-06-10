@@ -515,6 +515,58 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // --- M14 C3: the reading position survives a reload (anchor handshake) ---
+
+    [AvaloniaFact]
+    public void Scrolling_WritesTheReadingAnchor()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[2]); // scroll deep into the doc
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, vm.ReadingAnchor.Ordinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void RestoreAnchor_Preview_LandsOnTheSameHeading()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.IsActive = true;
+        vm.RestoreAnchor = new HeadingAnchor(2, 0);
+        var view = new DocumentView { DataContext = vm };
+        var window = CreateScrollTestWindow(view);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(vm.RestoreAnchor); // one-shot: consumed by the fresh view
+        Assert.True(view.PreviewScroll.Offset.Y > 0, "the restored view must not sit at the top");
+        view.RecomputeActiveHeading();
+        Assert.Equal(2, vm.ActiveHeadingOrdinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void RestoreAnchor_Source_LandsOnTheSameHeadingLine()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.ViewMode = DocumentViewMode.Source;
+        vm.IsActive = true;
+        vm.RestoreAnchor = new HeadingAnchor(3, 0);
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.InRange(FirstVisibleLine(editor), vm.Outline[3].Line - 1, vm.Outline[3].Line + 1);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
     {

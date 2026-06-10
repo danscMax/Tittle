@@ -307,6 +307,14 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isChangedOnDisk;
 
+    /// <summary>Current reading position, written by <c>DocumentView</c> per scroll event
+    /// (the <see cref="CaretLine"/> pattern) — the shell hands it to a reload's fresh tab.</summary>
+    public HeadingAnchor ReadingAnchor { get; set; } = new(-1, 0);
+
+    /// <summary>One-shot: set by the shell on a reload's replacement tab; consumed by the new
+    /// view after its first layout to land on the same document position (M14).</summary>
+    public HeadingAnchor? RestoreAnchor { get; set; }
+
     /// <summary>Ordinal of the heading currently at the top of the view, −1 above the first —
     /// written by <c>DocumentView</c> from the scroll position (like <see cref="CaretLine"/>).
     /// Drives the outline's active marker and the breadcrumbs (M10).</summary>
