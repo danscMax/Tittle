@@ -16,19 +16,19 @@ public sealed class FileDialogService : IFileDialogService
 
     public FileDialogService(Func<TopLevel?> topLevel) => _topLevel = topLevel;
 
-    public async Task<string?> PickFileAsync()
+    public async Task<IReadOnlyList<string>> PickFilesAsync()
     {
         var top = _topLevel();
         if (top is null)
-            return null;
+            return Array.Empty<string>();
 
         var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Открыть файл",
-            AllowMultiple = false,
+            Title = "Открыть файлы",
+            AllowMultiple = true,
         });
 
-        // TryGetLocalPath returns null for virtual/cloud locations; M1 only needs local files.
-        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+        // TryGetLocalPath returns null for virtual/cloud locations; only local files are loadable.
+        return files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
     }
 }

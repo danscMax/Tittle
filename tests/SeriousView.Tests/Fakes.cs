@@ -38,9 +38,10 @@ internal sealed class FakeFileReader : IFileReader
     }
 }
 
-internal sealed class FakeFileDialogService(string? path) : IFileDialogService
+internal sealed class FakeFileDialogService(params string?[]? paths) : IFileDialogService
 {
-    public Task<string?> PickFileAsync() => Task.FromResult(path);
+    public Task<IReadOnlyList<string>> PickFilesAsync() =>
+        Task.FromResult<IReadOnlyList<string>>(paths?.OfType<string>().ToList() ?? []);
 }
 
 internal sealed class FakeThemeService : IThemeService

@@ -243,8 +243,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenFileAsync()
     {
-        var path = await _fileDialog.PickFileAsync();
-        if (path is not null)
+        foreach (var path in await _fileDialog.PickFilesAsync())
             await OpenPathAsync(path);
     }
 

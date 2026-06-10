@@ -6,6 +6,7 @@ namespace SeriousView.Core.Abstractions;
 /// </summary>
 public interface IFileDialogService
 {
-    /// <summary>Returns the chosen local file path, or <c>null</c> if cancelled.</summary>
-    Task<string?> PickFileAsync();
+    /// <summary>Returns the chosen local file paths (the picker is multi-select),
+    /// or an empty list if cancelled.</summary>
+    Task<IReadOnlyList<string>> PickFilesAsync();
 }

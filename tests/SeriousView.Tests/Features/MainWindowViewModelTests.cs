@@ -230,6 +230,20 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task OpenFile_MultiplePicked_OpensTabPerFile()
+    {
+        var vm = new MainWindowViewModel(
+            new FakeFileDialogService("/docs/a.md", "/docs/b.md"), new FakeFileReader("x"),
+            new FakeThemeService(), new FakeRecentFilesStore(), Holder(),
+            new FakeClipboardService(), new FakeShellService(), Array.Empty<string>());
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Equal(2, vm.Tabs.Count);
+        Assert.Equal("/docs/b.md", vm.SelectedTab?.FilePath); // the last picked file ends up active
+    }
+
+    [AvaloniaFact]
     public async Task OpenFile_RecordsRecentFile()
     {
         var recent = new FakeRecentFilesStore();
