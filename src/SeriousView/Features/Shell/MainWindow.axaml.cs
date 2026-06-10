@@ -1,12 +1,15 @@
 using System;
 using System.Linq;
 using Avalonia;                 // AttachDevTools extension lives in the Avalonia namespace
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Reactive;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Windowing;
@@ -88,6 +91,9 @@ public partial class MainWindow : AppWindow
         TabStrip.AddHandler(PointerPressedEvent, OnTabPointerPressed, RoutingStrategies.Tunnel);
         TabStrip.AddHandler(PointerMovedEvent, OnTabPointerMoved, RoutingStrategies.Tunnel);
         TabStrip.AddHandler(PointerReleasedEvent, OnTabPointerReleased, RoutingStrategies.Tunnel);
+        // Entrance fade on new tabs (#23). Programmatic, not a styled animation: drag-reorder's
+        // Move() recreates containers mid-gesture, and a styled entrance would replay on every swap.
+        TabStrip.ContainerPrepared += OnTabContainerPrepared;
 #if DEBUG
         this.AttachDevTools();
 #endif
@@ -266,6 +272,27 @@ public partial class MainWindow : AppWindow
     {
         _dragTab = null;
         _dragging = false;
+    }
+
+    // Entrance fade for a freshly realized tab container (#23). Opacity only — Avalonia 11
+    // keyframes have no animator for the composite RenderTransform (see Animations.axaml),
+    // so a slide variant would crash. Close stays instant by design (matches VS Code).
+    private static readonly Animation TabEntranceAnimation = new()
+    {
+        Duration = TimeSpan.FromMilliseconds(180),
+        Easing = new CubicEaseOut(),
+        FillMode = FillMode.Forward,
+        Children =
+        {
+            new KeyFrame { Cue = new Cue(0d), Setters = { new Setter(OpacityProperty, 0d) } },
+            new KeyFrame { Cue = new Cue(1d), Setters = { new Setter(OpacityProperty, 1d) } },
+        },
+    };
+
+    private void OnTabContainerPrepared(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (!_dragging)
+            _ = TabEntranceAnimation.RunAsync(e.Container);
     }
 
     // The slot the cursor is over: the first tab whose horizontal midpoint is right of the cursor, else
