@@ -135,11 +135,15 @@ Hard without WebView (Mermaid is JS; PlantUML needs a server/jar — and **leaks
 service, must stay opt-in/off-by-default** as in the original). Chart.js blocks too. Research native
 options or a bundled renderer; may stay deferred. Don't start before M9 lands.
 
-## M13 — Export (HTML / PDF / print) · effort L–XL · ported
+## M13 — Export (HTML / PDF / print) · effort L–XL · ported · **HTML DONE**
 
-Self-contained HTML export first (achievable). PDF without WebView is non-trivial (render the visual
-tree or a PDF lib; original rasterized → non-selectable text). Also: copy-as-rich-text, native Print.
-Port `IExporter` + `Platform/`.
+**Self-contained HTML export DONE** (`c04dc79` + `40c8815`): pure `Core/Export/HtmlExporter` —
+RAW markdown through **Markdig** (advanced extensions; approved dependency) into one portable
+file with an inline themed stylesheet; wiki links become relative `name.md` hrefs via the SAME
+token regex as the viewer pass; block math stays as authored (no JS in a self-contained file).
+Shell command via `IFileDialogService.SaveFileAsync` — ☰ Файл ▸ «Экспорт в HTML…» + palette;
+errors → InfoBar. **Still open**: PDF (original rasterized via html2pdf — non-selectable text;
+native alternative needs research), native Print, copy-as-rich-text, doc-like Word export.
 
 ## M14 — Live-reload (file watcher) · effort M · **DONE**
 

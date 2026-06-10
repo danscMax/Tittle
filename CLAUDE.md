@@ -162,7 +162,18 @@ refresh for free; selection restored — the MoveTab lesson; ViewMode and the RE
 survive via the M10 heading anchor handed to the fresh view as a one-shot RestoreAnchor);
 inactive tabs get an accent dirty dot and reload manually (tab context menu + palette — user
 decision); removed/renamed files keep their tab and content (dot + one InfoBar error).
-Next: **M11** math (CSharpMath-fork spike), then **M13** HTML export (Markdig approved). Feature
+**M11 block math DONE**: `$$…$$` / `\[…\]` → `::: math` containers (percent-encoded opaque
+transport; bodies are protected regions — no pass rewrites raw LaTeX) rendered natively by
+**Sylinko.CSharpMath.Avalonia** 11.3.1 (maintained CSharpMath fork; garbage LaTeX → the control's
+inline error); theme via a `ChromeForegroundColor` twin (MathView.TextColor is a Color). Single
+`$` is NOT a delimiter; inline `\(…\)` deferred. **M13 HTML export DONE**: pure
+`Core/Export/HtmlExporter` — raw markdown through **Markdig** advanced extensions into ONE
+self-contained themed file; wiki links → relative `name.md` hrefs (same token regex as the
+viewer); ☰ Файл ▸ «Экспорт в HTML…» + palette via `IFileDialogService.SaveFileAsync`. PDF/print/
+rich-text still open. **Standing goal: port EVERYTHING from `E:\Scripts\Markdown Viewer`** — the
+complete gap audit lives in BACKLOG's ported pool (code-view decorations, CSV-as-table, JSON
+pretty-print, code/text outlines, sortable tables, copy buttons, stats panel, HTML preview,
+settings import/export, themes, help, M12 diagrams, M15 editing…). Feature
 spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
