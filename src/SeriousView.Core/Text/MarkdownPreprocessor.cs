@@ -52,6 +52,7 @@ public static partial class MarkdownPreprocessor
 
         ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
         ConvertUnderscoreEmphasisInPlace(lines, regions);
+        ConvertEmojiInPlace(lines, regions);
 
         // The legacy passes are fence-guarded too; footnotes/admonitions REBUILD the line list,
         // so the fence bitmap is rescanned after each of them (Scan is one cheap O(n) pass).
@@ -178,6 +179,97 @@ public static partial class MarkdownPreprocessor
                 LinkDestination(), AutoLink());
         }
     }
+
+    // :name: → unicode emoji (ported; the renderer has no shortcode support). Conservative
+    // allowlist — unknown names (and timestamps like 10:30:45, which never match the
+    // letter-only token) stay as authored; fences and inline code are skipped.
+    private static void ConvertEmojiInPlace(List<string> lines, MarkdownCodeRegions regions)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
+                || !line.Contains(':') || LinkRefDefLine().IsMatch(line))
+                continue;
+
+            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(line, EmojiToken(),
+                m => Emoji.TryGetValue(m.Groups[1].Value, out var glyph) ? glyph : m.Value,
+                LinkDestination(), AutoLink());
+        }
+    }
+
+    private static readonly Dictionary<string, string> Emoji = new()
+    {
+        ["smile"] = "😄",
+        ["grin"] = "😁",
+        ["joy"] = "😂",
+        ["wink"] = "😉",
+        ["blush"] = "😊",
+        ["thinking"] = "🤔",
+        ["sob"] = "😭",
+        ["scream"] = "😱",
+        ["sunglasses"] = "😎",
+        ["heart"] = "❤️",
+        ["broken_heart"] = "💔",
+        ["+1"] = "👍",
+        ["-1"] = "👎",
+        ["thumbsup"] = "👍",
+        ["thumbsdown"] = "👎",
+        ["ok_hand"] = "👌",
+        ["wave"] = "👋",
+        ["clap"] = "👏",
+        ["pray"] = "🙏",
+        ["muscle"] = "💪",
+        ["eyes"] = "👀",
+        ["fire"] = "🔥",
+        ["rocket"] = "🚀",
+        ["star"] = "⭐",
+        ["sparkles"] = "✨",
+        ["tada"] = "🎉",
+        ["zap"] = "⚡",
+        ["boom"] = "💥",
+        ["100"] = "💯",
+        ["check"] = "✅",
+        ["white_check_mark"] = "✅",
+        ["x"] = "❌",
+        ["warning"] = "⚠️",
+        ["question"] = "❓",
+        ["exclamation"] = "❗",
+        ["bulb"] = "💡",
+        ["book"] = "📖",
+        ["memo"] = "📝",
+        ["pencil"] = "✏️",
+        ["bug"] = "🐛",
+        ["wrench"] = "🔧",
+        ["gear"] = "⚙️",
+        ["hammer"] = "🔨",
+        ["lock"] = "🔒",
+        ["key"] = "🔑",
+        ["link"] = "🔗",
+        ["mag"] = "🔍",
+        ["bell"] = "🔔",
+        ["calendar"] = "📅",
+        ["chart_with_upwards_trend"] = "📈",
+        ["bar_chart"] = "📊",
+        ["clipboard"] = "📋",
+        ["folder"] = "📁",
+        ["package"] = "📦",
+        ["hourglass"] = "⌛",
+        ["clock"] = "🕐",
+        ["coffee"] = "☕",
+        ["red_circle"] = "🔴",
+        ["green_circle"] = "🟢",
+        ["yellow_circle"] = "🟡",
+        ["arrow_right"] = "➡️",
+        ["arrow_left"] = "⬅️",
+        ["arrow_up"] = "⬆️",
+        ["arrow_down"] = "⬇️",
+        ["heavy_plus_sign"] = "➕",
+        ["no_entry"] = "⛔",
+        ["construction"] = "🚧",
+        ["trophy"] = "🏆",
+        ["dart"] = "🎯",
+    };
 
     /// <summary>One resolver hit per distinct name per Transform — a note linked many times
     /// costs one existence check.</summary>
@@ -364,6 +456,10 @@ public static partial class MarkdownPreprocessor
     // Mask: an autolink "<scheme:…>".
     [GeneratedRegex(@"<[a-zA-Z][a-zA-Z0-9+.\-]*:[^<>\s]*>")]
     private static partial Regex AutoLink();
+
+    // An emoji shortcode token: :name: with letters/digits/underscore/plus/minus.
+    [GeneratedRegex(@":([a-z0-9_+\-]+):")]
+    private static partial Regex EmojiToken();
 
     // A whole-line math block: $$latex$$ or \[latex\]. Capture (1)/(2) = the LaTeX.
     [GeneratedRegex(@"^\s*(?:\$\$(.+?)\$\$|\\\[(.+?)\\\])\s*$")]

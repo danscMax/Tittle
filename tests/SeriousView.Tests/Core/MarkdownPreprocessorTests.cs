@@ -393,6 +393,26 @@ public class MarkdownPreprocessorTests
         Assert.Contains(MathContainer("_x_ + [[a]] - [x] step"), result);
     }
 
+    // --- Emoji :name: shortcodes (ported) ---
+
+    [Theory]
+    [InlineData("готово :tada: и :rocket:", "готово 🎉 и 🚀")]
+    [InlineData("оценка :+1:", "оценка 👍")]
+    [InlineData(":fire::fire:", "🔥🔥")]
+    public void Emoji_KnownShortcodes_BecomeUnicode(string input, string expected)
+        => Assert.Equal(expected, MarkdownPreprocessor.Transform(input));
+
+    [Theory]
+    [InlineData(":unknown_code:")]
+    [InlineData("time 10:30:45 plain colons")]
+    [InlineData("`:tada:` in code")]
+    public void Emoji_UnknownOrCodeOrPlainColons_LeftAlone(string input)
+        => Assert.Equal(input, MarkdownPreprocessor.Transform(input));
+
+    [Fact]
+    public void Emoji_InsideAFence_Unchanged()
+        => Assert.Equal("```\n:tada:\n```", MarkdownPreprocessor.Transform("```\n:tada:\n```"));
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;
