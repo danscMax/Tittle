@@ -463,6 +463,58 @@ public class DocumentViewTests
         window.Close();
     }
 
+    /// <summary>A document that is mostly one giant fenced code block (the reported repro:
+    /// a prompt file wrapped in ```markdown).</summary>
+    private static string GiantFenceMarkdown()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("# Title");
+        sb.AppendLine();
+        sb.AppendLine("Intro paragraph before the giant fence.");
+        sb.AppendLine();
+        sb.AppendLine("```markdown");
+        for (var i = 1; i <= 120; i++)
+            sb.AppendLine($"line {i} of the embedded prompt content");
+        sb.AppendLine("```");
+        return sb.ToString();
+    }
+
+    [AvaloniaFact]
+    public void GiantFence_EmbeddedCodeEditor_RendersFullContentHeight()
+    {
+        var vm = DocumentTabViewModel.FromFile(GiantFenceMarkdown(), "/docs/prompt.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = CreateScrollTestWindow(view);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // The embedded code editor (Markdown.Avalonia SyntaxHigh) must show its WHOLE content.
+        // Under our outer-scroll layout it gets an infinite height constraint it can't handle:
+        // its desired height is an estimate and its extent reads ~double the truth — so the
+        // fix pins height = lineCount × real line height, which this asserts against.
+        var embedded = window.GetVisualDescendants().OfType<TextEditor>()
+            .First(e => !ReferenceEquals(e, view.Source));
+
+        var textView = embedded.TextArea.TextView;
+        Assert.True(textView.VisualLinesValid && textView.VisualLines.Count > 0,
+            "the block's visual lines should be materialised");
+        var lineHeight = textView.VisualLines[0].Height; // the REAL rendered line height —
+        // DefaultLineHeight/extent are height-tree estimates that read ~double of it here
+        var contentHeight = 120 * lineHeight;
+        Assert.True(embedded.Bounds.Height >= contentHeight,
+            $"embedded editor height {embedded.Bounds.Height:0.#} must fit 120 lines × {lineHeight:0.#}");
+        Assert.True(embedded.Bounds.Height <= contentHeight + 80,
+            $"embedded editor height {embedded.Bounds.Height:0.#} must not trail an empty tail " +
+            $"beyond the content {contentHeight:0.#}");
+        Assert.False(double.IsInfinity(embedded.ViewportHeight),
+            "the inner viewport must be finite — an infinite one clamps every scroll to 0");
+
+        // With the full height granted, the whole-document scroll owns navigation.
+        Assert.True(view.PreviewScroll.Extent.Height >= contentHeight,
+            $"page extent {view.PreviewScroll.Extent.Height:0.#} must include the block {contentHeight:0.#}");
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
     {

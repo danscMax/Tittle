@@ -54,6 +54,11 @@ public partial class DocumentView : UserControl
         // Scroll-spy (M10): track the heading at the viewport top in both modes.
         PreviewScroll.ScrollChanged += OnPreviewScrollChanged;
         Source.TextArea.TextView.ScrollOffsetChanged += OnSourceScrollChanged;
+        // The reader's position is sacred: nothing inside the preview may yank the page via
+        // bring-into-view (embedded code editors request it on focus/caret/selection against
+        // their broken infinite-viewport geometry). All preview navigation goes through
+        // explicit PreviewScroll.Offset writes, so swallowing the request loses nothing.
+        Preview.AddHandler(RequestBringIntoViewEvent, (_, e) => e.Handled = true);
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -190,9 +195,57 @@ public partial class DocumentView : UserControl
         // An extent change means reflow (first layout, images, zoom, resize) → cached heading
         // Ys are stale. Offset-only changes keep the cache (content space is scroll-invariant).
         if (e.ExtentDelta.Y != 0)
+        {
             InvalidatePreviewHeadingTops();
+            FixupEmbeddedCodeEditors();
+        }
         if (_vm is { IsActive: true, ShowPreview: true })
             RecomputeActiveHeading();
+    }
+
+    /// <summary>Soft cap so a pathological multi-thousand-line fence can't materialise hundreds
+    /// of thousands of pixels of text visuals at once (a capped block stays inner-scrollable).</summary>
+    private const double MaxEmbeddedCodeEditorHeight = 50_000;
+
+    /// <summary>Markdown.Avalonia (SyntaxHigh) renders fenced code as embedded AvaloniaEdit
+    /// editors, which cannot size themselves under the infinite height our outer-scroll layout
+    /// provides: the inner ScrollViewer reports an infinite viewport, its extent reads roughly
+    /// DOUBLE the real content (so it can't be trusted either), and every BringCaretToView /
+    /// bring-into-view clamps against that broken geometry — long blocks rendered cut off and a
+    /// click snapped the page around. The deterministic fix: pin each embedded editor's height
+    /// to lineCount × the editor's REAL line height (code blocks never wrap) plus its chrome,
+    /// so the block shows everything and the page scroll flows straight through it. Runs on
+    /// every preview reflow (extent change); the equality guard keeps it convergent, and a
+    /// re-run picks up late font/line-height changes.</summary>
+    private void FixupEmbeddedCodeEditors()
+    {
+        foreach (var editor in Preview.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>())
+        {
+            if (editor.Document is not { LineCount: > 0 } doc)
+                continue;
+
+            // The only honest line height is a MATERIALISED visual line: both DefaultLineHeight
+            // and the scroll extent come from the height tree's default-properties estimate,
+            // which reads ~double the rendered height here. Phase 1 (no visual lines yet) uses
+            // the estimate just to make the viewport finite; once lines exist, phase 2 pins the
+            // height from the real rendered line. Code lines never wrap, so
+            // lineCount × lineHeight IS the content height.
+            var textView = editor.TextArea.TextView;
+            double lineHeight;
+            if (textView.VisualLinesValid && textView.VisualLines.Count > 0)
+                lineHeight = textView.VisualLines[0].Height;
+            else if (textView.DefaultLineHeight > 0)
+                lineHeight = textView.DefaultLineHeight;
+            else
+                continue; // font not applied yet — the next reflow pass will get it
+
+            // 8 = editor padding/border chrome, 14 = horizontal scrollbar lane, 2 = slack so
+            // the inner viewport never dips below its extent (which would materialise the
+            // vertical scrollbar — and shaping its FluentAvalonia glyphs crashes headless).
+            var target = Math.Min(doc.LineCount * lineHeight + 8 + 14 + 2, MaxEmbeddedCodeEditorHeight);
+            if (Math.Abs((double.IsNaN(editor.Height) ? -1 : editor.Height) - target) > 1)
+                editor.Height = target;
+        }
     }
 
     private void OnSourceScrollChanged(object? sender, EventArgs e)

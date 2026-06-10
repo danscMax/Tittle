@@ -145,7 +145,10 @@
               IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
       <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
               IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
+      <!-- BringIntoViewOnFocusChange off: clicking an embedded code editor focuses it, and the
+           default focus-scroll would yank the page around (the reader's position is sacred). -->
       <ScrollViewer x:Name="PreviewScroll" Background="Transparent" Padding="40,24,40,8"
+                    BringIntoViewOnFocusChange="False"
                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <md:MarkdownScrollViewer x:Name="Preview"
                                  Markdown="{Binding PreviewMarkdown}"
