@@ -166,14 +166,34 @@ Decide before starting; could stay deferred if SeriousView remains read-only.
 
 ## Ported feature pool (from the original viewer — slot opportunistically, not milestones)
 
-Code-view **decorations** (`cv-*`: timestamps · uuid · ip/mac · email · hashes · `file:line:col` paths ·
-TODO/FIXME · log levels · units · dates, with hover tooltips) · **JSON pretty-print** toggle ·
-**CSV/TSV as table** (sortable, sticky header) · **code outline** (breadcrumbs + minimap, per-language
-symbol regex) · **text-file outline + section folding** · **smart typography** (display-only) ·
-**indent guides** · code-view line numbers · **stats panel** (word/char/sentence + Russian readability) ·
-selection word count · **HTML-fragment preview** (Alt+H) · whole-file HTML render toggle ·
-**settings import/export** · image lightbox/zoom · YAML front-matter panel · reading presets ·
-**multiple themes** (original had a `DARK_THEMES` set) · **help modal** · drop-overlay polish.
+Full-port goal (2026-06-11): carry over ALL functionality from `E:\Scripts\Markdown Viewer`.
+Re-audited against its CLAUDE.md — the pool below is the complete gap list (✓-items moved out).
+
+**Code-view** (non-markdown files): `cv-*` **decorations** (timestamps · uuid · ip/mac · email ·
+hashes · `file:line:col` paths · TODO/FIXME · log levels · HTML entities · units · dates, hover
+tooltips, 2000-char/line ReDoS guard) · **JSON pretty-print** toggle · **CSV/TSV as table**
+(sortable, sticky header, rainbow column tint, 10k-row cap) · **code outline** (per-language
+symbol regex → breadcrumbs + minimap) · **text-file outline + section folding** (`Глава N` /
+ALL-CAPS / `====` headings; fold-all button) · **smart typography** (display-only, code-line
+guard) · **indent guides** · URL autolinking in code.
+
+**Markdown extras**: sortable tables (click-to-sort, like `setupTables`) · copy buttons on code
+blocks · collapsible heading sections (`.collapse-icon`) · bookmarks per heading · TOC unread
+marks (`md-visited-*`) · back-to-top button · emoji `:name:` shortcodes · image lightbox/zoom ·
+YAML front-matter panel · checkbox click-to-toggle (write-back guarded by `fencedCodeRanges` —
+needs M15 save).
+
+**Chrome/tools**: **stats panel** (words/chars/sentences + Russian-adapted Flesch) · selection
+word count in the status bar · scroll-% + line:col cursor info for code view (we have caret for
+source already) · **HTML-fragment preview** (Alt+H on selection) · whole-file HTML render toggle ·
+**settings import/export** (whitelisted keys) · reading presets · **multiple dark themes**
+(`DARK_THEMES` set) · **help modal** · drop-overlay polish.
+
+**Bigger ported milestones still open**: M12 diagrams (Mermaid — JS-only, PlantUML — external
+service, MUST stay opt-in/gated like the original's `plantumlAuto:false`; Chart.js blocks),
+M13 export beyond HTML (rasterized PDF / print / copy-as-rich-text / doc-like Word), M15
+in-place editing + save (Ctrl+S via file write, paste-image-as-data-URI, spellcheck, edit FAB,
+editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)` (M11 leftover).
 
 ---
 
