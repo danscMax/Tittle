@@ -242,6 +242,57 @@ public class MarkdownPreprocessorTests
         Assert.Equal(line, TransformWiki(line, "note"));
     }
 
+    // --- _underscore_ italics (M10, display-only) ---
+
+    [Theory]
+    [InlineData("_x_", "*x*")]
+    [InlineData("a _b_ c", "a *b* c")]
+    [InlineData("_em_,", "*em*,")]
+    [InlineData("(_em_)", "(*em*)")]
+    [InlineData("**_x_**", "***x***")]
+    [InlineData("[_x_](u)", "[*x*](u)")]
+    [InlineData("_x_ and _y_", "*x* and *y*")]
+    public void Underscore_WordEmphasis_BecomesAsterisks(string input, string expected)
+        => Assert.Equal(expected, MarkdownPreprocessor.Transform(input));
+
+    [Theory]
+    [InlineData("snake_case_name")]
+    [InlineData("a_b_c")]
+    [InlineData("слово_х_")]
+    [InlineData("__keep__")]
+    [InlineData("___x___")]
+    [InlineData("_x__")]
+    [InlineData("_ a_")]
+    [InlineData("_a _")]
+    [InlineData("[a](http://x.com/_y_/z)")]
+    [InlineData("<http://ex.com/_path_>")]
+    [InlineData("[ref]: http://x/_y_")]
+    public void Underscore_IntrawordCodeUrlsAndDoubles_AreLeftAlone(string input)
+        => Assert.Equal(input, MarkdownPreprocessor.Transform(input));
+
+    [Fact]
+    public void Underscore_SkippedInsideFencesAndInlineCode()
+    {
+        Assert.Equal("```\n_x_\n```", MarkdownPreprocessor.Transform("```\n_x_\n```"));
+        Assert.Equal("a `_x_` b", MarkdownPreprocessor.Transform("a `_x_` b"));
+    }
+
+    [Fact]
+    public void Underscore_AppliesInsideAdmonitionBodies()
+    {
+        var result = MarkdownPreprocessor.Transform("> [!NOTE]\n> важное _слово_ тут");
+
+        Assert.Contains("важное *слово* тут", result);
+    }
+
+    [Fact]
+    public void Underscore_ProtectsTheWikiPassOutput()
+    {
+        var result = MarkdownPreprocessor.Transform("see [[my_note]]", _ => true);
+
+        Assert.Equal("see [my_note](wiki:my_note)", result); // dest masked, text intraword
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;

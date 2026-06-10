@@ -40,9 +40,12 @@ public static partial class MarkdownPreprocessor
             markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
 
         // Inline passes run first, in place (line count preserved → the fence bitmap stays
-        // valid) and before admonition re-wrapping so callout bodies get them too.
+        // valid) and before admonition re-wrapping so callout bodies get them too. Wiki before
+        // underscore: a [[my_note]] link resolves to its real file first, and the underscore
+        // pass then sees its destination behind the link mask.
         var regions = MarkdownCodeRegions.Scan(lines);
         ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
+        ConvertUnderscoreEmphasisInPlace(lines, regions);
 
         lines = ConvertFootnotes(lines);
         lines = ConvertAdmonitions(lines);
@@ -73,6 +76,26 @@ public static partial class MarkdownPreprocessor
                     return name;
                 return $"[{name}]({WikiLink.CreateUrl(name)})";
             });
+        }
+    }
+
+    // _x_ → *x* (display-only): the renderer has no single-underscore italics, while its
+    // __x__ renders as UNDERLINE natively (verified against Markdown.Avalonia 11.0.3) — so
+    // double/triple runs are deliberately untouched. CommonMark-conservative: word-boundary
+    // flanks only (no intraword a_b_c; .NET \w covers '_' itself, killing run adjacency too),
+    // content underscore-free. Link destinations and autolinks are masked so URLs survive.
+    private static void ConvertUnderscoreEmphasisInPlace(List<string> lines, MarkdownCodeRegions regions)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
+                || !line.Contains('_') || LinkRefDefLine().IsMatch(line))
+                continue;
+
+            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(
+                line, UnderscoreEmphasis(), m => $"*{m.Groups[1].Value}*",
+                LinkDestination(), AutoLink());
         }
     }
 
@@ -226,4 +249,18 @@ public static partial class MarkdownPreprocessor
     // (?!\^) keeps footnote DEFINITION text eligible (it becomes visible «Сноски» content).
     [GeneratedRegex(@"^ {0,3}\[(?!\^)[^\]]+\]:")]
     private static partial Regex LinkRefDefLine();
+
+    // Single-underscore emphasis around a whole "word": flanks must not be word chars (\w
+    // includes '_', so adjacency to other underscores is excluded too); content has no
+    // underscores and no leading/trailing whitespace. Capture (1) = the emphasised text.
+    [GeneratedRegex(@"(?<!\w)_(?![\s_])([^_\n]*[^\s_])_(?!\w)")]
+    private static partial Regex UnderscoreEmphasis();
+
+    // Mask: an inline link/image destination "](…)" — protects URLs (incl. wiki: ones).
+    [GeneratedRegex(@"\]\([^)\n]*\)")]
+    private static partial Regex LinkDestination();
+
+    // Mask: an autolink "<scheme:…>".
+    [GeneratedRegex(@"<[a-zA-Z][a-zA-Z0-9+.\-]*:[^<>\s]*>")]
+    private static partial Regex AutoLink();
 }
