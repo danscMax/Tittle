@@ -238,6 +238,99 @@ public class DocumentViewTests
         window.Close();
     }
 
+    private static int FirstVisibleLine(TextEditor editor)
+    {
+        var tv = editor.TextArea.TextView;
+        return tv.GetDocumentLineByVisualTop(tv.ScrollOffset.Y + 1).LineNumber;
+    }
+
+    [AvaloniaFact]
+    public void ToggleViewMode_PreviewToSource_LandsOnTheAnchoredHeadingLine()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[2]); // heading 2 at the preview top
+        Dispatcher.UIThread.RunJobs();
+        vm.ToggleViewModeCommand.Execute(null);             // → source; sync is posted
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.InRange(FirstVisibleLine(editor), vm.Outline[2].Line - 1, vm.Outline[2].Line + 1);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ToggleViewMode_SourceToPreview_MonotoneAcrossHeadings()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.ViewMode = DocumentViewMode.Source;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        double OffsetAfterToggleFrom(int ordinal)
+        {
+            vm.ViewMode = DocumentViewMode.Source;
+            Dispatcher.UIThread.RunJobs();
+            vm.NavigateToHeadingCommand.Execute(vm.Outline[ordinal]);
+            Dispatcher.UIThread.RunJobs();
+            vm.ViewMode = DocumentViewMode.Preview;
+            Dispatcher.UIThread.RunJobs();
+            return PreviewScrollOf(window).Offset.Y;
+        }
+
+        var atFirst = OffsetAfterToggleFrom(1);
+        var atThird = OffsetAfterToggleFrom(3);
+
+        Assert.True(atThird > atFirst, $"offset {atThird:0.##} should be below {atFirst:0.##}");
+        Assert.True(atFirst > 0, "a mid-document heading must not land at the very top");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ToggleViewMode_RoundTrip_StaysOnTheHeadingLine()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[2]);
+        Dispatcher.UIThread.RunJobs();
+
+        for (var i = 0; i < 2; i++) // preview→source→preview→source
+        {
+            vm.ToggleViewModeCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+        }
+        vm.ToggleViewModeCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.InRange(FirstVisibleLine(editor), vm.Outline[2].Line - 1, vm.Outline[2].Line + 1);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ToggleViewMode_NoHeadings_DoesNotThrow()
+    {
+        var vm = DocumentTabViewModel.FromFile("plain text\n\nwithout any headings", "/docs/plain.md");
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.ToggleViewModeCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+        vm.ToggleViewModeCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(vm.ShowPreview);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void DocumentView_EditorContextMenu_HasCopySelectAllAndFind()
     {

@@ -77,6 +77,118 @@ public partial class DocumentView : UserControl
             Dispatcher.UIThread.Post(ActivateSource);
         else if (e.PropertyName == nameof(DocumentTabViewModel.IsSearchOpen))
             Dispatcher.UIThread.Post(OnSearchOpenChanged);
+        else if (e.PropertyName == nameof(DocumentTabViewModel.ViewMode))
+            SyncPositionAcrossModes();
+    }
+
+    // --- Position sync on the preview↔source toggle (M10). The reading position is anchored
+    //     as (nearest heading above the viewport top, fractional progress to the next one) and
+    //     restored in the other mode — pure maths in Core/Text/HeadingAnchors. Sync only ever
+    //     scrolls; the caret moves on explicit navigation (TOC, go-to-line, find), not here. ---
+
+    // Stale-closure guard: navigation bumps the generation so a pending sync (posted or armed
+    // on LayoutUpdated) can never fight a TOC jump that follows it.
+    private int _syncGeneration;
+    private EventHandler? _previewRetryHandler;
+
+    private void CancelPendingSync()
+    {
+        _syncGeneration++;
+        UnhookPreviewRetry();
+    }
+
+    private void UnhookPreviewRetry()
+    {
+        if (_previewRetryHandler is { } handler)
+        {
+            Preview.LayoutUpdated -= handler;
+            _previewRetryHandler = null;
+        }
+    }
+
+    private void SyncPositionAcrossModes()
+    {
+        if (_vm is null || !_vm.IsMarkdown || _vm.ShowNotice)
+            return;
+
+        var gen = ++_syncGeneration;
+        // Apply AFTER the newly shown view has laid out (Background runs below layout), else
+        // the target scroller still reports a stale/zero extent and clamps the offset away.
+        if (_vm.ShowSource)
+        {
+            if (CaptureFromPreview() is { } anchor)
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (gen == _syncGeneration)
+                        ApplyToSource(anchor);
+                }, DispatcherPriority.Background);
+        }
+        else
+        {
+            var anchor = CaptureFromSource();
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (gen == _syncGeneration)
+                    ApplyToPreview(anchor, retryAfterLayout: true);
+            }, DispatcherPriority.Background);
+        }
+    }
+
+    /// <summary>Anchor of the preview reading position (probe = just under the chrome). The
+    /// heading tops stay valid while the preview is hidden — offsets persist on kept-alive
+    /// views. Null when the preview never laid out (nothing worth syncing from).</summary>
+    private HeadingAnchor? CaptureFromPreview()
+        => PreviewScroll.Extent.Height > 0 && ComputePreviewHeadingTops() is { } tops
+            ? HeadingAnchors.FromPosition(
+                tops, PreviewScroll.Offset.Y + PreviewScroll.Padding.Top + 1, PreviewScroll.Extent.Height)
+            : null;
+
+    /// <summary>Anchor of the source reading position (probe = first visible line).</summary>
+    private HeadingAnchor CaptureFromSource()
+    {
+        if (_vm is null || Source.Document is not { LineCount: > 0 } doc)
+            return new HeadingAnchor(-1, 0);
+
+        var textView = Source.TextArea.TextView;
+        var y = Math.Clamp(textView.ScrollOffset.Y + 1, 0, Math.Max(0, textView.DocumentHeight - 1));
+        var line = textView.GetDocumentLineByVisualTop(y).LineNumber;
+        return HeadingAnchors.FromLine(_vm.Outline, line, doc.LineCount);
+    }
+
+    private void ApplyToSource(HeadingAnchor anchor)
+    {
+        if (_vm is null || Source.Document is not { LineCount: > 0 } doc || SourceScroller is not { } scroller)
+            return;
+
+        var line = HeadingAnchors.ToLine(_vm.Outline, anchor, doc.LineCount);
+        var top = Math.Max(0, Source.TextArea.TextView.GetVisualTopByDocumentLine(line));
+        scroller.Offset = scroller.Offset.WithY(top);
+    }
+
+    private void ApplyToPreview(HeadingAnchor anchor, bool retryAfterLayout)
+    {
+        if (PreviewScroll.Extent.Height > 0 && ComputePreviewHeadingTops() is { } tops)
+        {
+            var position = HeadingAnchors.ToPosition(tops, anchor, PreviewScroll.Extent.Height);
+            var max = Math.Max(0, PreviewScroll.Extent.Height - PreviewScroll.Viewport.Height);
+            PreviewScroll.Offset = PreviewScroll.Offset.WithY(
+                Math.Clamp(position - PreviewScroll.Padding.Top - 1, 0, max));
+        }
+        else if (retryAfterLayout)
+        {
+            // First-ever preview layout (markdown toggled to source before the preview showed):
+            // retry once after the markdown control lays out. Self-unsubscribing; cancelled by
+            // navigation/detach via the generation + UnhookPreviewRetry.
+            var gen = _syncGeneration;
+            UnhookPreviewRetry();
+            _previewRetryHandler = (_, _) =>
+            {
+                UnhookPreviewRetry();
+                if (gen == _syncGeneration)
+                    ApplyToPreview(anchor, retryAfterLayout: false);
+            };
+            Preview.LayoutUpdated += _previewRetryHandler;
+        }
     }
 
     // Find bar opened → focus + select the query box; closed → hand focus back to the editor.
@@ -199,6 +311,7 @@ public partial class DocumentView : UserControl
 
     private void Unsubscribe()
     {
+        CancelPendingSync();
         if (_vm is not null)
         {
             _vm.NavigationRequested -= OnNavigationRequested;
@@ -214,6 +327,8 @@ public partial class DocumentView : UserControl
     {
         if (_vm is null)
             return;
+
+        CancelPendingSync(); // an explicit jump always beats a pending mode-toggle sync
 
         // In preview, scroll the rendered document in place; if the heading control can't be
         // located, fall back to the reliable line-based source scroll (switching mode first).
