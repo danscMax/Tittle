@@ -42,6 +42,9 @@ public partial class DocumentView : UserControl
 
         // Relay the editor caret position to the active tab VM (shown in the status bar).
         Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+        // Scroll-spy (M10): track the heading at the viewport top in both modes.
+        PreviewScroll.ScrollChanged += OnPreviewScrollChanged;
+        Source.TextArea.TextView.ScrollOffsetChanged += OnSourceScrollChanged;
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -138,7 +141,7 @@ public partial class DocumentView : UserControl
     /// heading tops stay valid while the preview is hidden — offsets persist on kept-alive
     /// views. Null when the preview never laid out (nothing worth syncing from).</summary>
     private HeadingAnchor? CaptureFromPreview()
-        => PreviewScroll.Extent.Height > 0 && ComputePreviewHeadingTops() is { } tops
+        => PreviewScroll.Extent.Height > 0 && EnsurePreviewHeadingTops() is { } tops
             ? HeadingAnchors.FromPosition(
                 tops, PreviewScroll.Offset.Y + PreviewScroll.Padding.Top + 1, PreviewScroll.Extent.Height)
             : null;
@@ -163,16 +166,63 @@ public partial class DocumentView : UserControl
         var line = HeadingAnchors.ToLine(_vm.Outline, anchor, doc.LineCount);
         var top = Math.Max(0, Source.TextArea.TextView.GetVisualTopByDocumentLine(line));
         scroller.Offset = scroller.Offset.WithY(top);
+        RecomputeActiveHeading();
+    }
+
+    // --- Active-heading tracking (scroll-spy, M10): the heading at the viewport top feeds the
+    //     outline marker and the breadcrumbs through the tab VM (written like CaretLine). ---
+
+    /// <summary>Probe slack below the chrome line: a heading's own top margin keeps its control
+    /// a few px below the scrolled-to position, and the slack keeps it counted as active.</summary>
+    private const double PreviewActiveProbeSlack = 24.0;
+
+    private void OnPreviewScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        // An extent change means reflow (first layout, images, zoom, resize) → cached heading
+        // Ys are stale. Offset-only changes keep the cache (content space is scroll-invariant).
+        if (e.ExtentDelta.Y != 0)
+            InvalidatePreviewHeadingTops();
+        if (_vm is { IsActive: true, ShowPreview: true })
+            RecomputeActiveHeading();
+    }
+
+    private void OnSourceScrollChanged(object? sender, EventArgs e)
+    {
+        if (_vm is { IsActive: true, ShowSource: true })
+            RecomputeActiveHeading();
+    }
+
+    /// <summary>Scroll-spy recompute — a binary search over cached positions, cheap enough to
+    /// run unthrottled per scroll event. Internal so headless tests can poke it directly.</summary>
+    internal void RecomputeActiveHeading()
+    {
+        if (_vm is null || !_vm.IsMarkdown)
+            return;
+
+        if (_vm.ShowPreview)
+        {
+            if (EnsurePreviewHeadingTops() is { } tops)
+                _vm.ActiveHeadingOrdinal = HeadingAnchors.ActiveOrdinal(
+                    tops, PreviewScroll.Offset.Y + PreviewScroll.Padding.Top, PreviewActiveProbeSlack);
+        }
+        else if (Source.Document is { LineCount: > 0 })
+        {
+            var textView = Source.TextArea.TextView;
+            var y = Math.Clamp(textView.ScrollOffset.Y + 1, 0, Math.Max(0, textView.DocumentHeight - 1));
+            _vm.ActiveHeadingOrdinal = HeadingAnchors.ActiveOrdinalForLine(
+                _vm.Outline, textView.GetDocumentLineByVisualTop(y).LineNumber);
+        }
     }
 
     private void ApplyToPreview(HeadingAnchor anchor, bool retryAfterLayout)
     {
-        if (PreviewScroll.Extent.Height > 0 && ComputePreviewHeadingTops() is { } tops)
+        if (PreviewScroll.Extent.Height > 0 && EnsurePreviewHeadingTops() is { } tops)
         {
             var position = HeadingAnchors.ToPosition(tops, anchor, PreviewScroll.Extent.Height);
             var max = Math.Max(0, PreviewScroll.Extent.Height - PreviewScroll.Viewport.Height);
             PreviewScroll.Offset = PreviewScroll.Offset.WithY(
                 Math.Clamp(position - PreviewScroll.Padding.Top - 1, 0, max));
+            RecomputeActiveHeading();
         }
         else if (retryAfterLayout)
         {
@@ -305,6 +355,7 @@ public partial class DocumentView : UserControl
             return;
 
         UpdateCaret();
+        RecomputeActiveHeading();
         if (_vm.ShowSource)
             Source.TextArea.Focus(); // the TextArea handles keyboard, not the TextEditor wrapper
     }
@@ -343,6 +394,16 @@ public partial class DocumentView : UserControl
         Dispatcher.UIThread.Post(() => ScrollSourceToLine(heading.Line));
     }
 
+    // Heading-Y cache: the walk is the expensive part, so it runs once per layout generation —
+    // invalidated only when the preview extent changes (reflow/images/zoom/first layout), after
+    // which per-scroll work is a binary search (no debounce needed).
+    private List<double>? _previewHeadingTops;
+
+    private void InvalidatePreviewHeadingTops() => _previewHeadingTops = null;
+
+    private IReadOnlyList<double>? EnsurePreviewHeadingTops()
+        => _previewHeadingTops ??= ComputePreviewHeadingTops();
+
     /// <summary>Content-space Y of every preview heading, by walking the rendered tree
     /// (Markdown.Avalonia exposes no scroll/heading API). Scroll-invariant: viewport-relative
     /// TranslatePoint plus the current Offset. Null while the preview hasn't laid out. Index
@@ -368,7 +429,7 @@ public partial class DocumentView : UserControl
     /// Returns false when the preview has no laid-out headings yet.</summary>
     private bool TryScrollPreviewToHeading(int ordinal)
     {
-        if (ComputePreviewHeadingTops() is not { } tops || ordinal < 0 || ordinal >= tops.Count)
+        if (EnsurePreviewHeadingTops() is not { } tops || ordinal < 0 || ordinal >= tops.Count)
             return false;
 
         var max = Math.Max(0, PreviewScroll.Extent.Height - PreviewScroll.Viewport.Height);

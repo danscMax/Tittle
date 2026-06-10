@@ -164,8 +164,10 @@ public class DocumentViewTests
     /// crashes headless (project memory). Hidden bars are never measured; Offset/Extent (and so
     /// all scroll maths) keep working.</summary>
     private static Window CreateScrollTestWindow(DocumentTabViewModel vm)
+        => CreateScrollTestWindow(new DocumentView { DataContext = vm });
+
+    private static Window CreateScrollTestWindow(DocumentView view)
     {
-        var view = new DocumentView { DataContext = vm };
         view.PreviewScroll.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
         view.PreviewScroll.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
         view.Source.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
@@ -328,6 +330,91 @@ public class DocumentViewTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(vm.ShowPreview);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ActiveHeading_InitiallyZero_WhenTheDocStartsWithAHeading()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0, vm.ActiveHeadingOrdinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ActiveHeading_MinusOne_WhenProseComesFirst()
+    {
+        var md = "intro prose before any heading\n\nmore intro\n\n" + LongMarkdown();
+        var vm = DocumentTabViewModel.FromFile(md, "/docs/long.md");
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(-1, vm.ActiveHeadingOrdinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ActiveHeading_Source_FollowsGoToLine()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.ViewMode = DocumentViewMode.Source;
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.GoToLineText = (vm.Outline[3].Line + 2).ToString();
+        vm.SubmitGoToLineCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(3, vm.ActiveHeadingOrdinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ActiveHeading_Preview_TocClickMarksTheClickedHeading()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.NavigateToHeadingCommand.Execute(vm.Outline[2]);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, vm.ActiveHeadingOrdinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ActiveHeading_DoesNotChurn_OnEqualValue()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.IsActive = true;
+        var view = new DocumentView { DataContext = vm };
+        var window = CreateScrollTestWindow(view);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var changes = 0;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DocumentTabViewModel.ActiveHeadingOrdinal))
+                changes++;
+        };
+
+        view.RecomputeActiveHeading();
+        view.RecomputeActiveHeading();
+
+        Assert.Equal(0, changes); // already 0 after startup; equal recomputes raise nothing
         window.Close();
     }
 
