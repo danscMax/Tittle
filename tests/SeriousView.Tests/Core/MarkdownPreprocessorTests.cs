@@ -293,6 +293,40 @@ public class MarkdownPreprocessorTests
         Assert.Equal("see [my_note](wiki:my_note)", result); // dest masked, text intraword
     }
 
+    // --- Fence-guard retrofit: the legacy passes must not transform inside ``` fences ---
+
+    [Fact]
+    public void Fence_TaskListInside_Unchanged_OutsideStillConverts()
+    {
+        var result = MarkdownPreprocessor.Transform("- [x] real\n\n```\n- [x] keep\n- [ ] also\n```");
+
+        Assert.StartsWith("- ☑ real", result); // the real item converts (list marker kept)
+        Assert.Contains("- [x] keep", result);
+        Assert.Contains("- [ ] also", result);
+    }
+
+    [Fact]
+    public void Fence_FootnotesInside_Unchanged_OutsideStillConvert()
+    {
+        var result = MarkdownPreprocessor.Transform(
+            "A[^2]\n\n```\nX[^1] text\n[^1]: inner def\n```\n\n[^2]: real");
+
+        Assert.Contains("A¹", result);              // the real reference resolved as #1
+        Assert.Contains("1. real", result);         // the real definition listed
+        Assert.Contains("X[^1] text", result);      // fenced reference untouched
+        Assert.Contains("[^1]: inner def", result); // fenced definition stays in the body...
+        Assert.DoesNotContain("2.", result);        // ...and never registers as a footnote
+    }
+
+    [Fact]
+    public void Fence_AlertInside_DoesNotBecomeAnAdmonition()
+    {
+        var result = MarkdownPreprocessor.Transform("```\n> [!NOTE]\n> body\n```");
+
+        Assert.DoesNotContain("::: note", result);
+        Assert.Contains("[!NOTE]", result);
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;

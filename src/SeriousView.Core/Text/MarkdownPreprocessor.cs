@@ -47,9 +47,13 @@ public static partial class MarkdownPreprocessor
         ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
         ConvertUnderscoreEmphasisInPlace(lines, regions);
 
-        lines = ConvertFootnotes(lines);
-        lines = ConvertAdmonitions(lines);
-        ConvertTaskListsInPlace(lines);
+        // The legacy passes are fence-guarded too; footnotes/admonitions REBUILD the line list,
+        // so the fence bitmap is rescanned after each of them (Scan is one cheap O(n) pass).
+        lines = ConvertFootnotes(lines, regions);
+        regions = MarkdownCodeRegions.Scan(lines);
+        lines = ConvertAdmonitions(lines, regions);
+        regions = MarkdownCodeRegions.Scan(lines);
+        ConvertTaskListsInPlace(lines, regions);
 
         return string.Join("\n", lines);
     }
@@ -113,17 +117,26 @@ public static partial class MarkdownPreprocessor
     // Footnotes: pull out [^id]: definitions, replace [^id] references with superscript
     // numbers (numbered by first reference), and append a "Сноски" section. Anchored
     // navigation isn't attempted — the superscript ties the marker to the numbered list.
-    private static List<string> ConvertFootnotes(List<string> lines)
+    private static List<string> ConvertFootnotes(List<string> lines, MarkdownCodeRegions regions)
     {
         var defs = new Dictionary<string, string>(); // default string comparer is ordinal
         var body = new List<string>(lines.Count);
-        foreach (var line in lines)
+        var bodyFenced = new List<bool>(lines.Count); // fenced body lines keep their [^id]s
+        for (var i = 0; i < lines.Count; i++)
         {
-            var def = FootnoteDef().Match(line);
-            if (def.Success)
-                defs[def.Groups[1].Value] = def.Groups[2].Value;
-            else
-                body.Add(line);
+            var fenced = regions.IsFencedLine(i);
+            if (!fenced)
+            {
+                var def = FootnoteDef().Match(lines[i]);
+                if (def.Success)
+                {
+                    defs[def.Groups[1].Value] = def.Groups[2].Value;
+                    continue;
+                }
+            }
+
+            body.Add(lines[i]);
+            bodyFenced.Add(fenced);
         }
 
         if (defs.Count == 0)
@@ -134,6 +147,9 @@ public static partial class MarkdownPreprocessor
 
         for (var i = 0; i < body.Count; i++)
         {
+            if (bodyFenced[i])
+                continue;
+
             body[i] = FootnoteRef().Replace(body[i], m =>
             {
                 var id = m.Groups[1].Value;
@@ -173,12 +189,14 @@ public static partial class MarkdownPreprocessor
 
     // A GitHub alert opens with the marker alone on a quoted line; subsequent quoted
     // lines are its body, ending at the first non-quoted line.
-    private static List<string> ConvertAdmonitions(List<string> lines)
+    private static List<string> ConvertAdmonitions(List<string> lines, MarkdownCodeRegions regions)
     {
         var result = new List<string>(lines.Count);
         for (var i = 0; i < lines.Count; i++)
         {
-            var start = AlertStart().Match(lines[i]);
+            // A "> [!NOTE]" line inside a fence is code, not an alert opener (the body walk
+            // below is not fence-guarded — a fence starting mid-callout isn't a real shape).
+            var start = regions.IsFencedLine(i) ? Match.Empty : AlertStart().Match(lines[i]);
             if (!start.Success)
             {
                 result.Add(lines[i]);
@@ -209,10 +227,13 @@ public static partial class MarkdownPreprocessor
         return result;
     }
 
-    private static void ConvertTaskListsInPlace(List<string> lines)
+    private static void ConvertTaskListsInPlace(List<string> lines, MarkdownCodeRegions regions)
     {
         for (var i = 0; i < lines.Count; i++)
         {
+            if (regions.IsFencedLine(i))
+                continue; // "- [x]" inside a fence is code
+
             var item = TaskItem().Match(lines[i]);
             if (!item.Success)
                 continue;
