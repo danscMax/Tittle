@@ -668,6 +668,22 @@ public class MainWindowViewModelTests
             System.Linq.Enumerable.Select(vm.SelectedTab!.Outline, h => h.Text));
     }
 
+    // --- Ported: smart typography for plain text (display-only) ---
+
+    [AvaloniaFact]
+    public async Task TextTab_GetsSmartTypography_ByDefault_RawTextUntouched()
+    {
+        var vm = CreateVm(content: "идея -- хорошая...");
+        await vm.OpenPathAsync("/docs/notes.txt");
+
+        Assert.Equal("идея — хорошая…", vm.SelectedTab!.SourceText);
+        Assert.Equal("идея -- хорошая...", vm.SelectedTab.DocumentText);
+
+        vm.SelectedTab.ToggleSmartTypographyCommand.Execute(null);
+        Assert.Equal("идея -- хорошая...", vm.SelectedTab.SourceText);
+        Assert.False(vm.Editor.SmartTypography); // persisted default flipped
+    }
+
     // --- Ported: CSV/TSV as a sortable table ---
 
     [AvaloniaFact]

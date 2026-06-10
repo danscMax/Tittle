@@ -33,13 +33,18 @@ public partial class EditorOptions : ObservableObject
     [ObservableProperty]
     private bool _csvAsTable = true;
 
+    /// <summary>Default for new tabs: display-only smart typography in .txt/.log (ported).</summary>
+    [ObservableProperty]
+    private bool _smartTypography = true;
+
     public void ZoomIn() => FontSize = Math.Min(MaxFontSize, FontSize + Step);
     public void ZoomOut() => FontSize = Math.Max(MinFontSize, FontSize - Step);
     public void ResetZoom() => FontSize = DefaultFontSize;
     public void ToggleWordWrap() => WordWrap = !WordWrap;
     public void ToggleLineNumbers() => ShowLineNumbers = !ShowLineNumbers;
 
-    public EditorSettings ToSettings() => new(FontSize, WordWrap, ShowLineNumbers, JsonPretty, CsvAsTable);
+    public EditorSettings ToSettings()
+        => new(FontSize, WordWrap, ShowLineNumbers, JsonPretty, CsvAsTable, SmartTypography);
 
     /// <summary>Build options from persisted settings, clamping the font size defensively.</summary>
     public static EditorOptions FromSettings(EditorSettings? s) => s is null
@@ -51,5 +56,6 @@ public partial class EditorOptions : ObservableObject
             ShowLineNumbers = s.ShowLineNumbers,
             JsonPretty = s.JsonPretty,
             CsvAsTable = s.CsvAsTable,
+            SmartTypography = s.SmartTypography,
         };
 }

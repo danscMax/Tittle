@@ -271,14 +271,35 @@ public partial class DocumentTabViewModel : ViewModelBase
     private bool _jsonPrettyEnabled;
 
     private string? _prettyJson;
+    private string? _smartText;
 
-    /// <summary>What the source editor shows: the document text, or its display-only
-    /// pretty-printed form for JSON tabs (raw text is the single source of truth — exports,
-    /// reload and search still see the file as written).</summary>
+    /// <summary>True for prose-text files (.txt/.log) — they get the text outline and the
+    /// display-only smart typography (ported).</summary>
+    public bool IsPlainText => GrammarExtension is ".txt" or ".log";
+
+    /// <summary>Per-tab smart-typography state; inherits the persisted default on adoption.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SourceText))]
+    private bool _smartTypographyEnabled;
+
+    /// <summary>Toggle smart typography for this tab (and remember it as the default).</summary>
+    [RelayCommand]
+    private void ToggleSmartTypography()
+    {
+        SmartTypographyEnabled = !SmartTypographyEnabled;
+        if (Editor is not null)
+            Editor.SmartTypography = SmartTypographyEnabled;
+    }
+
+    /// <summary>What the source editor shows: the document text, or a display-only transform —
+    /// pretty-printed JSON / smart typography for prose text. The raw text stays the single
+    /// source of truth: exports, reload and search see the file as written.</summary>
     public string SourceText =>
         IsJson && JsonPrettyEnabled
             ? _prettyJson ??= JsonPrettyPrinter.TryFormat(DocumentText) ?? DocumentText
-            : DocumentText;
+        : IsPlainText && SmartTypographyEnabled
+            ? _smartText ??= SmartTypography.Apply(DocumentText)
+        : DocumentText;
 
     /// <summary>Toggle pretty-print for this tab (and remember it as the default).</summary>
     [RelayCommand]

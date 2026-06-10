@@ -409,6 +409,12 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedTab is { IsJson: true } jsonTab)
             items.Add(new PaletteItem("Форматировать JSON (вкл/выкл)", jsonTab.ToggleJsonPrettyCommand));
 
+        if (SelectedTab is { Delimiter: not null } csvTab)
+            items.Add(new PaletteItem("Таблица / исходник", csvTab.ToggleCsvViewCommand));
+
+        if (SelectedTab is { IsPlainText: true } textTab)
+            items.Add(new PaletteItem("Умная типографика (вкл/выкл)", textTab.ToggleSmartTypographyCommand));
+
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
 
@@ -674,6 +680,7 @@ public partial class MainWindowViewModel : ViewModelBase
         tab.Shell = this;      // back-reference for the tab's context-menu commands
         tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty;        // persisted default (ported)
         tab.CsvAsTableEnabled = tab.Delimiter is not null && Editor.CsvAsTable; // ditto
+        tab.SmartTypographyEnabled = tab.IsPlainText && Editor.SmartTypography; // ditto
     }
 
     // Keep exactly one tab active so the body shows only its (kept-alive) DocumentView.
