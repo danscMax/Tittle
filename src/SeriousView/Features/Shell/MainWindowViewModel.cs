@@ -110,6 +110,80 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // Settings import/export (ported). Whitelisting comes by construction: the file is
+    // deserialized into the typed AppSettings record — unknown keys are simply ignored.
+    private static readonly System.Text.Json.JsonSerializerOptions SettingsJson =
+        new() { TypeInfoResolver = AppJsonContext.Default, WriteIndented = true };
+
+    [RelayCommand]
+    private async Task ExportSettingsAsync()
+    {
+        var target = await _fileDialog.SaveFileAsync("seriousview-settings.json");
+        if (target is null)
+            return;
+
+        try
+        {
+            await File.WriteAllTextAsync(target,
+                System.Text.Json.JsonSerializer.Serialize(_settings.Current, SettingsJson));
+            StatusText = $"Настройки сохранены: {Path.GetFileName(target)}";
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, target));
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportSettingsAsync()
+    {
+        var paths = await _fileDialog.PickFilesAsync();
+        if (paths.Count == 0)
+            return;
+
+        try
+        {
+            var parsed = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(
+                await File.ReadAllTextAsync(paths[0]), SettingsJson);
+            if (parsed is null)
+            {
+                ShowError($"Не удалось открыть файл: {Path.GetFileName(paths[0])}");
+                return;
+            }
+
+            _settings.Update(parsed);
+            _theme.SetMode(parsed.Theme);
+            ApplyImportedOptions(parsed);
+            StatusText = "Настройки импортированы";
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, paths[0]));
+        }
+    }
+
+    /// <summary>Live-apply the imported editor/layout options to the shared observable
+    /// instances (window/session parts take effect on the next launch).</summary>
+    private void ApplyImportedOptions(AppSettings parsed)
+    {
+        var editor = EditorOptions.FromSettings(parsed.Editor);
+        Editor.FontSize = editor.FontSize;
+        Editor.WordWrap = editor.WordWrap;
+        Editor.ShowLineNumbers = editor.ShowLineNumbers;
+        Editor.JsonPretty = editor.JsonPretty;
+        Editor.CsvAsTable = editor.CsvAsTable;
+        Editor.SmartTypography = editor.SmartTypography;
+
+        var layout = LayoutOptions.FromSettings(parsed.Layout);
+        Layout.MenuPlacement = layout.MenuPlacement;
+        Layout.ToolbarMode = layout.ToolbarMode;
+        Layout.ViewTogglePlacement = layout.ViewTogglePlacement;
+        Layout.ShowOmnibar = layout.ShowOmnibar;
+        Layout.ShowRail = layout.ShowRail;
+        Layout.ReadingMode = layout.ReadingMode;
+        Layout.OutlineWidth = layout.OutlineWidth;
+    }
+
     /// <summary>Reload a tab from disk (tab context menu / the dirty dot / the palette).</summary>
     [RelayCommand]
     private Task ReloadTab(DocumentTabViewModel? tab)
@@ -409,6 +483,8 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
             new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
             new("Настройки: раскладка…", OpenLayoutSettingsCommand),
+            new("Настройки: экспорт…", ExportSettingsCommand),
+            new("Настройки: импорт…", ImportSettingsCommand),
         };
 
         if (SelectedTab is { IsMarkdown: true } tab)

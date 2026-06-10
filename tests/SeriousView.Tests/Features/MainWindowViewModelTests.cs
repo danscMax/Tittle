@@ -668,6 +668,68 @@ public class MainWindowViewModelTests
             System.Linq.Enumerable.Select(vm.SelectedTab!.Outline, h => h.Text));
     }
 
+    // --- Ported: settings import/export ---
+
+    [AvaloniaFact]
+    public async Task SettingsRoundTrip_ExportThenImport_AppliesLive()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-settings-").FullName;
+        try
+        {
+            var file = Path.Combine(dir, "s.json");
+            var source = CreateVm(settings: Holder(new AppSettings
+            {
+                Theme = ThemeMode.Light,
+                Editor = new EditorSettings(20, true, false),
+            }));
+            var sourceDialog = new FakeFileDialogService(null) { SavePath = file };
+            source = new MainWindowViewModel(sourceDialog, new FakeFileReader("x"),
+                new FakeThemeService(), new FakeRecentFilesStore(),
+                Holder(new AppSettings { Theme = ThemeMode.Light, Editor = new EditorSettings(20, true, false) }),
+                new FakeClipboardService(), new FakeShellService(), Array.Empty<string>());
+
+            await source.ExportSettingsCommand.ExecuteAsync(null);
+            Assert.Contains("\"Theme\"", File.ReadAllText(file));
+
+            var theme = new FakeThemeService();
+            var target = new MainWindowViewModel(new FakeFileDialogService(file),
+                new FakeFileReader("x"), theme, new FakeRecentFilesStore(), Holder(),
+                new FakeClipboardService(), new FakeShellService(), Array.Empty<string>());
+
+            await target.ImportSettingsCommand.ExecuteAsync(null);
+
+            Assert.Equal(ThemeMode.Light, theme.Mode);
+            Assert.Equal(20, target.Editor.FontSize);
+            Assert.True(target.Editor.WordWrap);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ImportSettings_GarbageFile_ShowsAnError()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-settings-bad-").FullName;
+        try
+        {
+            var file = Path.Combine(dir, "bad.json");
+            File.WriteAllText(file, "{not json");
+            var vm = new MainWindowViewModel(new FakeFileDialogService(file),
+                new FakeFileReader("x"), new FakeThemeService(), new FakeRecentFilesStore(),
+                Holder(), new FakeClipboardService(), new FakeShellService(), Array.Empty<string>());
+
+            await vm.ImportSettingsCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsErrorBarOpen);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // --- Ported: document statistics ---
 
     [AvaloniaFact]
