@@ -376,6 +376,12 @@ public partial class MainWindowViewModel : ViewModelBase
     /// (ported stats panel); the window is shown by the shell's code-behind.</summary>
     public event Action<TextStats>? StatsRequested;
 
+    /// <summary>Raised when the user opens the shortcuts help (F1 / menu / palette).</summary>
+    public event Action? HelpRequested;
+
+    [RelayCommand]
+    private void ShowHelp() => HelpRequested?.Invoke();
+
     /// <summary>Show document statistics for the active tab (palette / menu).</summary>
     [RelayCommand]
     private void ShowStats()
@@ -485,6 +491,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Настройки: раскладка…", OpenLayoutSettingsCommand),
             new("Настройки: экспорт…", ExportSettingsCommand),
             new("Настройки: импорт…", ImportSettingsCommand),
+            new("Справка: горячие клавиши", ShowHelpCommand, "F1"),
         };
 
         if (SelectedTab is { IsMarkdown: true } tab)

@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SeriousView.Features.Help.HelpWindow"
+        Title="Справка"
+        Width="430" SizeToContent="Height" CanResize="False"
+        ShowInTaskbar="False" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+  <!-- Shortcuts reference (ported help modal). Esc / Закрыть dismisses. -->
+  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="22">
+    <StackPanel Spacing="12">
+      <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"
+                 Foreground="{DynamicResource ChromeForegroundBrush}"/>
+
+      <ItemsControl x:Name="ShortcutList">
+        <ItemsControl.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+          </Style>
+          <Style Selector="TextBlock.key">
+            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,monospace"/>
+            <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+          </Style>
+        </ItemsControl.Styles>
+      </ItemsControl>
+
+      <Button Content="Закрыть" HorizontalAlignment="Right" Click="OnCloseClick"/>
+    </StackPanel>
+  </Border>
+</Window>

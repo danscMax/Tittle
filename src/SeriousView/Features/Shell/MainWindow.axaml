@@ -101,6 +101,10 @@
               <Separator/>
               <MenuItem Header="Раскладка…" Command="{Binding OpenLayoutSettingsCommand}"/>
             </MenuItem>
+            <MenuItem Header="Справка">
+              <MenuItem Header="Горячие клавиши" InputGesture="F1" Command="{Binding ShowHelpCommand}"/>
+              <MenuItem Header="Статистика документа" Command="{Binding ShowStatsCommand}"/>
+            </MenuItem>
           </MenuFlyout>
         </Button.Flyout>
       </Button>

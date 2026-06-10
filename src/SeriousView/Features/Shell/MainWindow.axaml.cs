@@ -143,6 +143,7 @@ public partial class MainWindow : AppWindow
             (true, false, false, Key.L) => vm.ToggleLineNumbersCommand,
             (true, false, false, Key.G) => vm.OpenGoToLineCommand,
             (true, false, false, Key.F) => vm.OpenSearchCommand,
+            (false, false, false, Key.F1) => vm.ShowHelpCommand,
             (false, false, true, Key.Z) => vm.ToggleWordWrapCommand,
             _ => (System.Windows.Input.ICommand?)null,
         };
@@ -321,6 +322,7 @@ public partial class MainWindow : AppWindow
         viewModel.LayoutSettingsRequested += OpenLayoutSettings;
         viewModel.StatsRequested += stats =>
             new Features.Stats.StatsWindow { DataContext = stats }.ShowDialog(this);
+        viewModel.HelpRequested += () => new Features.Help.HelpWindow().ShowDialog(this);
     }
 
     // Restore the persisted outline width, follow live drags into a field, and expand/collapse the
