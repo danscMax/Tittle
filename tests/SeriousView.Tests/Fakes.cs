@@ -25,8 +25,19 @@ internal sealed class FakeFileReader : IFileReader
     /// (used to exercise session restore skipping missing files).</summary>
     public FakeFileReader(IReadOnlyDictionary<string, string> byPath) => _byPath = byPath;
 
+    /// <summary>Fail the next N loads with <see cref="FailWith"/> (retry-path testing).</summary>
+    public int FailNextLoads { get; set; }
+
+    public Exception FailWith { get; set; } = new IOException("transient share violation");
+
     public Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default)
     {
+        if (FailNextLoads > 0)
+        {
+            FailNextLoads--;
+            return Task.FromException<FileLoadResult>(FailWith);
+        }
+
         if (_byPath is not null)
             return _byPath.TryGetValue(path, out var content)
                 ? Task.FromResult(FileLoadResult.ForText(content, "UTF-8", LineEndings.Detect(content), content.Length))

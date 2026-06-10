@@ -459,11 +459,12 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public async Task Watcher_Changed_SetsTheDirtyDot()
+    public async Task Watcher_Changed_DotsAnInactiveTab()
     {
         var watcher = new FakeDocumentWatcher();
         var vm = CreateVm(content: "x", watcher: watcher);
         await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md"); // b is active, a inactive
         Assert.False(vm.Tabs[0].IsChangedOnDisk);
 
         watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
@@ -500,6 +501,116 @@ public class MainWindowViewModelTests
 
         Assert.False(vm.IsErrorBarOpen);
         Assert.Empty(vm.Tabs);
+    }
+
+    // --- M14: reload (C2 — auto for the active tab, manual command elsewhere) ---
+
+    [AvaloniaFact]
+    public async Task ActiveTab_ExternalChange_AutoReloadsInPlace()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "# old", ["/docs/b.md"] = "x" };
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: new FakeFileReader(map), watcher: watcher);
+        await vm.OpenPathAsync("/docs/b.md");
+        await vm.OpenPathAsync("/docs/a.md"); // index 1, active
+        vm.SelectedTab!.ViewMode = DocumentViewMode.Source;
+
+        map["/docs/a.md"] = "# new";
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+        await vm.PendingReload!;
+
+        Assert.Equal(2, vm.Tabs.Count);
+        Assert.NotNull(vm.SelectedTab); // the replace must not drop the ListBox selection
+        Assert.Same(vm.Tabs[1], vm.SelectedTab);
+        Assert.Equal("# new", vm.SelectedTab!.DocumentText);
+        Assert.Equal(DocumentViewMode.Source, vm.SelectedTab.ViewMode); // mode survives
+        Assert.False(vm.SelectedTab.IsChangedOnDisk);
+        Assert.Contains("обновлён", vm.StatusText);
+    }
+
+    [AvaloniaFact]
+    public async Task InactiveTab_ExternalChange_OnlyDots_ManualCommandReloads()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "# old", ["/docs/b.md"] = "x" };
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: new FakeFileReader(map), watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md"); // b active, a inactive
+
+        map["/docs/a.md"] = "# new";
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+
+        var inactive = vm.Tabs[0];
+        Assert.True(inactive.IsChangedOnDisk);
+        Assert.Equal("# old", inactive.DocumentText); // manual policy: no reload yet
+        Assert.Null(vm.PendingReload);
+
+        vm.ReloadTabCommand.Execute(inactive);
+        await vm.PendingReload!;
+
+        Assert.Equal("# new", vm.Tabs[0].DocumentText);
+        Assert.False(vm.Tabs[0].IsChangedOnDisk);
+        Assert.Same(vm.Tabs[1], vm.SelectedTab); // reloading an inactive tab keeps the selection
+    }
+
+    [AvaloniaFact]
+    public async Task Reload_Failure_KeepsTheTabAndContent_ShowsTheError()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "keep" };
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: new FakeFileReader(map), watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+
+        map.Remove("/docs/a.md"); // the file is gone by reload time
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+        await vm.PendingReload!;
+
+        var tab = Assert.Single(vm.Tabs);
+        Assert.Equal("keep", tab.DocumentText);
+        Assert.True(tab.IsChangedOnDisk); // the dot stays — disk still differs
+        Assert.True(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task Reload_TransientIOException_RetriesOnce()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "# new" };
+        var reader = new FakeFileReader(map);
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: reader, watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        vm.ReloadRetryDelay = TimeSpan.Zero;
+
+        reader.FailNextLoads = 1; // the editor still holds the file on the first attempt
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+        await vm.PendingReload!;
+
+        Assert.Equal("# new", vm.Tabs[0].DocumentText);
+        Assert.False(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task Reload_KeepsTheSessionSnapshotStable()
+    {
+        var map = new Dictionary<string, string> { ["/docs/a.md"] = "old", ["/docs/b.md"] = "x" };
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(fileReader: new FakeFileReader(map), watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md");
+        vm.SelectedTab = vm.Tabs[0];
+
+        map["/docs/a.md"] = "new";
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+        await vm.PendingReload!;
+
+        var session = vm.GetSession();
+        Assert.Equal(new[] { "/docs/a.md", "/docs/b.md" }, session.OpenFiles);
+        Assert.Equal(0, session.ActiveIndex);
     }
 
     [AvaloniaFact]

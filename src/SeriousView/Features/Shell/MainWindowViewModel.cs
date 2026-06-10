@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Documents;
 using SeriousView.Core.Services;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
@@ -55,8 +56,9 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>A (debounced) external change arrived for <paramref name="path"/> — mark the tab.
-    /// A removed/renamed file keeps its tab and content (the last loaded text stays readable);
-    /// the error bar says why the dot won't clear.</summary>
+    /// The ACTIVE tab auto-reloads (the reader is looking at stale text right now); inactive
+    /// tabs keep the dot until the user reloads them explicitly (their choice — M14 decision).
+    /// A removed/renamed file keeps its tab and content; the error bar says why.</summary>
     private void HandleDocumentChanged(string path, DocumentChangeKind kind)
     {
         var tab = Tabs.FirstOrDefault(t => FilePathEquality.SameFile(t.FilePath, path));
@@ -66,6 +68,81 @@ public partial class MainWindowViewModel : ViewModelBase
         tab.IsChangedOnDisk = true;
         if (kind == DocumentChangeKind.Removed)
             ShowError($"Файл удалён или переименован: {Path.GetFileName(path)}");
+        else if (ReferenceEquals(tab, SelectedTab))
+            PendingReload = ReloadTabAsync(tab);
+    }
+
+    /// <summary>The pending reload, for tests to await (same seam as <see cref="ErrorBarDismissal"/>).</summary>
+    internal Task? PendingReload { get; private set; }
+
+    /// <summary>Pause before the second attempt when the first load hits a transient
+    /// IOException (the editor may still hold the file); tests zero it.</summary>
+    internal TimeSpan ReloadRetryDelay { get; set; } = TimeSpan.FromMilliseconds(150);
+
+    private readonly HashSet<string> _reloadInFlight = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Reload a tab from disk (tab context menu / the dirty dot / the palette).</summary>
+    [RelayCommand]
+    private Task ReloadTab(DocumentTabViewModel? tab)
+    {
+        if (tab?.FilePath is null)
+            return Task.CompletedTask;
+        return PendingReload = ReloadTabAsync(tab);
+    }
+
+    /// <summary>Reload = build a FRESH tab VM and swap it in place: DocumentText is immutable by
+    /// design, so replacing the tab refreshes every cache (preview, outline, search, wiki-link
+    /// existence snapshot) through the same FromLoad path every open uses.</summary>
+    private async Task ReloadTabAsync(DocumentTabViewModel tab)
+    {
+        if (tab.FilePath is not { } path || !_reloadInFlight.Add(path))
+            return;
+
+        try
+        {
+            FileLoadResult result;
+            try
+            {
+                result = await _fileReader.LoadAsync(path);
+            }
+            catch (IOException)
+            {
+                await Task.Delay(ReloadRetryDelay);
+                result = await _fileReader.LoadAsync(path);
+            }
+
+            var fresh = DocumentTabViewModel.FromLoad(result, path);
+            fresh.ViewMode = tab.ViewMode; // the reader's preview/source choice survives
+            ReplaceTab(tab, fresh);
+            // After the swap: selecting the fresh tab blanks StatusText, so write it last.
+            StatusText = $"Файл обновлён: {Path.GetFileName(path)}";
+        }
+        catch (Exception ex)
+        {
+            // Keep the old tab and its content readable; the dot stays — disk still differs.
+            ShowError(DescribeError(ex, path));
+        }
+        finally
+        {
+            _reloadInFlight.Remove(path);
+        }
+    }
+
+    /// <summary>Indexed in-place swap. Restores the selection explicitly — the bound ListBox
+    /// nulls SelectedItem on collection changes (the MoveTab lesson).</summary>
+    internal void ReplaceTab(DocumentTabViewModel oldTab, DocumentTabViewModel newTab)
+    {
+        var index = Tabs.IndexOf(oldTab);
+        if (index < 0)
+            return;
+
+        newTab.Editor = Editor;
+        newTab.Layout = Layout;
+        newTab.Shell = this;
+        var wasSelected = ReferenceEquals(SelectedTab, oldTab);
+        Tabs[index] = newTab;
+        if (wasSelected || SelectedTab is null)
+            SelectedTab = newTab;
     }
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
