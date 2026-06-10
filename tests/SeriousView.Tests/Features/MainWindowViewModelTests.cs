@@ -643,6 +643,31 @@ public class MainWindowViewModelTests
         Assert.Equal(0, session.ActiveIndex);
     }
 
+    // --- Ported: code-symbol and plain-text outlines feed the shared TOC machinery ---
+
+    [AvaloniaFact]
+    public async Task CodeTab_GetsASymbolOutline()
+    {
+        var vm = CreateVm(content: "public class Widget\n{\n    public void Run() { }\n}");
+
+        await vm.OpenPathAsync("/src/widget.cs");
+
+        Assert.True(vm.SelectedTab!.HasOutline);
+        Assert.Equal(new[] { "Widget", "Run" },
+            System.Linq.Enumerable.Select(vm.SelectedTab.Outline, h => h.Text));
+    }
+
+    [AvaloniaFact]
+    public async Task TextTab_GetsAPlainTextOutline()
+    {
+        var vm = CreateVm(content: "Глава 1. Начало\nтекст\n==== Финал ====");
+
+        await vm.OpenPathAsync("/docs/story.txt");
+
+        Assert.Equal(new[] { "Глава 1. Начало", "Финал" },
+            System.Linq.Enumerable.Select(vm.SelectedTab!.Outline, h => h.Text));
+    }
+
     // --- Ported: JSON pretty-print toggle ---
 
     [AvaloniaFact]

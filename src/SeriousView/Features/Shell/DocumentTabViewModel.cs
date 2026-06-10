@@ -322,10 +322,15 @@ public partial class DocumentTabViewModel : ViewModelBase
 
     private IReadOnlyList<HeadingOutline>? _outline;
 
-    /// <summary>Heading outline (table of contents). Empty for non-markdown files.
-    /// Cached: the document text is immutable.</summary>
-    public IReadOnlyList<HeadingOutline> Outline =>
-        IsMarkdown ? _outline ??= MarkdownOutline.Parse(DocumentText) : [];
+    /// <summary>Document outline (table of contents): markdown headings, code symbols
+    /// (per-language heuristics) or plain-text headings — all the same shape, so the TOC
+    /// panel, breadcrumbs and scroll-spy work for every file type (ported). Cached: the
+    /// document text is immutable.</summary>
+    public IReadOnlyList<HeadingOutline> Outline => _outline ??=
+        IsMarkdown ? MarkdownOutline.Parse(DocumentText)
+        : SymbolOutline.Supports(GrammarExtension) ? SymbolOutline.Parse(DocumentText, GrammarExtension)
+        : GrammarExtension is ".txt" or ".log" ? TextOutline.Parse(DocumentText)
+        : [];
 
     /// <summary>True when the document has at least one heading (drives the outline pane).</summary>
     public bool HasOutline => Outline.Count > 0;
