@@ -153,8 +153,17 @@ under our infinite-height outer scroll (estimates ~2× real line height; infinit
 clamped click-scrolls to 0) — heights pinned from a measured `VisualLine`, preview swallows
 `RequestBringIntoView` (see project memory). Legacy preprocessor passes are still fence-blind
 (pre-existing; `MarkdownCodeRegions` makes the retrofit one guard per pass).
-Next: **M14** live-reload + dirty dot, **M11** math, or **M13** export. Feature spec
-source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+The preprocessor's legacy passes (task lists, footnotes, admonitions) are fence-guarded since
+`b50e801` — nothing transforms inside ``` fences. **M14 (live-reload + dirty dot) DONE**:
+`IDocumentWatcher` port + per-directory FileSystemWatcher with ref-counted names and debounced
+last-kind-wins coalescing (File.Replace = one Changed); the ACTIVE tab auto-reloads on external
+change by swapping in a fresh tab VM (immutable DocumentText → all caches and the wiki snapshot
+refresh for free; selection restored — the MoveTab lesson; ViewMode and the READING POSITION
+survive via the M10 heading anchor handed to the fresh view as a one-shot RestoreAnchor);
+inactive tabs get an accent dirty dot and reload manually (tab context menu + palette — user
+decision); removed/renamed files keep their tab and content (dot + one InfoBar error).
+Next: **M11** math (CSharpMath-fork spike), then **M13** HTML export (Markdig approved). Feature
+spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 

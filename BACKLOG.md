@@ -94,7 +94,7 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | 23 ✅ | Tab open animation | DONE (`526cbd5`) — 180 ms entrance fade via `ContainerPrepared`, skipped while drag-reordering (Move() recreates containers); opacity-only (no RenderTransform animator on Av11); close stays instant by design. |
 | 26 ✅ | Editor context menu (copy / select all) | DONE (`54de229`) — `ContextFlyout` on the source editor: Копировать (disabled w/o selection) · Выделить всё · Найти…; click handlers (flyout content gets no DataContext until shown) + `InternalsVisibleTo` for the headless enabled-state test. |
 | 18b ✅ | Multi-file open dialog (`AllowMultiple`) | DONE (`c082e33`) — `PickFilesAsync` returns every picked local path; `OpenFileAsync` funnels each through `OpenPathAsync` (pipe/args already handled lists). |
-| — | Tab "changed on disk" dirty dot | Pairs with M14 live-reload. |
+| — ✅ | Tab "changed on disk" dirty dot | DONE with M14 (`5959cec`) — accent dot on external change; manual reload for inactive tabs. |
 
 ## M9 — In-document search (find) · effort L · ported ★high-value · **find DONE**
 
@@ -141,10 +141,20 @@ Self-contained HTML export first (achievable). PDF without WebView is non-trivia
 tree or a PDF lib; original rasterized → non-selectable text). Also: copy-as-rich-text, native Print.
 Port `IExporter` + `Platform/`.
 
-## M14 — Live-reload (file watcher) · effort M · ported
+## M14 — Live-reload (file watcher) · effort M · **DONE**
 
-`IDocumentWatcher` (FileSystemWatcher in `Platform/`) → reload on external change, preserving scroll;
-mark inactive changed tabs with a dirty dot instead of auto-rerender. Pairs with M6 session work.
+`IDocumentWatcher` port + `Platform/DocumentWatcher` (`5959cec`): one FileSystemWatcher per
+DIRECTORY with ref-counted names (catches editor temp-write/rename dances), 300 ms per-path
+debounce with last-kind-wins (File.Replace = one Changed; a lone delete = Removed), overflow
+over-notifies, fail-open on unwatchable paths. The shell mirrors watches onto file-backed tabs via
+the CollectionChanged funnel. **Active tab auto-reloads** on change (`c837150`): a FRESH tab VM
+swaps in place (DocumentText is immutable — the swap refreshes preview/outline/search caches and
+the wiki existence snapshot for free), ViewMode survives, selection restored (the MoveTab lesson),
+IOException retries once, failures keep content + InfoBar. **Inactive tabs get the dirty dot** and
+reload MANUALLY (user decision): tab context menu + palette (`e239b62`). **Reading position
+survives reload** (`142efc6`): scroll-spy writes the M10 heading anchor per scroll; the fresh view
+consumes a one-shot RestoreAnchor after first layout. Removed/renamed files keep their tab and
+last-loaded content (dot + one InfoBar). This also closes the M8 leftover (the dirty-dot row).
 
 ## M15 — In-place editing + save · effort L–XL · ported · ⚠ scope decision
 
@@ -185,10 +195,10 @@ Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout)
 (reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18), and the
 **M8 polish** (#28 open-error InfoBar + session-restore summary, #24 ✕ tooltip, #23 tab entrance fade,
 #26 editor context menu, #18b multi-file open) — M8 is closed except the "changed on disk" dirty dot,
-which ships with M14 live-reload. Done since: **all of M10** (toggle-position sync via pure
+which shipped with M14 live-reload. Done since: **all of M10** (toggle-position sync via pure
 `HeadingAnchors`, active-heading scroll-spy + outline marker, TOC/Ctrl+G land-at-top, markdown
-breadcrumbs, wiki-links `[[name]]`, conservative `_underscore_` italics) + the giant-fence preview
-fix (`f06eba5`). Next candidates: **M14** live-reload (+ the dirty dot; also refreshes the
-wiki-link existence snapshot), **M11** math (CSharpMath research first), **M13** export
-(self-contained HTML first), or the preprocessor fence-guard retrofit (legacy passes still
-transform inside ``` fences — `MarkdownCodeRegions` makes it a one-guard-per-pass change).
+breadcrumbs, wiki-links `[[name]]`, conservative `_underscore_` italics), the giant-fence preview
+fix (`f06eba5`), the **preprocessor fence-guard retrofit** (`b50e801` — legacy passes no longer
+transform inside ``` fences), and **all of M14** (live-reload + dirty dot + position-preserving
+reload). Next: **M11** math (CSharpMath-fork spike first), then **M13** export
+(self-contained HTML via Markdig — approved new dependency).
