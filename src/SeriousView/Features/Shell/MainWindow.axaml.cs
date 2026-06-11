@@ -134,6 +134,7 @@ public partial class MainWindow : AppWindow
         var command = (ctrl, shift, alt, e.Key) switch
         {
             (true, false, false, Key.O) => vm.OpenFileCommand,
+            (true, false, false, Key.S) => vm.SaveActiveTabCommand, // M15 save
             (true, false, false, Key.W) => vm.CloseActiveTabCommand,
             (true, false, false, Key.Tab) => vm.SelectNextTabCommand,
             (true, true, false, Key.Tab) => vm.SelectPreviousTabCommand,

@@ -77,6 +77,16 @@ public partial class DocumentView : UserControl
         Preview.AddHandler(PointerPressedEvent, OnPreviewPointerPressed);
         // Code minimap (ported): clicks land the clicked line at the viewport top.
         Minimap.LineRequested += line => ScrollSourceToLine(line);
+        // In-place editing (M15): track the unsaved-changes flag. Length-first keeps the
+        // common keystroke O(1); a programmatic full reload compares equal and stays clean.
+        Source.TextChanged += (_, _) =>
+        {
+            if (_vm is null)
+                return;
+            var current = Source.Text ?? string.Empty;
+            var loaded = _vm.SourceText ?? string.Empty;
+            _vm.IsEdited = current.Length != loaded.Length || current != loaded;
+        };
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -106,6 +116,7 @@ public partial class DocumentView : UserControl
         UpdateCvDecorationPolicy();
         if (_vm is not null)
         {
+            _vm.EditorTextProvider = () => Source.Text ?? string.Empty; // M15 save pulls from here
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
             _vm.SearchUpdated += OnSearchUpdated;
@@ -703,6 +714,7 @@ public partial class DocumentView : UserControl
         CancelPendingSync();
         if (_vm is not null)
         {
+            _vm.EditorTextProvider = null;
             _vm.NavigationRequested -= OnNavigationRequested;
             _vm.GoToLineRequested -= OnGoToLineRequested;
             _vm.SearchUpdated -= OnSearchUpdated;

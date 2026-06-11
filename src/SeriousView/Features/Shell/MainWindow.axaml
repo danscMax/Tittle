@@ -71,6 +71,9 @@
                 </MenuItem.ItemContainerTheme>
               </MenuItem>
               <Separator/>
+              <MenuItem Header="Сохранить" InputGesture="Ctrl+S" Command="{Binding SaveActiveTabCommand}"
+                        IsEnabled="{Binding HasTabs}"/>
+              <Separator/>
               <MenuItem Header="Экспорт в HTML…" Command="{Binding ExportHtmlCommand}"
                         IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <MenuItem Header="Копировать как форматированный текст" Command="{Binding CopyAsRichTextCommand}"
@@ -218,6 +221,11 @@
                        Fill="{DynamicResource AccentBrush}"
                        IsVisible="{Binding IsChangedOnDisk}"
                        ToolTip.Tip="Файл изменён на диске"/>
+              <!-- Unsaved-changes marker (M15): the editor buffer differs from the file. -->
+              <TextBlock Text="●" FontSize="9" VerticalAlignment="Center"
+                         Foreground="{DynamicResource ChromeForegroundMutedBrush}"
+                         IsVisible="{Binding IsEdited}"
+                         ToolTip.Tip="Есть несохранённые правки (Ctrl+S)"/>
             </StackPanel>
           </DataTemplate>
         </ListBox.ItemTemplate>

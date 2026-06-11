@@ -111,6 +111,39 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Save (M15, Ctrl+S): writes the live editor buffer back to the file (UTF-8 —
+    /// same policy as the original's File API write). A file-backed tab then reloads itself
+    /// through the M14 watcher (fresh VM, caches and reading position handled); a tab without
+    /// a file (the sample) asks for a target and opens it. No-ops without an attached editor.</summary>
+    [RelayCommand]
+    private async Task SaveActiveTabAsync()
+    {
+        if (SelectedTab is not { } tab || tab.EditorTextProvider is not { } pull)
+            return;
+
+        var text = pull();
+        var target = tab.FilePath;
+        if (target is null)
+        {
+            target = await _fileDialog.SaveFileAsync(Path.ChangeExtension(tab.Header, ".md"));
+            if (target is null)
+                return;
+        }
+
+        try
+        {
+            await File.WriteAllTextAsync(target, text);
+            tab.IsEdited = false;
+            StatusText = $"Сохранено: {Path.GetFileName(target)}";
+            if (tab.FilePath is null)
+                await OpenPathAsync(target); // the sample saved to disk → open the real file tab
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, target));
+        }
+    }
+
     /// <summary>Print / save-as-PDF (ported, M13): the LIGHT-theme HTML export goes to a temp
     /// file and opens in the default browser — its print dialog (Ctrl+P) covers both paper and
     /// selectable-text PDF. A native rasterized PDF was deliberately not built: rendering the
@@ -545,6 +578,9 @@ public partial class MainWindowViewModel : ViewModelBase
             items.Add(new PaletteItem("Копировать как форматированный текст", CopyAsRichTextCommand));
             items.Add(new PaletteItem("Печать / PDF (через браузер)…", PrintViaBrowserCommand));
         }
+
+        if (SelectedTab is not null)
+            items.Add(new PaletteItem("Сохранить", SaveActiveTabCommand));
 
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));

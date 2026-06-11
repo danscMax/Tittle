@@ -462,6 +462,19 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// tests or for the sample tab — everything degrades to "no marks".</summary>
     public ViewStateStore? ViewState { get; set; }
 
+    // ---- in-place editing (M15): DocumentText stays the loaded truth; the live editor
+    //      buffer is reached through a pull seam and persisted by the shell's Save. ----
+
+    /// <summary>True while the editor buffer differs from the loaded document (drives the
+    /// unsaved-changes marker on the tab). Written by <c>DocumentView</c> on text changes;
+    /// cleared by Save (the follow-up watcher reload swaps in a clean tab anyway).</summary>
+    [ObservableProperty]
+    private bool _isEdited;
+
+    /// <summary>Pull seam to the live editor text, wired by <c>DocumentView</c>; null when
+    /// no view is attached (then there is nothing unsaved to pull).</summary>
+    public Func<string>? EditorTextProvider { get; set; }
+
     /// <summary>Bumped on every visited/bookmark mutation so the TOC multi-bindings recompute.</summary>
     [ObservableProperty]
     private int _viewStateVersion;

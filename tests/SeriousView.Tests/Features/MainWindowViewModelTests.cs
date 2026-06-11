@@ -30,9 +30,9 @@ public class MainWindowViewModelTests
         string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
         IFileReader? fileReader = null, IAppSettingsService? settings = null,
         IClipboardService? clipboard = null, IShellService? shell = null,
-        IDocumentWatcher? watcher = null, ViewStateStore? viewState = null)
+        IDocumentWatcher? watcher = null, ViewStateStore? viewState = null, string? savePath = null)
         => new(
-            new FakeFileDialogService(dialogPath),
+            new FakeFileDialogService(dialogPath) { SavePath = savePath },
             fileReader ?? new FakeFileReader(content),
             new FakeThemeService(),
             new FakeRecentFilesStore(),
@@ -1253,6 +1253,68 @@ public class MainWindowViewModelTests
         vm.OpenGoToLineCommand.Execute(null); // welcome, no selected tab — must not throw
 
         Assert.Null(vm.SelectedTab);
+    }
+
+    // ---- in-place editing + save (M15) ----
+
+    [AvaloniaFact]
+    public async Task Save_WritesTheEditorBuffer_AndClearsTheEditedFlag()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-save");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "doc.md");
+            File.WriteAllText(path, "# Старый");
+            var vm = CreateVm(fileReader: new FileReader());
+            await vm.OpenPathAsync(path); // args-startup is async; open explicitly instead
+            var tab = vm.SelectedTab!;
+            tab.EditorTextProvider = () => "# Новый текст";
+            tab.IsEdited = true;
+
+            await vm.SaveActiveTabCommand.ExecuteAsync(null);
+
+            Assert.Equal("# Новый текст", File.ReadAllText(path));
+            Assert.False(tab.IsEdited);
+            Assert.StartsWith("Сохранено:", vm.StatusText);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task Save_SampleWithoutAFile_AsksForATargetAndOpensIt()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-save");
+        try
+        {
+            var target = Path.Combine(dir.FullName, "sample.md");
+            var vm = CreateVm(fileReader: new FileReader(), savePath: target);
+            vm.OpenSampleCommand.Execute(null);
+            var tab = vm.SelectedTab!;
+            tab.EditorTextProvider = () => "# Из примера";
+
+            await vm.SaveActiveTabCommand.ExecuteAsync(null);
+
+            Assert.Equal("# Из примера", File.ReadAllText(target));
+            Assert.Equal(target, vm.SelectedTab!.FilePath); // the saved file opened as a real tab
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public void Save_WithoutAnAttachedEditor_IsANoOp()
+    {
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# A");
+
+        vm.SaveActiveTabCommand.Execute(null); // no EditorTextProvider wired (no view)
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(vm.SelectedTab!.EditorTextProvider);
     }
 
     // ---- copy-as-rich-text (ported, M13) ----

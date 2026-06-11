@@ -723,6 +723,30 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // ---- in-place editing (M15): the view feeds the edited flag + the pull seam ----
+
+    [AvaloniaFact]
+    public void Editing_TypingSetsIsEdited_AndTheProviderSeesTheBuffer()
+    {
+        var vm = DocumentTabViewModel.FromFile("hello", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsEdited); // the programmatic load must not count as an edit
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        editor.Document!.Insert(0, "x");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(vm.IsEdited);
+        Assert.Equal("xhello", vm.EditorTextProvider!());
+
+        editor.Document.Remove(0, 1); // back to the loaded content → clean again
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsEdited);
+        window.Close();
+    }
+
     // ---- code minimap (ported) ----
 
     [Theory]
