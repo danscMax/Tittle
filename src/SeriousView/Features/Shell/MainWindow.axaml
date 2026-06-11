@@ -165,7 +165,7 @@
         <Button AutomationProperties.AutomationId="ReadingModeButton" ToolTip.Tip="Декоративный фон"
                 IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
                 Command="{Binding ToggleReadingModeCommand}" Padding="8,3">
-          <ui:SymbolIcon Symbol="Document" FontSize="16"/>
+          <PathIcon Data="{StaticResource IconDocument}" Width="16" Height="16"/>
         </Button>
       </StackPanel>
 
@@ -213,8 +213,8 @@
                   <MenuItem Header="Показать в проводнике" Command="{Binding Shell.RevealInExplorerCommand}" CommandParameter="{Binding}"/>
                 </MenuFlyout>
               </StackPanel.ContextFlyout>
-              <ui:SymbolIcon FontSize="15" VerticalAlignment="Center"
-                             Symbol="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToSymbolConverter.Instance}}"/>
+              <PathIcon Width="15" Height="15" VerticalAlignment="Center"
+                        Data="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToIconConverter.Instance}}"/>
               <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
               <!-- "Changed on disk" dot (M14): an external edit happened since this tab loaded. -->
               <Ellipse Width="7" Height="7" VerticalAlignment="Center"
@@ -248,7 +248,7 @@
       <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
         <Button Command="{Binding OpenSearchCommand}" ToolTip.Tip="Найти (Ctrl+F)"
                 AutomationProperties.Name="Найти" Classes="statusbtn">
-          <ui:SymbolIcon Symbol="Find" FontSize="15"/>
+          <PathIcon Data="{StaticResource IconSearch}" Width="15" Height="15"/>
         </Button>
         <Border Width="1" Margin="6,2" Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
@@ -333,8 +333,8 @@
                 Command="{Binding SelectedTab.ToggleViewModeCommand}"
                 ToolTip.Tip="{Binding SelectedTab.ViewModeToggleTip}">
           <Panel>
-            <ui:SymbolIcon Symbol="Code" FontSize="15"
-                           IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}"/>
+            <PathIcon Data="{StaticResource IconCode}" Width="16" Height="16"
+                      IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}"/>
             <PathIcon Data="{StaticResource IconEye}" Width="16" Height="16"
                       IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"/>
           </Panel>

@@ -18,4 +18,49 @@
     <RectangleGeometry Rect="5.6,3.4,8.6,9.2" RadiusX="1" RadiusY="1"/>
   </GeometryGroup>
 
+  <!-- Document / "page" glyph: a portrait page with a folded top-right corner (dog-ear), drawn as an
+       outline via EvenOdd (outer silhouette minus inner). Used on the decorative-background toggle;
+       a PathIcon (not the Symbols font) so its thin strokes render crisp, with no subpixel colour
+       fringing like the font glyph had. -->
+  <GeometryGroup x:Key="IconDocument" FillRule="EvenOdd">
+    <PathGeometry Figures="M5,2 L14,2 L19,7 L19,22 L5,22 Z"/>
+    <PathGeometry Figures="M7,4 L13,4 L13,8 L17,8 L17,20 L7,20 Z"/>
+  </GeometryGroup>
+
+  <!-- The chrome icons below replace FluentAvalonia font SymbolIcons (Find / Code / per-tab type):
+       PathIcons are geometry, immune to the Symbols-font load race that left them as .notdef boxes. -->
+
+  <!-- Search / "magnifier": a ring (EvenOdd outer minus inner ellipse) plus a diagonal handle. -->
+  <GeometryGroup x:Key="IconSearch" FillRule="EvenOdd">
+    <EllipseGeometry Center="10,10" RadiusX="6.6" RadiusY="6.6"/>
+    <EllipseGeometry Center="10,10" RadiusX="4.2" RadiusY="4.2"/>
+    <PathGeometry Figures="M14.6,15.8 L15.8,14.6 L21,19.8 L19.8,21 Z"/>
+  </GeometryGroup>
+
+  <!-- Code / "&lt; &gt;": two solid chevrons (the universal source-view affordance). -->
+  <GeometryGroup x:Key="IconCode">
+    <PathGeometry Figures="M9.4,6.6 L11,8.2 L7.2,12 L11,15.8 L9.4,17.4 L4,12 Z"/>
+    <PathGeometry Figures="M14.6,6.6 L13,8.2 L16.8,12 L13,15.8 L14.6,17.4 L20,12 Z"/>
+  </GeometryGroup>
+
+  <!-- Settings / "sliders": three thin bars with fatter knobs that bulge past them (Nonzero union).
+       A tune glyph reads as config without the fiddly tooth geometry of a gear. -->
+  <GeometryGroup x:Key="IconSettings">
+    <RectangleGeometry Rect="3,6.4,18,1.6" RadiusX="0.8" RadiusY="0.8"/>
+    <RectangleGeometry Rect="3,11.2,18,1.6" RadiusX="0.8" RadiusY="0.8"/>
+    <RectangleGeometry Rect="3,16,18,1.6" RadiusX="0.8" RadiusY="0.8"/>
+    <EllipseGeometry Center="8,7.2" RadiusX="2.4" RadiusY="2.4"/>
+    <EllipseGeometry Center="15,12" RadiusX="2.4" RadiusY="2.4"/>
+    <EllipseGeometry Center="10,16.8" RadiusX="2.4" RadiusY="2.4"/>
+  </GeometryGroup>
+
+  <!-- Image / "picture": a frame (EvenOdd outer minus inner rect) with a sun and a mountain inside
+       (each adds one more crossing inside the frame's hole, so EvenOdd fills them). -->
+  <GeometryGroup x:Key="IconImage" FillRule="EvenOdd">
+    <RectangleGeometry Rect="3,4,18,16" RadiusX="2.4" RadiusY="2.4"/>
+    <RectangleGeometry Rect="5,6,14,12" RadiusX="1.2" RadiusY="1.2"/>
+    <EllipseGeometry Center="9,10" RadiusX="1.8" RadiusY="1.8"/>
+    <PathGeometry Figures="M6,18 L11,12.5 L14,15.5 L16.5,13 L19,18 Z"/>
+  </GeometryGroup>
+
 </ResourceDictionary>
