@@ -56,4 +56,18 @@
     <SolidColorBrush x:Key="AdmonitionCautionBrush" Color="#CF222E" />
     <SolidColorBrush x:Key="AdmonitionCautionBgBrush" Color="#CF222E" Opacity="0.10" />
 
+    <!-- cv-* code-view token decorations (ported): foregrounds painted by CodeDecorationColorizer. -->
+    <SolidColorBrush x:Key="CvTimestampBrush" Color="#8250DF" />
+    <SolidColorBrush x:Key="CvUuidBrush" Color="#0E7490" />
+    <SolidColorBrush x:Key="CvMacBrush" Color="#9A6700" />
+    <SolidColorBrush x:Key="CvIpBrush" Color="#BC4C00" />
+    <SolidColorBrush x:Key="CvEmailBrush" Color="#0969DA" />
+    <SolidColorBrush x:Key="CvHashBrush" Color="#6E7781" />
+    <SolidColorBrush x:Key="CvPathBrush" Color="#0550AE" />
+    <SolidColorBrush x:Key="CvTodoBrush" Color="#CF222E" />
+    <SolidColorBrush x:Key="CvLogBrush" Color="#953800" />
+    <SolidColorBrush x:Key="CvEntityBrush" Color="#A21CAF" />
+    <SolidColorBrush x:Key="CvUnitBrush" Color="#0969DA" />
+    <SolidColorBrush x:Key="CvDateBrush" Color="#1A7F37" />
+
 </ResourceDictionary>

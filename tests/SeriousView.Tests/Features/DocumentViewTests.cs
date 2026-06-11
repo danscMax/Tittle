@@ -672,4 +672,70 @@ public class DocumentViewTests
         Assert.True(vm.IsSearchOpen);
         window.Close();
     }
+
+    // ---- cv-* code decorations (ported) ----
+
+    [AvaloniaFact]
+    public void DocumentView_CodeTab_AttachesTheCvColorizer()
+    {
+        var vm = DocumentTabViewModel.FromFile("[ERROR] boot at 10.0.0.1", "/var/app.log");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.Contains(editor.TextArea.TextView.LineTransformers, t => t is CodeDecorationColorizer);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_MarkdownTab_HasNoCvColorizer()
+    {
+        var vm = DocumentTabViewModel.FromFile("# TODO list\n\n2026-01-01", "/docs/readme.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.DoesNotContain(editor.TextArea.TextView.LineTransformers, t => t is CodeDecorationColorizer);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_CvTooltipProbe_ResolvesAUnitUnderThePoint()
+    {
+        var vm = DocumentTabViewModel.FromFile("вес 5 MB конец", "/var/app.log");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var textView = editor.TextArea.TextView;
+        textView.EnsureVisualLines();
+
+        // Visual mid-point of the "5 MB" token (cols 5..8) → the byte-count tooltip.
+        var docPoint = textView.GetVisualPosition(
+            new AvaloniaEdit.TextViewPosition(1, 6), AvaloniaEdit.Rendering.VisualYPosition.LineMiddle);
+        var tip = view.CvTooltipAt(docPoint - textView.ScrollOffset);
+
+        Assert.Equal("5 242 880 байт", tip);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_CvTooltipProbe_PlainTextHasNone()
+    {
+        var vm = DocumentTabViewModel.FromFile("просто текст без токенов", "/var/app.log");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        editor.TextArea.TextView.EnsureVisualLines();
+
+        Assert.Null(view.CvTooltipAt(new Point(8, 8)));
+        window.Close();
+    }
 }

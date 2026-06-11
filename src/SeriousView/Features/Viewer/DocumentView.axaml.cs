@@ -24,6 +24,8 @@ public partial class DocumentView : UserControl
     private DocumentTabViewModel? _vm;
     private readonly SearchHighlightRenderer _searchRenderer = new();
     private bool _searchRendererAttached;
+    private readonly CodeDecorationColorizer _cvColorizer = new();
+    private bool _cvAttached;
 
     public DocumentView()
     {
@@ -73,6 +75,17 @@ public partial class DocumentView : UserControl
         // Editor context menu (#26): grey out «Копировать» while nothing is selected.
         if (Source.ContextFlyout is MenuFlyout editorMenu)
             editorMenu.Opening += (_, _) => RefreshEditorMenu();
+        // cv-* decorations (ported): hover shows the resolved value (decoded entity, byte
+        // count, relative date) as a native tooltip; brushes follow the theme.
+        Source.TextArea.TextView.PointerHover += OnSourceHover;
+        Source.TextArea.TextView.PointerHoverStopped += (_, _) => ToolTip.SetIsOpen(Source, false);
+        AttachedToVisualTree += (_, _) => RefreshCvPalette();
+        ActualThemeVariantChanged += (_, _) =>
+        {
+            RefreshCvPalette();
+            if (_cvAttached)
+                Source.TextArea.TextView.Redraw();
+        };
 
         DataContextChanged += OnDataContextChanged;
         DetachedFromVisualTree += (_, _) => Unsubscribe();
@@ -82,6 +95,7 @@ public partial class DocumentView : UserControl
     {
         Unsubscribe();
         _vm = DataContext as DocumentTabViewModel;
+        UpdateCvDecorationPolicy();
         if (_vm is not null)
         {
             _vm.NavigationRequested += OnNavigationRequested;
@@ -402,6 +416,85 @@ public partial class DocumentView : UserControl
 
     private IBrush? TryBrush(string key)
         => this.TryFindResource(key, ActualThemeVariant, out var value) ? value as IBrush : null;
+
+    // ---- cv-* code decorations (ported): colorizer policy, themed palette, hover tooltips ----
+
+    // Only non-markdown tabs are decorated — same as the original's code-view-only rule.
+    private void UpdateCvDecorationPolicy()
+    {
+        var wanted = _vm is { IsMarkdown: false };
+        if (wanted == _cvAttached)
+            return;
+
+        var transformers = Source.TextArea.TextView.LineTransformers;
+        if (wanted)
+            transformers.Add(_cvColorizer);
+        else
+            transformers.Remove(_cvColorizer);
+        _cvAttached = wanted;
+    }
+
+    private void RefreshCvPalette()
+    {
+        var palette = new Dictionary<CodeDecorationKind, IBrush>();
+        foreach (var (kind, key) in CvBrushKeys)
+        {
+            if (TryBrush(key) is { } brush)
+                palette[kind] = brush;
+        }
+
+        _cvColorizer.SetPalette(palette);
+    }
+
+    private static readonly (CodeDecorationKind Kind, string Key)[] CvBrushKeys =
+    {
+        (CodeDecorationKind.Timestamp, "CvTimestampBrush"),
+        (CodeDecorationKind.Uuid, "CvUuidBrush"),
+        (CodeDecorationKind.Mac, "CvMacBrush"),
+        (CodeDecorationKind.Ip, "CvIpBrush"),
+        (CodeDecorationKind.Email, "CvEmailBrush"),
+        (CodeDecorationKind.Hash, "CvHashBrush"),
+        (CodeDecorationKind.FilePath, "CvPathBrush"),
+        (CodeDecorationKind.Todo, "CvTodoBrush"),
+        (CodeDecorationKind.LogLevel, "CvLogBrush"),
+        (CodeDecorationKind.HtmlEntity, "CvEntityBrush"),
+        (CodeDecorationKind.Unit, "CvUnitBrush"),
+        (CodeDecorationKind.Date, "CvDateBrush"),
+    };
+
+    private void OnSourceHover(object? sender, PointerEventArgs e)
+    {
+        if (!_cvAttached)
+            return;
+
+        var tip = CvTooltipAt(e.GetPosition(Source.TextArea.TextView));
+        if (tip is not null)
+        {
+            ToolTip.SetTip(Source, tip);
+            ToolTip.SetIsOpen(Source, true);
+        }
+        else
+        {
+            ToolTip.SetIsOpen(Source, false);
+        }
+    }
+
+    /// <summary>Resolved tooltip of the decoration under a TextView-relative point, or null.
+    /// Internal so headless tests can probe without synthesizing hover events.</summary>
+    internal string? CvTooltipAt(Point viewPoint)
+    {
+        var textView = Source.TextArea.TextView;
+        var position = textView.GetPosition(viewPoint + textView.ScrollOffset);
+        if (position is null || Source.Document is not { } document)
+            return null;
+
+        var line = document.GetLineByNumber(position.Value.Line);
+        var column = position.Value.Column - 1;
+        var text = document.GetText(line);
+        return CodeDecorations.ScanLine(text, _cvColorizer.Today())
+            .FirstOrDefault(d => d.Tooltip is not null && column >= d.Start && column < d.Start + d.Length)
+            ?.Tooltip;
+    }
 
     private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)
     {
