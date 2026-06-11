@@ -226,7 +226,8 @@
                Background="Transparent" BorderThickness="0" Padding="0"
                HorizontalAlignment="Left" VerticalAlignment="Bottom"
                ScrollViewer.HorizontalScrollBarVisibility="Auto"
-               ScrollViewer.VerticalScrollBarVisibility="Disabled">
+               ScrollViewer.VerticalScrollBarVisibility="Disabled"
+               ScrollViewer.AllowAutoHide="True">
         <ListBox.ItemsPanel>
           <ItemsPanelTemplate>
             <StackPanel Orientation="Horizontal"/>
@@ -254,7 +255,11 @@
               </StackPanel.ContextFlyout>
               <PathIcon Width="15" Height="15" VerticalAlignment="Center"
                         Data="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToIconConverter.Instance}}"/>
-              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"/>
+              <!-- Cap the title and ellipsize it (full name is in the tab tooltip): an unbounded
+                   header let a long filename stretch the tab past the strip width, which tripped the
+                   ListBox's horizontal scrollbar. VS Code-style variable-width tabs. -->
+              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"
+                         MaxWidth="200" TextTrimming="CharacterEllipsis"/>
               <!-- "Changed on disk" dot (M14): an external edit happened since this tab loaded. -->
               <Ellipse Width="7" Height="7" VerticalAlignment="Center"
                        Fill="{DynamicResource AccentBrush}"

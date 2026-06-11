@@ -350,6 +350,23 @@ public partial class MainWindow : AppWindow
             new Features.Stats.StatsWindow { DataContext = stats }.ShowDialog(this);
         viewModel.HelpRequested += () => new Features.Help.HelpWindow().ShowDialog(this);
         viewModel.DonateRequested += () => new Features.Donate.DonateWindow().ShowDialog(this);
+        // The tab strip lays out horizontally; translate a vertical wheel into sideways scroll so
+        // overflowing tabs are reachable by the wheel (Avalonia doesn't flip the wheel axis itself).
+        TabStrip.PointerWheelChanged += OnTabStripWheel;
+    }
+
+    private ScrollViewer? _tabScroll;
+
+    private void OnTabStripWheel(object? sender, PointerWheelEventArgs e)
+    {
+        _tabScroll ??= TabStrip.FindDescendantOfType<ScrollViewer>();
+        if (_tabScroll is not { } sv || sv.Extent.Width <= sv.Viewport.Width + 0.5)
+            return;
+
+        var delta = e.Delta.Y != 0 ? e.Delta.Y : e.Delta.X;
+        var max = sv.Extent.Width - sv.Viewport.Width;
+        sv.Offset = new Vector(Math.Clamp(sv.Offset.X - delta * 48, 0, max), sv.Offset.Y);
+        e.Handled = true;
     }
 
     // Restore the persisted outline width, follow live drags into a field, and expand/collapse the
