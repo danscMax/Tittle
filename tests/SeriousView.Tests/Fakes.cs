@@ -125,7 +125,11 @@ internal sealed class FakeShellService : IShellService
 {
     public List<string> Revealed { get; } = new();
 
+    public List<string> Opened { get; } = new();
+
     public void RevealInExplorer(string filePath) => Revealed.Add(filePath);
+
+    public void OpenWithDefaultApp(string filePath) => Opened.Add(filePath);
 }
 
 internal sealed class FakeRecentFilesStore : IRecentFilesStore

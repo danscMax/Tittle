@@ -75,6 +75,8 @@
                         IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <MenuItem Header="Копировать как форматированный текст" Command="{Binding CopyAsRichTextCommand}"
                         IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <MenuItem Header="Печать / PDF (через браузер)…" Command="{Binding PrintViaBrowserCommand}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <Separator/>
               <MenuItem Header="Закрыть вкладку" InputGesture="Ctrl+W" Command="{Binding CloseActiveTabCommand}"/>
             </MenuItem>

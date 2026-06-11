@@ -41,4 +41,20 @@ public sealed class ShellService : IShellService
             // Best-effort: a missing file manager / unhandled path must not crash the viewer.
         }
     }
+
+    public void OpenWithDefaultApp(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return;
+
+        try
+        {
+            // UseShellExecute routes through the OS file association (browser for .html).
+            Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
+        }
+        catch
+        {
+            // Best-effort: no association / sandboxed shell must not crash the viewer.
+        }
+    }
 }

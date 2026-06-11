@@ -1284,6 +1284,24 @@ public class MainWindowViewModelTests
         Assert.Null(clipboard.LastHtml);
     }
 
+    [AvaloniaFact]
+    public void PrintViaBrowser_WritesALightHtmlAndOpensIt()
+    {
+        var shell = new FakeShellService();
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# Печать", shell: shell);
+
+        vm.PrintViaBrowserCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        var opened = Assert.Single(shell.Opened);
+        Assert.EndsWith(".print.html", opened);
+        var html = File.ReadAllText(opened);
+        Assert.Contains("<h1", html);
+        Assert.DoesNotContain("#15151A", html); // the LIGHT stylesheet — no dark surface tones
+        Assert.Equal("Открыто в браузере — печать: Ctrl+P", vm.StatusText);
+        File.Delete(opened);
+    }
+
     // ---- per-file visited / bookmarks (ported md-visited-* + bookmarks) ----
 
     [AvaloniaFact]

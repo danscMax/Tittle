@@ -111,6 +111,32 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Print / save-as-PDF (ported, M13): the LIGHT-theme HTML export goes to a temp
+    /// file and opens in the default browser — its print dialog (Ctrl+P) covers both paper and
+    /// selectable-text PDF. A native rasterized PDF was deliberately not built: rendering the
+    /// preview off-screen trips the embedded-editor geometry, and the browser output is better.</summary>
+    [RelayCommand]
+    private async Task PrintViaBrowserAsync()
+    {
+        if (SelectedTab is not { IsMarkdown: true } tab)
+            return;
+
+        try
+        {
+            var html = HtmlExporter.Export(tab.DocumentText, tab.Header, darkTheme: false, tab.BuildWikiResolver());
+            var dir = Path.Combine(Path.GetTempPath(), "SeriousView");
+            Directory.CreateDirectory(dir);
+            var target = Path.Combine(dir, Path.GetFileNameWithoutExtension(tab.Header) + ".print.html");
+            await File.WriteAllTextAsync(target, html);
+            _shell.OpenWithDefaultApp(target);
+            StatusText = "Открыто в браузере — печать: Ctrl+P";
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, tab.Header));
+        }
+    }
+
     /// <summary>Copy-as-rich-text (ported, M13): the themed HTML export goes onto the
     /// clipboard as HTML (CF_HTML on Windows) with the raw markdown as the plain fallback.</summary>
     [RelayCommand]
@@ -517,6 +543,7 @@ public partial class MainWindowViewModel : ViewModelBase
             items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
             items.Add(new PaletteItem("Экспорт в HTML…", ExportHtmlCommand));
             items.Add(new PaletteItem("Копировать как форматированный текст", CopyAsRichTextCommand));
+            items.Add(new PaletteItem("Печать / PDF (через браузер)…", PrintViaBrowserCommand));
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)
