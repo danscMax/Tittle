@@ -28,6 +28,31 @@
       <Setter Property="FontSize" Value="11.5"/>
       <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
     </Style>
+    <!-- Omnibar address field: a borderless TextBox that blends into the omnibar pill (the outer Border
+         already draws the box). Editable + selectable so the path can be copied or replaced (Enter opens
+         it; see code-behind). We flatten the FluentAvalonia template's PART_BorderElement across all
+         states so no inner box/border appears on hover/focus. -->
+    <Style Selector="TextBox.omnibar-input">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Padding" Value="2,2"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
   </wnd:AppWindow.Styles>
   <!-- AppWindow draws our content into the title-bar area (ExtendsContentIntoTitleBar, set in
        code-behind). The single top strip = brand + tab strip + buttons, painted with the
@@ -143,9 +168,13 @@
                   Click="OnPaletteButtonClick" Padding="8,3">
             <TextBlock Text="⌘" FontSize="14"/>
           </Button>
-          <TextBlock Text="{Binding SelectedTab.FilePath, FallbackValue=SeriousView, TargetNullValue=SeriousView}"
-                     VerticalAlignment="Center" Margin="8,0" TextTrimming="CharacterEllipsis"
-                     Foreground="{DynamicResource ChromeForegroundBrush}" Opacity="0.8" FontSize="12.5"/>
+          <!-- Editable address field: shows the active document's path (selectable → copy), and opening
+               another path is just typing it and pressing Enter (Esc reverts). Enter/Esc are handled in
+               code-behind on this named box; the text mirrors the VM's OmnibarText scratch buffer. -->
+          <TextBox x:Name="OmnibarBox" Classes="omnibar-input" Margin="6,0"
+                   Text="{Binding OmnibarText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   Watermark="Путь к файлу…" AutomationProperties.Name="Адрес файла"
+                   ToolTip.Tip="Путь к файлу — Enter открывает, Esc отменяет"/>
         </DockPanel>
       </Border>
 

@@ -87,6 +87,8 @@ public partial class MainWindow : AppWindow
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         // Go-to-line input (status bar): Enter jumps, Esc closes.
         GoToLineBox.KeyDown += OnGoToLineKeyDown;
+        // Omnibar address field: Enter opens the typed path, Esc reverts to the active tab's path.
+        OmnibarBox.KeyDown += OnOmnibarKeyDown;
         // Tab drag-reorder. Tunnel so we observe the gesture before the ListBox's own pointer handling.
         TabStrip.AddHandler(PointerPressedEvent, OnTabPointerPressed, RoutingStrategies.Tunnel);
         TabStrip.AddHandler(PointerMovedEvent, OnTabPointerMoved, RoutingStrategies.Tunnel);
@@ -195,6 +197,29 @@ public partial class MainWindow : AppWindow
         _layoutSettings = new LayoutSettingsWindow { DataContext = vm.Layout };
         _layoutSettings.Closed += (_, _) => _layoutSettings = null;
         _layoutSettings.Show(this);
+    }
+
+    // Omnibar address field: Enter opens the typed path (reusing the open tab if any), Esc reverts to the
+    // active tab's path. async-void event handler — OpenPathAsync is itself guarded (a bad path becomes an
+    // error message, never a crash), so nothing can escape to the global backstop.
+    private async void OnOmnibarKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            // Tolerate an Explorer "Copy as path" value (wrapped in quotes) and stray whitespace.
+            var path = (vm.OmnibarText ?? string.Empty).Trim().Trim('"');
+            if (path.Length > 0)
+                await vm.OpenPathAsync(path);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            vm.ResetOmnibar();
+        }
     }
 
     // Go-to-line input (status bar): Enter submits the jump, Esc closes.

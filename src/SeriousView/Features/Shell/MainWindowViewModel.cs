@@ -402,6 +402,15 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _title = "SeriousView";
 
+    /// <summary>Editable text of the omnibar address field. Seeded from the active tab's path and
+    /// rewritten on every tab change; only acted upon when the user presses Enter (open) — so it's a
+    /// scratch buffer, never a mutation of the tab itself. Esc reverts it via <see cref="ResetOmnibar"/>.</summary>
+    [ObservableProperty]
+    private string _omnibarText = "";
+
+    /// <summary>Restore the omnibar to the active tab's path (Esc / cancel an in-progress edit).</summary>
+    public void ResetOmnibar() => OmnibarText = SelectedTab?.FilePath ?? "";
+
     /// <summary>Idle hint shown in the status bar on the welcome screen (no tab open): a short
     /// call-to-action instead of a bare "Готово".</summary>
     private const string WelcomeHint = "Откройте файл (Ctrl+O), перетащите его сюда или выберите из недавних";
@@ -965,6 +974,8 @@ public partial class MainWindowViewModel : ViewModelBase
         // open, otherwise cleared (the right segment binds the active tab's metrics directly in the
         // view). A read error overwrites this until the next tab change.
         StatusText = value is null ? WelcomeHint : "";
+        // Reflect the active document's path in the editable omnibar address field.
+        OmnibarText = value?.FilePath ?? "";
         // The outline pane depends on the active tab's headings.
         OnPropertyChanged(nameof(IsOutlinePaneVisible));
     }
