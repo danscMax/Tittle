@@ -191,20 +191,39 @@ import/export** (`c82d3bc` — whitelisted `AppSettings` via the source-gen JSON
 re-apply on import) · **back-to-top button** in the preview (`7157c61`) · **help window** F1
 (`ac02b75` — shortcut reference, Esc closes).
 
-**Code-view** (non-markdown files): `cv-*` **decorations** (timestamps · uuid · ip/mac · email ·
-hashes · `file:line:col` paths · TODO/FIXME · log levels · HTML entities · units · dates, hover
-tooltips, 2000-char/line ReDoS guard) · code **breadcrumbs + minimap** (symbol outline is in —
-these are its remaining consumers) · **section folding** for text files (fold-all button) ·
-**indent guides** · URL autolinking in code.
+**Ported batch 2 DONE (2026-06-11, visually QA'd)** — eight more, each its own commit + tests:
+**cv-* decorations** (`247b42d` — pure `Core/Text/CodeDecorations` composite-regex scanner:
+timestamps · uuid · mac/ip · email · 32/40/64-hex hashes · `file:line:col` · TODO/FIXME ·
+log levels · HTML entities · units · dates; 2000-char ReDoS guard + regex timeout; themed
+`Cv*Brush` palette painted by a `DocumentColorizingTransformer` over TextMate; **hover
+tooltips** via AvaloniaEdit `PointerHover` — decoded entity, byte count, «через N дней») ·
+**indent guides** (`d0bdfb6` — pure `IndentGuides` tab-stop geometry, blank lines bridge the
+block; `IBackgroundRenderer`, code tabs only — prose isn't striped) · **copy button on preview
+code blocks** (`7d4d102` — a ghost ⧉ floated over each fenced block: a Grid slipped between
+SyntaxHigh's Border and its CodePad, idempotent via the `code-copy-host` class) · **code/text
+breadcrumbs** (`52d3b8f` — the M10 strip + outline marker now follow the symbol/text outlines;
+one-line scroll-spy gate relaxation) · **scroll-%** in the status bar (`e5f92a3`, both modes) ·
+**image lightbox** (`654ce2d` — click a preview image → top-level window, NOT an overlay:
+anything floated over AvaloniaEdit won't repaint) · **YAML front-matter panel** (`1ffa5b5` —
+preprocessor pass → percent-encoded `::: frontmatter` container → key-value «Метаданные» card;
+the HTML export consumes it via Markdig `UseYamlFrontMatter`) · **section folding** for text
+files (`4eec2f5` — pure `SectionFolding` + AvaloniaEdit `FoldingManager` margin; fold/unfold-all
+in the palette). **URL autolinking in code view**: already built-in — AvaloniaEdit's
+`LinkElementGenerator` (https/ftp/www + mailto, Ctrl+Click) is on by default; nothing to port.
 
-**Markdown extras**: sortable tables (click-to-sort, like `setupTables`) · copy buttons on code
-blocks · collapsible heading sections (`.collapse-icon`) · bookmarks per heading · TOC unread
-marks (`md-visited-*`) · image lightbox/zoom · YAML front-matter panel · checkbox click-to-toggle
-(write-back guarded by `fencedCodeRanges` — needs M15 save).
+**Markdown extras**: sortable tables (click-to-sort, like `setupTables`) · collapsible heading
+sections (`.collapse-icon`) · bookmarks per heading · TOC unread marks (`md-visited-*`) ·
+checkbox click-to-toggle (write-back guarded by `fencedCodeRanges` — needs M15 save).
 
-**Chrome/tools**: scroll-% + line:col cursor info for code view (we have caret for source
-already) · **HTML-fragment preview** (Alt+H on selection) · whole-file HTML render toggle ·
-reading presets · **multiple dark themes** (`DARK_THEMES` set) · drop-overlay polish.
+**Chrome/tools**: code minimap (symbol outline is in — the remaining consumer) · reading
+presets · **multiple dark themes** (`DARK_THEMES` set).
+
+**Deferred with reasons**: **HTML-fragment preview / whole-file HTML render** — no HTML
+renderer without a WebView (the original leaned on the browser + DOMPurify); revisit if a
+native HTML-to-Avalonia control appears. **Drop-overlay polish** — a full-window drag overlay
+sits over AvaloniaEdit's GPU surface, which overlays cannot repaint (project memory; the
+palette/lightbox use top-level windows instead, but a drag overlay can't be its own window).
+Plain drag-and-drop open works and stays.
 
 **Bigger ported milestones still open**: M12 diagrams (Mermaid — JS-only, PlantUML — external
 service, MUST stay opt-in/gated like the original's `plantumlAuto:false`; Chart.js blocks),
@@ -237,8 +256,11 @@ which shipped with M14 live-reload. Done since: **all of M10** (toggle-position 
 breadcrumbs, wiki-links `[[name]]`, conservative `_underscore_` italics), the giant-fence preview
 fix (`f06eba5`), the **preprocessor fence-guard retrofit** (`b50e801` — legacy passes no longer
 transform inside ``` fences), **all of M14** (live-reload + dirty dot + position-preserving
-reload), **M11 block math** (Sylinko.CSharpMath fork), **M13 HTML export** (Markdig), and the
+reload), **M11 block math** (Sylinko.CSharpMath fork), **M13 HTML export** (Markdig), the
 **nine-feature ported batch** (JSON pretty · outlines · CSV table · emoji · typography · stats ·
-settings import/export · back-to-top · help — see the pool section). Next: keep draining the
-ported pool (cv-* decorations, markdown extras, chrome/tools), then the big open milestones
-(M12 diagrams · M13 beyond HTML · M15 editing).
+settings import/export · back-to-top · help), and **ported batch 2** (cv-* decorations · indent
+guides · code-block copy buttons · code/text breadcrumbs · scroll-% · image lightbox ·
+front-matter panel · section folding — see the pool section). Next: the pool remainder
+(sortable preview tables, collapsible sections, bookmarks/unread marks, minimap, reading
+presets, dark-theme set), then the big open milestones (M12 diagrams · M13 beyond HTML ·
+M15 editing — scope decision pending).

@@ -176,11 +176,20 @@ complete gap audit lives in BACKLOG's ported pool. **Ported batch DONE** (nine c
 `DocumentText` stays truth), code-symbol + plain-text outlines in the TOC panel, CSV/TSV as a
 sortable sticky-header table (▦ status-bar toggle), emoji `:name:`, smart typography for
 .txt/.log, stats window (F-stats + Russian Flesch) + selection word count, settings
-import/export, back-to-top button, F1 help window. **Pool still open**: cv-* code decorations,
-code breadcrumbs/minimap, section folding, indent guides, sortable preview tables, copy buttons
-on code blocks, collapsible sections, image lightbox, YAML front-matter, HTML preview, reading
-presets, dark-theme set, M12 diagrams, M13 beyond HTML, M15 editing, inline math. Feature
-spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+import/export, back-to-top button, F1 help window. **Ported batch 2 DONE** (eight commits,
+`247b42d`…`4eec2f5`, visually QA'd): cv-* token decorations (pure `CodeDecorations` scanner +
+colorizer + `PointerHover` tooltips), indent guides (pure geometry + `IBackgroundRenderer`,
+code tabs only), copy button on preview code blocks (Grid slipped inside SyntaxHigh's Border,
+idempotent), code/text breadcrumbs (scroll-spy gate relaxed to any outline), scroll-% in the
+status bar, image lightbox (top-level window — overlays over AvaloniaEdit don't repaint),
+YAML front-matter → «Метаданные» panel (percent-encoded `::: frontmatter`; export consumes it
+via Markdig UseYamlFrontMatter), section folding for text files (`SectionFolding` +
+`FoldingManager`, fold/unfold-all in the palette). URL autolinking in code = AvaloniaEdit
+built-in (Ctrl+Click). **Pool still open**: sortable preview tables, collapsible sections,
+bookmarks per heading, TOC unread marks, code minimap, reading presets, dark-theme set,
+checkbox toggle (M15), M12 diagrams, M13 beyond HTML, M15 editing (scope decision), inline
+math; HTML preview + drop overlay deferred with reasons (no WebView · overlay repaint).
+Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
 
