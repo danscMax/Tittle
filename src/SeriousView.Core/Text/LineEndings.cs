@@ -30,7 +30,11 @@ public static class LineEndings
         };
     }
 
-    /// <summary>Normalize all CRLF / CR line endings to LF.</summary>
+    /// <summary>Normalize all CRLF / CR line endings to LF. When the text is already LF-only
+    /// (no '\r' at all — the common Unix/markdown case), the same reference is returned without
+    /// allocating a copy; a full-document scan/copy near the size ceiling is wasted otherwise.</summary>
     public static string NormalizeToLf(string text)
-        => text.Replace("\r\n", "\n").Replace('\r', '\n');
+        => text.IndexOf('\r') < 0
+            ? text
+            : text.Replace("\r\n", "\n").Replace('\r', '\n');
 }
