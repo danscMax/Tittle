@@ -18,6 +18,7 @@ public class LayoutOptionsTests
         Assert.False(o.ShowRail);
         Assert.True(o.ReadingMode);   // reading column on by default (etalon)
         Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
+        Assert.Equal(ReadingWidth.Full, o.ReadingWidth); // full-width preview by default
     }
 
     [Fact]
@@ -32,9 +33,25 @@ public class LayoutOptionsTests
             ShowRail = true,
             ReadingMode = false,
             OutlineWidth = 320,
+            ReadingWidth = ReadingWidth.Narrow,
         };
 
         Assert.Equal(s, LayoutOptions.FromSettings(s).ToSettings());
+    }
+
+    [Fact]
+    public void ReadingWidthConverter_MapsPresetsToColumnAndAlignment()
+    {
+        var c = ReadingWidthConverter.Instance;
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+
+        Assert.Equal(double.PositiveInfinity, c.Convert(ReadingWidth.Full, typeof(double), null, culture));
+        Assert.Equal(760d, c.Convert(ReadingWidth.Comfort, typeof(double), null, culture));
+        Assert.Equal(620d, c.Convert(ReadingWidth.Narrow, typeof(double), null, culture));
+        Assert.Equal(Avalonia.Layout.HorizontalAlignment.Stretch,
+            c.Convert(ReadingWidth.Full, typeof(object), "align", culture));
+        Assert.Equal(Avalonia.Layout.HorizontalAlignment.Center,
+            c.Convert(ReadingWidth.Narrow, typeof(object), "align", culture));
     }
 
     [Theory]

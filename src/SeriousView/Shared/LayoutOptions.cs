@@ -30,6 +30,9 @@ public partial class LayoutOptions : ObservableObject
     [ObservableProperty]
     private bool _readingMode = true;
 
+    [ObservableProperty]
+    private ReadingWidth _readingWidth = ReadingWidth.Full;
+
     /// <summary>Outline/TOC sidebar width range (px). Shared by the splitter (view) and persistence.</summary>
     public const double MinOutlineWidth = 180, MaxOutlineWidth = 480, DefaultOutlineWidth = 240;
 
@@ -57,6 +60,7 @@ public partial class LayoutOptions : ObservableObject
         ShowRail = ShowRail,
         ReadingMode = ReadingMode,
         OutlineWidth = OutlineWidth,
+        ReadingWidth = ReadingWidth,
     };
 
     /// <summary>Build options from persisted settings, or the etalon defaults when none are saved.</summary>
@@ -71,5 +75,6 @@ public partial class LayoutOptions : ObservableObject
             ShowRail = s.ShowRail,
             ReadingMode = s.ReadingMode,
             OutlineWidth = s.OutlineWidth,
+            ReadingWidth = s.ReadingWidth,
         };
 }

@@ -42,6 +42,20 @@
                      IsChecked="{Binding ToolbarMode, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Off}"/>
       </StackPanel>
 
+      <StackPanel Spacing="6">
+        <TextBlock Text="Ширина колонки чтения" FontSize="12.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <RadioButton GroupName="ReadingWidth" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Полная"
+                     IsChecked="{Binding ReadingWidth, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Full}"/>
+        <RadioButton GroupName="ReadingWidth" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Средняя (760 px)"
+                     IsChecked="{Binding ReadingWidth, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Comfort}"/>
+        <RadioButton GroupName="ReadingWidth" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Узкая (620 px)"
+                     IsChecked="{Binding ReadingWidth, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Narrow}"/>
+      </StackPanel>
+
       <Button Content="Готово" HorizontalAlignment="Right" Classes="accent"
               AutomationProperties.Name="Закрыть настройки" Click="OnDone"/>
     </StackPanel>

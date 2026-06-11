@@ -39,6 +39,19 @@ public enum ViewTogglePlacement
     Omnibar,
 }
 
+/// <summary>Reading-column width preset for the markdown preview (ported reading presets).</summary>
+public enum ReadingWidth
+{
+    /// <summary>Full window width (the default — today's look).</summary>
+    Full,
+
+    /// <summary>A comfortable centered column (~760 px).</summary>
+    Comfort,
+
+    /// <summary>A narrow book-like column (~620 px).</summary>
+    Narrow,
+}
+
 /// <summary>
 /// Shell layout / chrome customization. The whole chrome is driven by these knobs rather than being
 /// hard-coded, so presets (hamburger, classic menu-bar, in-title-bar) are just different values.
@@ -70,4 +83,7 @@ public sealed record LayoutSettings
     /// <summary>Width of the outline/TOC sidebar in pixels (user-resizable via a splitter).
     /// Default: 240.</summary>
     public double OutlineWidth { get; init; } = 240;
+
+    /// <summary>Reading-column preset for the preview. Default: full width.</summary>
+    public ReadingWidth ReadingWidth { get; init; } = ReadingWidth.Full;
 }

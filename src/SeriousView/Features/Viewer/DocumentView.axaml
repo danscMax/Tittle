@@ -4,6 +4,7 @@
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:vm="using:SeriousView.Features.Shell"
              xmlns:viewer="using:SeriousView.Features.Viewer"
+             xmlns:sh="using:SeriousView.Shared"
              x:Class="SeriousView.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
   <UserControl.Styles>
@@ -164,7 +165,9 @@
         <md:MarkdownScrollViewer x:Name="Preview"
                                  Markdown="{Binding PreviewMarkdown}"
                                  AssetPathRoot="{Binding AssetPathRoot}"
-                                 SelectionEnabled="True">
+                                 SelectionEnabled="True"
+                                 MaxWidth="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}}"
+                                 HorizontalAlignment="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}, ConverterParameter=align}">
           <!-- Inner vertical scroll off → the outer (dark) ScrollViewer scrolls; the inner still
                handles horizontal overflow (wide code blocks / tables). -->
           <md:MarkdownScrollViewer.Styles>
