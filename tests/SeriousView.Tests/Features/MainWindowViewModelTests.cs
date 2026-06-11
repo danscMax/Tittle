@@ -1255,6 +1255,35 @@ public class MainWindowViewModelTests
         Assert.Null(vm.SelectedTab);
     }
 
+    // ---- copy-as-rich-text (ported, M13) ----
+
+    [AvaloniaFact]
+    public void CopyAsRichText_PutsHtmlAndMarkdownFallbackOnTheClipboard()
+    {
+        var clipboard = new FakeClipboardService();
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# Заголовок\n\n**жирный**", clipboard: clipboard);
+
+        vm.CopyAsRichTextCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("<h1", clipboard.LastHtml);
+        Assert.Contains("<strong>жирный</strong>", clipboard.LastHtml);
+        Assert.Equal("# Заголовок\n\n**жирный**", clipboard.LastHtmlPlainFallback);
+        Assert.Equal("Скопировано как форматированный текст", vm.StatusText);
+    }
+
+    [AvaloniaFact]
+    public void CopyAsRichText_NonMarkdownTab_IsANoOp()
+    {
+        var clipboard = new FakeClipboardService();
+        var vm = CreateVm(args: new[] { "/src/a.cs" }, content: "var x = 1;", clipboard: clipboard);
+
+        vm.CopyAsRichTextCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(clipboard.LastHtml);
+    }
+
     // ---- per-file visited / bookmarks (ported md-visited-* + bookmarks) ----
 
     [AvaloniaFact]

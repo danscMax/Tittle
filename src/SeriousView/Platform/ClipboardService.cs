@@ -22,4 +22,20 @@ public sealed class ClipboardService : IClipboardService
         if (clipboard is not null)
             await clipboard.SetTextAsync(text);
     }
+
+    public async Task SetHtmlAsync(string html, string plainText)
+    {
+        var clipboard = _topLevel()?.Clipboard;
+        if (clipboard is null)
+            return;
+
+        var data = new Avalonia.Input.DataObject();
+        data.Set(Avalonia.Input.DataFormats.Text, plainText);
+        if (OperatingSystem.IsWindows())
+            // Windows pastes rich text from the CF_HTML envelope (byte offsets, UTF-8 payload).
+            data.Set("HTML Format", Core.Export.ClipboardHtml.BuildCfHtml(html));
+        else
+            data.Set("text/html", html);
+        await clipboard.SetDataObjectAsync(data);
+    }
 }

@@ -111,6 +111,19 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Copy-as-rich-text (ported, M13): the themed HTML export goes onto the
+    /// clipboard as HTML (CF_HTML on Windows) with the raw markdown as the plain fallback.</summary>
+    [RelayCommand]
+    private async Task CopyAsRichTextAsync()
+    {
+        if (SelectedTab is not { IsMarkdown: true } tab)
+            return;
+
+        var html = HtmlExporter.Export(tab.DocumentText, tab.Header, _theme.Mode.IsDark(), tab.BuildWikiResolver());
+        await _clipboard.SetHtmlAsync(html, tab.DocumentText);
+        StatusText = "Скопировано как форматированный текст";
+    }
+
     // Settings import/export (ported). Whitelisting comes by construction: the file is
     // deserialized into the typed AppSettings record — unknown keys are simply ignored.
     private static readonly System.Text.Json.JsonSerializerOptions SettingsJson =
@@ -503,6 +516,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
             items.Add(new PaletteItem("Экспорт в HTML…", ExportHtmlCommand));
+            items.Add(new PaletteItem("Копировать как форматированный текст", CopyAsRichTextCommand));
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)

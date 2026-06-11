@@ -103,9 +103,20 @@ internal sealed class FakeClipboardService : IClipboardService
 {
     public string? LastText { get; private set; }
 
+    public string? LastHtml { get; private set; }
+
+    public string? LastHtmlPlainFallback { get; private set; }
+
     public Task SetTextAsync(string text)
     {
         LastText = text;
+        return Task.CompletedTask;
+    }
+
+    public Task SetHtmlAsync(string html, string plainText)
+    {
+        LastHtml = html;
+        LastHtmlPlainFallback = plainText;
         return Task.CompletedTask;
     }
 }

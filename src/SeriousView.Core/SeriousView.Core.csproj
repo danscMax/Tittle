@@ -13,4 +13,9 @@
     <PackageReference Include="Markdig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Tests may pin internal seams (fragment markers, pass internals) without making them API. -->
+    <InternalsVisibleTo Include="SeriousView.Tests" />
+  </ItemGroup>
+
 </Project>
