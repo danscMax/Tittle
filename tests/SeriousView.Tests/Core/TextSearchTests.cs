@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using SeriousView.Core.Text;
 using Xunit;
 
@@ -65,6 +66,22 @@ public class TextSearchTests
 
         Assert.True(r.PatternValid);
         Assert.Equal(new[] { new MatchRange(0, 3), new MatchRange(6, 3) }, r.Matches);
+    }
+
+    [Fact]
+    public void FindAll_Regex_CatastrophicBacktracking_BailsOut_StaysValid()
+    {
+        // A classic ReDoS pattern against a long run of 'a' would hang for many seconds
+        // without a match timeout. The find bar recompiles on every keystroke, so this
+        // must bail out fast, never throw, and report the pattern as syntactically valid.
+        var text = new string('a', 50_000);
+
+        var sw = Stopwatch.StartNew();
+        var r = TextSearch.FindAll(text, "(a+)+$", caseSensitive: false, regex: true);
+        sw.Stop();
+
+        Assert.True(r.PatternValid);                       // valid syntax — it just timed out
+        Assert.True(sw.ElapsedMilliseconds < 2000, $"took {sw.ElapsedMilliseconds} ms");
     }
 
     [Fact]

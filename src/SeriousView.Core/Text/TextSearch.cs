@@ -52,12 +52,17 @@ public static class TextSearch
         return matches;
     }
 
+    // ReDoS guard: the find bar recompiles + re-scans the whole document on every keystroke, so a
+    // user-typed pathological pattern (e.g. "(a+)+$") against a long line could hang the UI thread
+    // with catastrophic backtracking. Cap each Match call; mirrors CodeDecorations' 200 ms budget.
+    private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(200);
+
     private static SearchOutcome FindRegex(string text, string pattern, bool caseSensitive)
     {
         Regex re;
         try
         {
-            re = new Regex(pattern, caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase);
+            re = new Regex(pattern, caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase, MatchTimeout);
         }
         catch (ArgumentException)
         {
@@ -65,15 +70,23 @@ public static class TextSearch
         }
 
         var matches = new List<MatchRange>();
-        for (var pos = 0; pos <= text.Length;)
+        try
         {
-            var m = re.Match(text, pos);
-            if (!m.Success)
-                break;
-            if (m.Length > 0)
-                matches.Add(new MatchRange(m.Index, m.Length));
-            // Advance at least one char so a zero-width match can't spin forever.
-            pos = m.Index + Math.Max(m.Length, 1);
+            for (var pos = 0; pos <= text.Length;)
+            {
+                var m = re.Match(text, pos);
+                if (!m.Success)
+                    break;
+                if (m.Length > 0)
+                    matches.Add(new MatchRange(m.Index, m.Length));
+                // Advance at least one char so a zero-width match can't spin forever.
+                pos = m.Index + Math.Max(m.Length, 1);
+            }
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // The pattern is syntactically valid — it just backtracked past the budget. Return the
+            // matches collected so far (often none); the find bar shows partial/no matches, never hangs.
         }
 
         return new SearchOutcome(matches, PatternValid: true);
