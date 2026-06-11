@@ -410,6 +410,25 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void ScrollPercent_Source_FillsAfterAJumpDown()
+    {
+        var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
+        vm.ViewMode = DocumentViewMode.Source;
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        vm.GoToLineText = vm.Outline[^1].Line.ToString(); // deep into the document
+        vm.SubmitGoToLineCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.EndsWith("%", vm.ScrollPercentText);
+        Assert.NotEqual("0%", vm.ScrollPercentText);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ActiveHeading_Preview_TocClickMarksTheClickedHeading()
     {
         var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");

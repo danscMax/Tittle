@@ -248,6 +248,8 @@ public partial class DocumentView : UserControl
             RecomputeActiveHeading();
             if (CaptureFromPreview() is { } anchor)
                 _vm.ReadingAnchor = anchor; // live reading position, for reload restore (M14)
+            _vm.ScrollPercentText = FormatScrollPercent(
+                PreviewScroll.Offset.Y, PreviewScroll.Extent.Height, PreviewScroll.Viewport.Height);
         }
 
         // Back-to-top appears once the reader is a screen below the start (ported).
@@ -367,7 +369,19 @@ public partial class DocumentView : UserControl
         {
             RecomputeActiveHeading();
             _vm.ReadingAnchor = CaptureFromSource();
+            if (SourceScroller is { } scroller)
+                _vm.ScrollPercentText = FormatScrollPercent(
+                    scroller.Offset.Y, scroller.Extent.Height, scroller.Viewport.Height);
         }
+    }
+
+    /// <summary>"NN%" through the document, or empty when it fits the viewport (ported).</summary>
+    private static string FormatScrollPercent(double offset, double extent, double viewport)
+    {
+        var max = extent - viewport;
+        if (max < 1)
+            return string.Empty;
+        return $"{Math.Clamp((int)Math.Round(offset / max * 100), 0, 100)}%";
     }
 
     /// <summary>Scroll-spy recompute — a binary search over cached positions, cheap enough to

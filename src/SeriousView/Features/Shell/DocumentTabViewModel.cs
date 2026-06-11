@@ -416,6 +416,11 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectionInfo = string.Empty;
 
+    /// <summary>Status-bar "NN%" through the document, written by <c>DocumentView</c> per
+    /// scroll event in either view mode (ported). Empty when the document fits the viewport.</summary>
+    [ObservableProperty]
+    private string _scrollPercentText = string.Empty;
+
     /// <summary>Current reading position, written by <c>DocumentView</c> per scroll event
     /// (the <see cref="CaretLine"/> pattern) — the shell hands it to a reload's fresh tab.</summary>
     public HeadingAnchor ReadingAnchor { get; set; } = new(-1, 0);
