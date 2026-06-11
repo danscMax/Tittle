@@ -72,7 +72,9 @@ dotnet test SeriousView.sln                     # unit + Headless UI tests
 ```
 
 Windows portable build: `build.ps1` / `build.bat` → `dist/SeriousView.exe`;
-per-user file association via `install-fileassoc.ps1`.
+combined build: `build_all.ps1` / `build_all.bat` → test gate + `dist/win-x64/` +
+`dist/win-arm64/` + `build-manifest.json`; per-user file association via
+`install-fileassoc.ps1`.
 
 ## Contributing
 

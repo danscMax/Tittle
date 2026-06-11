@@ -21,12 +21,15 @@
 #   .\build.ps1 -Rid win-arm64  # build for ARM64 instead
 #   .\build.ps1 -ReadyToRun     # AOT-precompile for faster cold start (bigger file)
 #   .\build.ps1 -NoOpen         # don't open Explorer when finished
+#   .\build.ps1 -OutDir dist\win-x64   # alternate output dir (build_all puts each RID
+#                                       in its own subfolder so phases don't clobber)
 # ============================================================================
 
 param(
     [string]$Rid = 'win-x64',
     [switch]$ReadyToRun,
-    [switch]$NoOpen
+    [switch]$NoOpen,
+    [string]$OutDir = 'dist'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,7 +41,7 @@ $root = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvoca
 . (Join-Path $root 'ScriptKit.ps1')
 
 $project = Join-Path $root 'src\SeriousView\SeriousView.csproj'
-$outDir  = Join-Path $root 'dist'
+$outDir  = if ([System.IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $root $OutDir }
 $start   = Get-Date
 
 Write-Banner "SeriousView -- portable single-file" "Release  $Rid  single-file  self-contained"
