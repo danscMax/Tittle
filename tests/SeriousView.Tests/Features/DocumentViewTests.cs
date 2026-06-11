@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
@@ -1064,6 +1065,71 @@ public class DocumentViewTests
         editor.TextArea.TextView.EnsureVisualLines();
 
         Assert.Null(view.CvTooltipAt(new Point(8, 8)));
+        window.Close();
+    }
+
+    // ---- B1/H2: the search highlighter only builds geometry for ON-SCREEN matches ----
+
+    [AvaloniaFact]
+    public void SearchHighlight_DrawsOnlyTheVisibleMatchSubset_NotEveryMatch()
+    {
+        // 400 single-line matches, far more than fit in a 200px-tall viewport. Before the clip,
+        // Draw allocated a builder + geometry for ALL 400 every repaint; now it must touch only the
+        // on-screen slice. One match per line so the count maps cleanly to visible lines.
+        var sb = new StringBuilder();
+        for (var i = 0; i < 400; i++)
+            sb.AppendLine("MATCH line filler text");
+        var vm = DocumentTabViewModel.FromFile(sb.ToString(), "/src/big.txt");
+        var view = new DocumentView { DataContext = vm };
+        view.Source.VerticalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        view.Source.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+        var window = new Window { Width = 600, Height = 200, Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var matches = SeriousView.Core.Text.TextSearch
+            .FindAll(vm.DocumentText, "MATCH", caseSensitive: false, regex: false).Matches;
+        Assert.True(matches.Count >= 400, $"fixture should yield many matches, got {matches.Count}");
+
+        var textView = view.Source.TextArea.TextView;
+        textView.EnsureVisualLines();
+        var visibleLines = textView.VisualLines.Count;
+        Assert.True(visibleLines > 0 && visibleLines < matches.Count,
+            $"the viewport must show only a slice: {visibleLines} of {matches.Count}");
+
+        var renderer = new SearchHighlightRenderer();
+        renderer.Update(matches, current: 0, Brushes.Yellow, new Pen(Brushes.Red, 1));
+
+        using (var ctx = new DrawingGroup().Open())
+            renderer.Draw(textView, ctx);
+
+        // O(visible), not O(total): the draw count tracks the on-screen lines, never the full set.
+        Assert.True(renderer.LastDrawCount > 0, "the visible matches must still be drawn");
+        Assert.True(renderer.LastDrawCount <= visibleLines + 1,
+            $"drew {renderer.LastDrawCount} but only ~{visibleLines} lines are visible");
+        Assert.True(renderer.LastDrawCount < matches.Count / 2,
+            $"drew {renderer.LastDrawCount} of {matches.Count} — should be a small visible subset");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void SearchHighlight_NoMatches_DrawsNothing()
+    {
+        var vm = DocumentTabViewModel.FromFile("plain text", "/src/a.txt");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var textView = view.Source.TextArea.TextView;
+        textView.EnsureVisualLines();
+
+        var renderer = new SearchHighlightRenderer();
+        renderer.Update(Array.Empty<MatchRange>(), current: -1, Brushes.Yellow, null);
+        using (var ctx = new DrawingGroup().Open())
+            renderer.Draw(textView, ctx);
+
+        Assert.Equal(0, renderer.LastDrawCount);
         window.Close();
     }
 }

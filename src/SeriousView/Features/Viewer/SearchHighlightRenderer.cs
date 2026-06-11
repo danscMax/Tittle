@@ -29,19 +29,61 @@ public sealed class SearchHighlightRenderer : IBackgroundRenderer
         _currentPen = currentPen;
     }
 
+    /// <summary>Draw calls issued by the last <see cref="Draw"/> — a headless test seam proving we only
+    /// build geometry for the on-screen subset, not the whole document's match set.</summary>
+    internal int LastDrawCount { get; private set; }
+
     public void Draw(TextView textView, DrawingContext drawingContext)
     {
+        LastDrawCount = 0;
         if (_matches.Count == 0 || _fill is null)
             return;
 
         textView.EnsureVisualLines();
-        for (var i = 0; i < _matches.Count; i++)
+        var lines = textView.VisualLines;
+        if (!textView.VisualLinesValid || lines.Count == 0)
+            return;
+
+        // Clip to the visible document offset window: Draw runs on EVERY Selection-layer repaint
+        // (scroll, resize), so looping all matches and allocating geometry per match — most of which
+        // come back null off-screen — scales with total matches, not visible ones. _matches is ordered
+        // by offset and non-overlapping, so we binary-search the first match that could touch the window
+        // and break once past it: O(visible), not O(total).
+        var visibleStart = lines[0].FirstDocumentLine.Offset;
+        var visibleEnd = lines[^1].LastDocumentLine.EndOffset;
+
+        var builder = new BackgroundGeometryBuilder { AlignToWholePixels = true, CornerRadius = 2 };
+        for (var i = FirstMatchAtOrAfter(visibleStart); i < _matches.Count; i++)
         {
-            var builder = new BackgroundGeometryBuilder { AlignToWholePixels = true, CornerRadius = 2 };
-            builder.AddSegment(textView, new TextSegment { StartOffset = _matches[i].Offset, Length = _matches[i].Length });
+            var match = _matches[i];
+            if (match.Offset > visibleEnd)
+                break; // ordered → every later match starts even further past the window
+            if (match.Offset + match.Length < visibleStart)
+                continue; // ends before the window (a match spanning the top edge)
+
+            builder.AddSegment(textView, new TextSegment { StartOffset = match.Offset, Length = match.Length });
             var geometry = builder.CreateGeometry();
             if (geometry is not null)
+            {
                 drawingContext.DrawGeometry(_fill, i == _current ? _currentPen : null, geometry);
+                LastDrawCount++;
+            }
         }
+    }
+
+    /// <summary>Binary-search the first match whose end reaches <paramref name="offset"/> — i.e. the
+    /// earliest one that can still be visible (a match straddling the top edge ends ≥ visibleStart).</summary>
+    private int FirstMatchAtOrAfter(int offset)
+    {
+        int lo = 0, hi = _matches.Count;
+        while (lo < hi)
+        {
+            var mid = (lo + hi) / 2;
+            if (_matches[mid].Offset + _matches[mid].Length < offset)
+                lo = mid + 1;
+            else
+                hi = mid;
+        }
+        return lo;
     }
 }
