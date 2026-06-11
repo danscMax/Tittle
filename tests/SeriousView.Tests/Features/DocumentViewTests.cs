@@ -723,6 +723,44 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // ---- section folding for text files (ported) ----
+
+    private const string FoldableText = "Глава 1. Старт\nстрока\nстрока\n\nГлава 2. Финал\nконец";
+
+    [AvaloniaFact]
+    public void Folding_TextTabWithOutline_InstallsSectionsAndFoldsAll()
+    {
+        var vm = DocumentTabViewModel.FromFile(FoldableText, "/notes/a.txt");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        view.UpdateSectionFolding();
+
+        Assert.Equal((2, 0), view.FoldingState());
+
+        vm.FoldAllSectionsCommand.Execute(null);
+        Assert.Equal((2, 2), view.FoldingState());
+
+        vm.UnfoldAllSectionsCommand.Execute(null);
+        Assert.Equal((2, 0), view.FoldingState());
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Folding_MarkdownTab_StaysUninstalled()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n\ntext", "/docs/readme.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        view.UpdateSectionFolding();
+
+        Assert.Equal((0, 0), view.FoldingState());
+        window.Close();
+    }
+
     // ---- YAML front-matter panel (ported) ----
 
     [AvaloniaFact]

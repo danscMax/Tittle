@@ -29,6 +29,7 @@ public partial class DocumentView : UserControl
     private bool _cvAttached;
     private readonly IndentGuideRenderer _indentGuides = new();
     private bool _indentGuidesAttached;
+    private AvaloniaEdit.Folding.FoldingManager? _foldingManager;
 
     public DocumentView()
     {
@@ -106,10 +107,13 @@ public partial class DocumentView : UserControl
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
             _vm.SearchUpdated += OnSearchUpdated;
+            _vm.FoldAllRequested += OnFoldAllRequested;
             _vm.PropertyChanged += OnVmPropertyChanged;
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
             Dispatcher.UIThread.Post(ActivateSource);
+            // Folding needs the bound Document — install after the bindings have applied.
+            Dispatcher.UIThread.Post(UpdateSectionFolding);
 
             // A reload's replacement tab carries the old tab's reading position (M14): consume
             // the one-shot anchor and apply it once the fresh view has laid out. The generation
@@ -679,10 +683,74 @@ public partial class DocumentView : UserControl
             _vm.NavigationRequested -= OnNavigationRequested;
             _vm.GoToLineRequested -= OnGoToLineRequested;
             _vm.SearchUpdated -= OnSearchUpdated;
+            _vm.FoldAllRequested -= OnFoldAllRequested;
             _vm.PropertyChanged -= OnVmPropertyChanged;
         }
 
+        if (_foldingManager is not null)
+        {
+            AvaloniaEdit.Folding.FoldingManager.Uninstall(_foldingManager);
+            _foldingManager = null;
+        }
+
         _vm = null;
+    }
+
+    // ---- section folding for text files (ported): the heading stays, the body collapses ----
+
+    /// <summary>Installs/refreshes the folding margin for a plain-text tab with an outline.
+    /// Internal so headless tests can drive it without waiting on the dispatcher post.</summary>
+    internal void UpdateSectionFolding()
+    {
+        var wanted = _vm is { IsPlainText: true, HasOutline: true };
+        if (!wanted)
+        {
+            if (_foldingManager is not null)
+            {
+                AvaloniaEdit.Folding.FoldingManager.Uninstall(_foldingManager);
+                _foldingManager = null;
+            }
+
+            return;
+        }
+
+        if (_vm is null || Source.Document is not { LineCount: > 0 } document)
+            return;
+
+        _foldingManager ??= AvaloniaEdit.Folding.FoldingManager.Install(Source.TextArea);
+        var foldings = SectionFolding.Compute(_vm.Outline, document.LineCount)
+            .Select(s => new AvaloniaEdit.Folding.NewFolding(
+                document.GetLineByNumber(s.HeadingLine).EndOffset,
+                document.GetLineByNumber(s.EndLine).EndOffset)
+            { Name = " … " })
+            .OrderBy(f => f.StartOffset)
+            .ToList();
+        _foldingManager.UpdateFoldings(foldings, -1);
+    }
+
+    private void OnFoldAllRequested(bool collapse)
+    {
+        if (_foldingManager is null)
+            return;
+        foreach (var folding in _foldingManager.AllFoldings)
+            folding.IsFolded = collapse;
+    }
+
+    /// <summary>Folded state probe for tests: how many sections exist / are collapsed.</summary>
+    internal (int Total, int Folded) FoldingState()
+    {
+        if (_foldingManager is null)
+            return (0, 0);
+        var total = 0;
+        var folded = 0;
+        foreach (var f in _foldingManager.AllFoldings)
+        {
+            total++;
+            if (f.IsFolded)
+                folded++;
+        }
+
+        return (total, folded);
     }
 
     private void OnNavigationRequested(HeadingOutline heading)

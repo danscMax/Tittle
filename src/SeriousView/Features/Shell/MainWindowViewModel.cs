@@ -510,7 +510,14 @@ public partial class MainWindowViewModel : ViewModelBase
             items.Add(new PaletteItem("Таблица / исходник", csvTab.ToggleCsvViewCommand));
 
         if (SelectedTab is { IsPlainText: true } textTab)
+        {
             items.Add(new PaletteItem("Умная типографика (вкл/выкл)", textTab.ToggleSmartTypographyCommand));
+            if (textTab.HasOutline)
+            {
+                items.Add(new PaletteItem("Свернуть все секции", textTab.FoldAllSectionsCommand));
+                items.Add(new PaletteItem("Развернуть все секции", textTab.UnfoldAllSectionsCommand));
+            }
+        }
 
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));

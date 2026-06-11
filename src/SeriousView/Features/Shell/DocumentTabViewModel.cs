@@ -453,6 +453,16 @@ public partial class DocumentTabViewModel : ViewModelBase
             NavigationRequested?.Invoke(heading);
     }
 
+    /// <summary>Raised by the fold-all/unfold-all commands (ported section folding);
+    /// the view owns the folding state, the same seam shape as navigation.</summary>
+    public event Action<bool>? FoldAllRequested;
+
+    [RelayCommand]
+    private void FoldAllSections() => FoldAllRequested?.Invoke(true);
+
+    [RelayCommand]
+    private void UnfoldAllSections() => FoldAllRequested?.Invoke(false);
+
     private DocumentTabViewModel(string header, FileLoadResult load)
     {
         _header = header;
