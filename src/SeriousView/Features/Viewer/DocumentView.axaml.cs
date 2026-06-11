@@ -26,6 +26,8 @@ public partial class DocumentView : UserControl
     private bool _searchRendererAttached;
     private readonly CodeDecorationColorizer _cvColorizer = new();
     private bool _cvAttached;
+    private readonly IndentGuideRenderer _indentGuides = new();
+    private bool _indentGuidesAttached;
 
     public DocumentView()
     {
@@ -83,7 +85,7 @@ public partial class DocumentView : UserControl
         ActualThemeVariantChanged += (_, _) =>
         {
             RefreshCvPalette();
-            if (_cvAttached)
+            if (_cvAttached || _indentGuidesAttached)
                 Source.TextArea.TextView.Redraw();
         };
 
@@ -420,18 +422,30 @@ public partial class DocumentView : UserControl
     // ---- cv-* code decorations (ported): colorizer policy, themed palette, hover tooltips ----
 
     // Only non-markdown tabs are decorated — same as the original's code-view-only rule.
+    // Indent guides additionally skip plain text so prose isn't visually striped.
     private void UpdateCvDecorationPolicy()
     {
-        var wanted = _vm is { IsMarkdown: false };
-        if (wanted == _cvAttached)
-            return;
+        var textView = Source.TextArea.TextView;
 
-        var transformers = Source.TextArea.TextView.LineTransformers;
-        if (wanted)
-            transformers.Add(_cvColorizer);
-        else
-            transformers.Remove(_cvColorizer);
-        _cvAttached = wanted;
+        var wantCv = _vm is { IsMarkdown: false };
+        if (wantCv != _cvAttached)
+        {
+            if (wantCv)
+                textView.LineTransformers.Add(_cvColorizer);
+            else
+                textView.LineTransformers.Remove(_cvColorizer);
+            _cvAttached = wantCv;
+        }
+
+        var wantGuides = _vm is { IsMarkdown: false, IsPlainText: false };
+        if (wantGuides != _indentGuidesAttached)
+        {
+            if (wantGuides)
+                textView.BackgroundRenderers.Add(_indentGuides);
+            else
+                textView.BackgroundRenderers.Remove(_indentGuides);
+            _indentGuidesAttached = wantGuides;
+        }
     }
 
     private void RefreshCvPalette()
@@ -444,6 +458,7 @@ public partial class DocumentView : UserControl
         }
 
         _cvColorizer.SetPalette(palette);
+        _indentGuides.GuideBrush = TryBrush("IndentGuideBrush");
     }
 
     private static readonly (CodeDecorationKind Kind, string Key)[] CvBrushKeys =

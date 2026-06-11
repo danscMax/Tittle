@@ -724,6 +724,34 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void DocumentView_CodeTab_AttachesIndentGuides()
+    {
+        var vm = DocumentTabViewModel.FromFile("if (x)\n    y();", "/src/a.cs");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.Contains(editor.TextArea.TextView.BackgroundRenderers, r => r is IndentGuideRenderer);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_PlainTextTab_HasCvColorizerButNoIndentGuides()
+    {
+        // .txt is still decorated (dates, urls, units…) but prose must not be striped.
+        var vm = DocumentTabViewModel.FromFile("заметка от 01.05.2026", "/notes/a.txt");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        Assert.Contains(editor.TextArea.TextView.LineTransformers, t => t is CodeDecorationColorizer);
+        Assert.DoesNotContain(editor.TextArea.TextView.BackgroundRenderers, r => r is IndentGuideRenderer);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void DocumentView_CvTooltipProbe_PlainTextHasNone()
     {
         var vm = DocumentTabViewModel.FromFile("просто текст без токенов", "/var/app.log");

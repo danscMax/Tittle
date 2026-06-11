@@ -70,4 +70,7 @@
     <SolidColorBrush x:Key="CvUnitBrush" Color="#0969DA" />
     <SolidColorBrush x:Key="CvDateBrush" Color="#1A7F37" />
 
+    <!-- Indent guides in the code view (ported): a whisper, not a stripe. -->
+    <SolidColorBrush x:Key="IndentGuideBrush" Color="#1F2328" Opacity="0.12" />
+
 </ResourceDictionary>
