@@ -189,10 +189,14 @@ built-in (Ctrl+Click). **Ported batch 3 DONE**: click-to-sort preview tables (Gr
 rows re-rowed in place, zebra re-dealt; numeric sniff shared with CSV via `TableSorting`),
 collapsible heading sections (IsVisible-only — the M10 heading contract survives),
 reading-width presets (Full/Comfort/Narrow in Настройки ▸ Раскладка, persisted).
-**Pool still open**: bookmarks per heading, TOC unread marks (need a per-file store),
-code minimap, dark-theme set, checkbox toggle (M15), M12 diagrams, M13 beyond HTML,
-M15 editing (scope decision), inline math; HTML preview + drop overlay deferred with
-reasons (no WebView · overlay repaint).
+**Ported batch 4 DONE**: heading bookmarks + TOC unread marks (pure `ViewStateStore` →
+LRU-capped `viewstate.json`; scroll-spy marks visited, ☆/★ per TOC row, palette
+«Закладка: …»), code minimap (`MinimapStrip` in a sibling column — overlays over
+AvaloniaEdit never repaint), Midnight/Ocean themes (custom `ThemeVariant`s inheriting
+Dark — palettes override only surface tokens). **M15 editing APPROVED by user decision**
+(2026-06-11). **Pool still open**: checkbox toggle (with M15), M12 diagrams (gated),
+M13 beyond HTML (PDF/print/rich-text), M15 editing+save, inline math; HTML preview +
+drop overlay deferred with reasons (no WebView · overlay repaint).
 Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions

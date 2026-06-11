@@ -221,12 +221,19 @@ tops cache survive) · **reading-width presets** (`b649b6d` — `LayoutSettings.
 Full/Comfort(760)/Narrow(620), radios in Настройки ▸ Раскладка, live + persisted;
 `ReadingWidthConverter` drives the preview column's MaxWidth/alignment).
 
-**Markdown extras still open**: bookmarks per heading · TOC unread marks (`md-visited-*`) —
-both need a per-file state store (a `settings.json` sibling or a size-capped map) ·
-checkbox click-to-toggle (write-back guarded by `fencedCodeRanges` — needs M15 save).
+**Ported batch 4 DONE (2026-06-11, visually QA'd)** — three more: **heading bookmarks + TOC
+unread marks** (`94c2bb0` — pure `Core/Services/ViewStateStore` over the `ISettingsStore` seam,
+one LRU-capped `viewstate.json` (200 files, monotonic touch counter); scroll-spy marks visited
+→ the accent dot fades; ☆/★ toggle per TOC row flushes eagerly, visited flushes with the
+session; bookmarks surface in the palette as «Закладка: …») · **code minimap** (`1f795c3` —
+`MinimapStrip` custom-rendered strip in a SIBLING column beside the editor (overlays over
+AvaloniaEdit never repaint): symbol ticks long/short by level + a viewport band; click lands
+the line at the viewport top; non-markdown tabs with an outline) · **dark theme set**
+(`cd55cf7` — `ThemeMode.Midnight`/`Ocean` as custom `ThemeVariant`s INHERITING Dark, palettes
+override only surface tokens; ☰ Вид ▸ Тема radios + palette; cycle walks the dark set first).
 
-**Chrome/tools still open**: code minimap (symbol outline is in — the remaining consumer) ·
-**multiple dark themes** (`DARK_THEMES` set — a palette-set + picker effort).
+**Markdown extras still open**: checkbox click-to-toggle (write-back guarded by
+`fencedCodeRanges` — ships with M15 save).
 
 **Deferred with reasons**: **HTML-fragment preview / whole-file HTML render** — no HTML
 renderer without a WebView (the original leaned on the browser + DOMPurify); revisit if a
@@ -270,8 +277,9 @@ reload), **M11 block math** (Sylinko.CSharpMath fork), **M13 HTML export** (Mark
 **nine-feature ported batch** (JSON pretty · outlines · CSV table · emoji · typography · stats ·
 settings import/export · back-to-top · help), and **ported batch 2** (cv-* decorations · indent
 guides · code-block copy buttons · code/text breadcrumbs · scroll-% · image lightbox ·
-front-matter panel · section folding — see the pool section), and **ported batch 3**
-(sortable preview tables · collapsible sections · reading-width presets). Pool remainder:
-bookmarks/unread marks (need a per-file store), code minimap, dark-theme set. Big open
-milestones: M12 diagrams · M13 beyond HTML (PDF/print/rich-text) · M15 editing — **scope
-decision pending (viewer vs editor)**.
+front-matter panel · section folding — see the pool section), **ported batch 3** (sortable
+preview tables · collapsible sections · reading-width presets), and **ported batch 4**
+(heading bookmarks + TOC unread marks · code minimap · Midnight/Ocean dark themes).
+**User decision (2026-06-11): M15 editing+save is APPROVED** — the remaining work, in order:
+M13 beyond HTML (PDF/print/copy-as-rich-text), then M15 (edit mode, Ctrl+S write-back,
+paste-image-as-data-URI, checkbox click-to-toggle), then M12 diagrams (gated/opt-in).
