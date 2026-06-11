@@ -7,6 +7,8 @@
 
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0C141D" />
     <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#101B26" />
+    <!-- Opaque outline-sidebar surface (see Dark.axaml). -->
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#121E28" />
 
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#17252F" Offset="0" />

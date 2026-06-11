@@ -21,15 +21,13 @@
        as the item DataContext is a HeadingOutline). -->
   <!-- Width is driven by the shell's OutlineColumn (user-resizable via the GridSplitter); the panel
        stretches to fill it. -->
-  <Border Background="{DynamicResource ChromeOverlayBrush}"
+  <!-- Transparent background + a 1px right divider only: the opaque sidebar surface and the decorative
+       reading glow are painted ONCE at the shell's BodyGrid level (a single continuous gradient across the
+       whole body), so the glow no longer breaks along this panel's edge. Don't reintroduce a background or
+       a per-panel glow here. -->
+  <Border Background="Transparent"
           BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
     <Panel>
-    <!-- Same barely-there accent glow as the markdown preview, so the reading chrome is cohesive
-         (toggled with «Декоративный фон»). Sits under the headings, hit-test invisible. -->
-    <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"
-            IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
-    <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
-            IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
     <!-- Virtualizing TOC. The ScrollViewer lives INSIDE the ItemsControl template, directly wrapping the
          ItemsPresenter, with a VirtualizingStackPanel items host — so a heading-dense document realizes
          only the visible rows (an ItemsControl in an EXTERNAL ScrollViewer measures unbounded and would

@@ -399,6 +399,33 @@
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
+
+      <!-- Body surfaces are layered HERE, at the grid level, so the decorative reading glow is a SINGLE
+           continuous gradient across the whole body instead of being painted twice (once per panel) — the
+           old approach resolved its percentage-based radial centres against each panel's own (very
+           different) width, so the gradients didn't line up and broke along the sidebar's right edge,
+           worst at the bottom where ReaderGlowB is centred. The panels above (OutlinePanel / preview) are
+           transparent so these layers show through:
+             1. full-body opaque base (editor surface)
+             2. opaque sidebar surface over col 0 (the sidebar is now non-transparent)
+             3. ONE hit-test-invisible glow spanning the whole body, under the content, above the surfaces.
+           Order matters: later children paint on top. -->
+      <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource EditorSurfaceBrush}"/>
+      <Border Grid.Column="0" Background="{DynamicResource SidebarSurfaceBrush}"
+              IsVisible="{Binding IsOutlinePaneVisible}"/>
+      <Panel Grid.Column="0" Grid.ColumnSpan="3" IsHitTestVisible="False">
+        <!-- Shown only with a document open AND the decorative background on; the welcome screen
+             paints its own glow, so gating on HasTabs avoids doubling it up. -->
+        <Panel.IsVisible>
+          <MultiBinding Converter="{x:Static conv:AllTrueConverter.Instance}">
+            <Binding Path="HasTabs"/>
+            <Binding Path="Layout.ReadingMode" FallbackValue="False"/>
+          </MultiBinding>
+        </Panel.IsVisible>
+        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"/>
+        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"/>
+      </Panel>
+
       <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
       <GridSplitter Grid.Column="1" AutomationProperties.AutomationId="OutlineSplitter"
                     ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"

@@ -6,6 +6,8 @@
     <!-- Base surfaces -->
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7F7FB" />
     <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#FFFFFF" />
+    <!-- Opaque outline-sidebar surface (see Dark.axaml). -->
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#F1F1F7" />
 
     <!-- Chrome (subtle vertical gradient for depth) -->
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">

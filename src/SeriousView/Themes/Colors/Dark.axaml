@@ -9,6 +9,9 @@
     <!-- Base surfaces -->
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#15151A" />
     <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#1B1B22" />
+    <!-- Opaque outline-sidebar surface (reproduces the old ChromeOverlay-over-window look, now solid so
+         the single body reading-glow stays continuous across the sidebar/content seam). -->
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#212129" />
 
     <!-- Chrome (subtle vertical gradient for depth) -->
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">

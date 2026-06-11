@@ -160,11 +160,10 @@
          keeps the styled render with its vertical scroll disabled. Padding keeps the prose off the
          edges (#4). MarkdownStyleName is deliberately NOT set (the auto FluentAvalonia style follows
          Light/Dark); the hyperlink command is hardened in code-behind. -->
-    <Panel IsVisible="{Binding ShowPreview}" Background="{DynamicResource EditorSurfaceBrush}">
-      <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"
-              IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
-      <Border IsHitTestVisible="False" Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"
-              IsVisible="{Binding Layout.ReadingMode, FallbackValue=False}"/>
+    <!-- Transparent so the shell's single continuous reading glow (and the editor-surface base under it)
+         show through — the glow is painted ONCE at BodyGrid level, not per-panel, so it stays continuous
+         across the sidebar/content seam. Don't put an opaque background or a per-panel glow back here. -->
+    <Panel IsVisible="{Binding ShowPreview}" Background="Transparent">
       <!-- BringIntoViewOnFocusChange off: clicking an embedded code editor focuses it, and the
            default focus-scroll would yank the page around (the reader's position is sacred). -->
       <ScrollViewer x:Name="PreviewScroll" Background="Transparent" Padding="40,24,40,8"
