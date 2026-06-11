@@ -72,6 +72,8 @@ public partial class DocumentView : UserControl
         // their broken infinite-viewport geometry). All preview navigation goes through
         // explicit PreviewScroll.Offset writes, so swallowing the request loses nothing.
         Preview.AddHandler(RequestBringIntoViewEvent, (_, e) => e.Handled = true);
+        // Image lightbox (ported): a left-click on a rendered image opens it full-size.
+        Preview.AddHandler(PointerPressedEvent, OnPreviewPointerPressed);
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -258,6 +260,29 @@ public partial class DocumentView : UserControl
 
     private void OnBackToTopClick(object? sender, RoutedEventArgs e)
         => PreviewScroll.Offset = PreviewScroll.Offset.WithY(0);
+
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(Preview).Properties.IsLeftButtonPressed && TryOpenLightbox(e.Source))
+            e.Handled = true;
+    }
+
+    /// <summary>Opens the lightbox when the event source sits inside a rendered image.
+    /// Internal so headless tests can probe without synthesizing pointer events.</summary>
+    internal bool TryOpenLightbox(object? source)
+    {
+        for (var visual = source as Visual; visual is not null && visual != Preview; visual = visual.GetVisualParent())
+        {
+            if (visual is Image { Source: { } image })
+            {
+                if (TopLevel.GetTopLevel(this) is Window owner)
+                    ImageLightboxWindow.Open(owner, image);
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>Soft cap so a pathological multi-thousand-line fence can't materialise hundreds
     /// of thousands of pixels of text visuals at once (a capped block stays inner-scrollable).</summary>

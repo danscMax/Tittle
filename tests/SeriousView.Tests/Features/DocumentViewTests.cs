@@ -722,6 +722,44 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // ---- image lightbox (ported) ----
+
+    [AvaloniaFact]
+    public void Lightbox_OpensForAPreviewImage()
+    {
+        var vm = DocumentTabViewModel.FromFile("# t", "/docs/readme.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var bitmap = new Avalonia.Media.Imaging.WriteableBitmap(
+            new PixelSize(2, 2), new Vector(96, 96));
+        var image = new Avalonia.Controls.Image { Source = bitmap };
+
+        Assert.True(view.TryOpenLightbox(image));
+        Dispatcher.UIThread.RunJobs();
+
+        var lightbox = Assert.IsType<ImageLightboxWindow>(Assert.Single(window.OwnedWindows));
+        Assert.Same(bitmap, lightbox.FindControl<Avalonia.Controls.Image>("ImageView")!.Source);
+        lightbox.Close();
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Lightbox_IgnoresNonImageClicks()
+    {
+        var vm = DocumentTabViewModel.FromFile("# t", "/docs/readme.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(view.TryOpenLightbox(new TextBlock()));
+        Assert.Empty(window.OwnedWindows);
+        window.Close();
+    }
+
     // ---- copy button on preview code blocks (ported) ----
 
     [AvaloniaFact]
