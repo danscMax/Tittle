@@ -211,12 +211,22 @@ files (`4eec2f5` — pure `SectionFolding` + AvaloniaEdit `FoldingManager` margi
 in the palette). **URL autolinking in code view**: already built-in — AvaloniaEdit's
 `LinkElementGenerator` (https/ftp/www + mailto, Ctrl+Click) is on by default; nothing to port.
 
-**Markdown extras**: sortable tables (click-to-sort, like `setupTables`) · collapsible heading
-sections (`.collapse-icon`) · bookmarks per heading · TOC unread marks (`md-visited-*`) ·
+**Ported batch 3 DONE (2026-06-11, visually QA'd)** — three more: **click-to-sort preview
+tables** (`cb3d008` — Markdown.Avalonia renders GFM tables as `Grid.Table` of Border cells;
+a header click reorders `Grid.Row` in place and re-deals the zebra classes; numeric-vs-ordinal
+sniffing shared with the CSV view via the new pure `Core/Text/TableSorting`) · **collapsible
+heading sections** (`6dcbb21` — click a preview heading to hide its body up to the next
+same-or-shallower heading; `IsVisible` only, so the M10 ordinal↔control heading contract and
+tops cache survive) · **reading-width presets** (`b649b6d` — `LayoutSettings.ReadingWidth`
+Full/Comfort(760)/Narrow(620), radios in Настройки ▸ Раскладка, live + persisted;
+`ReadingWidthConverter` drives the preview column's MaxWidth/alignment).
+
+**Markdown extras still open**: bookmarks per heading · TOC unread marks (`md-visited-*`) —
+both need a per-file state store (a `settings.json` sibling or a size-capped map) ·
 checkbox click-to-toggle (write-back guarded by `fencedCodeRanges` — needs M15 save).
 
-**Chrome/tools**: code minimap (symbol outline is in — the remaining consumer) · reading
-presets · **multiple dark themes** (`DARK_THEMES` set).
+**Chrome/tools still open**: code minimap (symbol outline is in — the remaining consumer) ·
+**multiple dark themes** (`DARK_THEMES` set — a palette-set + picker effort).
 
 **Deferred with reasons**: **HTML-fragment preview / whole-file HTML render** — no HTML
 renderer without a WebView (the original leaned on the browser + DOMPurify); revisit if a
@@ -260,7 +270,8 @@ reload), **M11 block math** (Sylinko.CSharpMath fork), **M13 HTML export** (Mark
 **nine-feature ported batch** (JSON pretty · outlines · CSV table · emoji · typography · stats ·
 settings import/export · back-to-top · help), and **ported batch 2** (cv-* decorations · indent
 guides · code-block copy buttons · code/text breadcrumbs · scroll-% · image lightbox ·
-front-matter panel · section folding — see the pool section). Next: the pool remainder
-(sortable preview tables, collapsible sections, bookmarks/unread marks, minimap, reading
-presets, dark-theme set), then the big open milestones (M12 diagrams · M13 beyond HTML ·
-M15 editing — scope decision pending).
+front-matter panel · section folding — see the pool section), and **ported batch 3**
+(sortable preview tables · collapsible sections · reading-width presets). Pool remainder:
+bookmarks/unread marks (need a per-file store), code minimap, dark-theme set. Big open
+milestones: M12 diagrams · M13 beyond HTML (PDF/print/rich-text) · M15 editing — **scope
+decision pending (viewer vs editor)**.
