@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Documents;
@@ -129,9 +130,54 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// scrolls the editor to it. Mirrors <see cref="GoToLineRequested"/>.</summary>
     public event Action? SearchUpdated;
 
-    partial void OnSearchQueryChanged(string value) => RecomputeSearch();
+    // Typing debounces on large documents (a burst → one scan); a single toggle never bursts, so
+    // those re-scan immediately.
+    partial void OnSearchQueryChanged(string value) => ScheduleSearch();
     partial void OnSearchCaseSensitiveChanged(bool value) => RecomputeSearch();
     partial void OnSearchRegexChanged(bool value) => RecomputeSearch();
+
+    // Large documents re-scan the whole buffer on every keystroke; coalesce a typing burst into one
+    // scan. Small documents (the common case + test fixtures) stay synchronous — the scan is instant
+    // and the "set query → results" contract holds. The timer is created lazily on the first
+    // large-doc search (so plain unit fixtures never construct a DispatcherTimer).
+    private const int SearchDebounceThreshold = 200_000;
+    private DispatcherTimer? _searchDebounceTimer;
+
+    internal bool SearchDebouncePending => _searchDebounceTimer is { IsEnabled: true };
+
+    private void ScheduleSearch()
+    {
+        if (DocumentText.Length <= SearchDebounceThreshold)
+        {
+            RecomputeSearch();
+            return;
+        }
+
+        if (_searchDebounceTimer is null)
+        {
+            _searchDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+            _searchDebounceTimer.Tick += OnSearchDebounceTick;
+        }
+
+        _searchDebounceTimer.Stop();
+        _searchDebounceTimer.Start();
+    }
+
+    private void OnSearchDebounceTick(object? sender, EventArgs e)
+    {
+        _searchDebounceTimer?.Stop();
+        RecomputeSearch();
+    }
+
+    // Run a pending (debounced) scan now — so next/prev act on fresh matches after a fast type+Enter.
+    private void FlushPendingSearch()
+    {
+        if (_searchDebounceTimer is { IsEnabled: true })
+        {
+            _searchDebounceTimer.Stop();
+            RecomputeSearch();
+        }
+    }
 
     // Re-run the search and jump to the first match — incremental, as the user types or flips a toggle.
     private void RecomputeSearch()
@@ -161,6 +207,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     private void CloseSearch()
     {
         IsSearchOpen = false;
+        _searchDebounceTimer?.Stop(); // cancel any pending large-doc scan
         _searchMatches = Array.Empty<MatchRange>();
         SearchMatchCount = 0;
         SearchCurrentIndex = -1;
@@ -177,6 +224,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     // Move relative to the current match (its offset is the anchor), wrapping at the ends.
     private void StepSearch(bool forward)
     {
+        FlushPendingSearch(); // a fast type+Enter on a large doc must step over fresh matches
         if (_searchMatches.Count == 0)
             return;
 
