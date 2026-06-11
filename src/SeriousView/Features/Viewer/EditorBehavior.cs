@@ -117,7 +117,7 @@ public static class EditorBehavior
             return existing;
 
         var registry = GetRegistry(PickTheme(editor));
-        var installation = editor.InstallTextMate(registry);
+        var installation = InstallTextMate(editor, registry);
         var state = new EditorState(registry, installation);
         States.Add(editor, state);
         editor.DetachedFromVisualTree += OnDetached;
@@ -138,14 +138,39 @@ public static class EditorBehavior
         // own background/foreground on the theme it was first installed with. Reinstall so the
         // new theme applies fully (editor surface follows Light+/Dark+ with the app theme).
         var grammar = GetGrammarExtension(editor);
+        var registry = GetRegistry(PickTheme(editor));
+
+        // Build the fresh installation BEFORE touching the registered state, so a throw here
+        // (InstallTextMate / a faulted seam) leaves the editor on its old, still-valid state —
+        // nothing half-registered, nothing leaked. Theme switching is a repeatable global action,
+        // so an orphaned native handle here would accumulate.
+        TextMate.Installation? freshInstallation;
+        try
+        {
+            freshInstallation = InstallTextMate(editor, registry);
+        }
+        catch
+        {
+            // Reinstall failed: keep the existing (working) state untouched. The editor stays on
+            // the previous theme's surface — degraded but consistent, and Teardown can still
+            // dispose it. ApplyGrammar at :179 swallows the same way.
+            return;
+        }
+
+        // Past the only throwing step — now swap atomically. Disposing the old installation and
+        // re-registering can't throw, so States can't be left empty.
         state.Installation.Dispose();
         States.Remove(editor);
 
-        var registry = GetRegistry(PickTheme(editor));
-        var fresh = new EditorState(registry, editor.InstallTextMate(registry));
+        var fresh = new EditorState(registry, freshInstallation);
         States.Add(editor, fresh);
         ApplyGrammar(fresh, grammar);
     }
+
+    // Seam over TextEditor.InstallTextMate so tests can force the theme-switch reinstall to throw
+    // and assert that a failure leaves States consistent (no orphaned native installation).
+    internal static Func<TextEditor, RegistryOptions, TextMate.Installation> InstallTextMate { get; set; } =
+        static (editor, registry) => editor.InstallTextMate(registry);
 
     private static void OnDetached(object? sender, VisualTreeAttachmentEventArgs e)
     {
@@ -183,4 +208,14 @@ public static class EditorBehavior
     }
 
     private sealed record EditorState(RegistryOptions Registry, TextMate.Installation Installation);
+
+    // Test-only seams (InternalsVisibleTo SeriousView.Tests). Let a headless test inspect the
+    // per-editor TextMate registration without exposing the State table or its disposal flow.
+    internal static bool HasState(TextEditor editor) => States.TryGetValue(editor, out _);
+
+    internal static void RaiseThemeVariantChanged(TextEditor editor)
+        => OnThemeVariantChanged(editor, EventArgs.Empty);
+
+    // Drives the same teardown path as DetachedFromVisualTree without fabricating the event args.
+    internal static void RaiseTeardown(TextEditor editor) => Teardown(editor);
 }
