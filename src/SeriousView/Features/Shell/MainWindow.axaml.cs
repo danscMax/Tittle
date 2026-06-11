@@ -574,6 +574,10 @@ public partial class MainWindow : AppWindow
             Session = vm?.GetSession(),
         });
         vm?.FlushViewState(); // accumulated visited marks persist alongside the session
+
+        // Detach every VM subscription and stop its timer now the window is going away. Dispose()
+        // re-flushes editor settings internally (idempotent with the call above) so nothing is lost.
+        vm?.Dispose();
     }
 
     private Size CurrentSize() => new(

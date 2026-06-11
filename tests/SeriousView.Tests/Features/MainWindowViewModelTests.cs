@@ -937,6 +937,73 @@ public class MainWindowViewModelTests
         Assert.Equal(EditorOptions.DefaultFontSize + 1, holder.Current.Editor!.FontSize); // persisted
     }
 
+    // --- B6/L3: VM lifecycle — Dispose detaches every subscription so a recreated/closed window
+    // doesn't leak via the shared Editor/Layout/watcher singletons. ---
+
+    [AvaloniaFact]
+    public void Dispose_FlushesPendingEditorChange_ThenStopsPersisting()
+    {
+        var holder = Holder();
+        var vm = CreateVm(settings: holder);
+
+        vm.ZoomInCommand.Execute(null); // marks the editor dirty (write is debounced, not yet landed)
+        vm.Dispose();                   // must flush the pending change before detaching
+
+        Assert.Equal(EditorOptions.DefaultFontSize + 1, holder.Current.Editor!.FontSize); // pending flushed
+
+        // After dispose, mutating the shared Editor must NOT re-arm the timer or persist again.
+        vm.ZoomInCommand.Execute(null);
+        vm.FlushEditorSettings(); // no pending change → no-op; the detached handler never set _editorDirty
+        Assert.Equal(EditorOptions.DefaultFontSize + 1, holder.Current.Editor!.FontSize); // unchanged
+    }
+
+    [AvaloniaFact]
+    public void Dispose_DetachesLayoutHandler_NoFurtherPersist()
+    {
+        var holder = Holder();
+        var vm = CreateVm(settings: holder);
+        vm.Dispose();
+
+        vm.Layout.ShowOmnibar = !vm.Layout.ShowOmnibar; // would persist while subscribed
+        Assert.Null(holder.Current.Layout); // detached → nothing written back
+    }
+
+    [AvaloniaFact]
+    public void Dispose_DetachesWatcher_ButDoesNotDisposeTheSharedSingleton()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "x", watcher: watcher);
+        Assert.True(watcher.HasSubscribers); // VM subscribed in the ctor
+
+        vm.Dispose();
+
+        Assert.False(watcher.HasSubscribers); // handler detached
+        Assert.False(watcher.Disposed);       // a DI singleton outlives the window — never disposed here
+    }
+
+    [AvaloniaFact]
+    public async Task Dispose_WatcherEventAfterDispose_IsIgnored()
+    {
+        var watcher = new FakeDocumentWatcher();
+        var vm = CreateVm(content: "x", watcher: watcher);
+        await vm.OpenPathAsync("/docs/a.md");
+        await vm.OpenPathAsync("/docs/b.md"); // a inactive
+
+        vm.Dispose();
+        watcher.Raise("/docs/a.md", DocumentChangeKind.Changed);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(vm.Tabs[0].IsChangedOnDisk); // detached handler never ran
+    }
+
+    [AvaloniaFact]
+    public void Dispose_IsIdempotent()
+    {
+        var vm = CreateVm();
+        vm.Dispose();
+        vm.Dispose(); // second call is a no-op, must not throw
+    }
+
     [AvaloniaFact]
     public void SelectingTab_ActivatesExactlyOne()
     {

@@ -19,8 +19,10 @@ using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IDisposable
 {
+    private bool _disposed;
+
     private readonly IFileDialogService _fileDialog;
     private readonly IFileReader _fileReader;
     private readonly IThemeService _theme;
@@ -564,8 +566,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _watcher = documentWatcher;
         _viewState = viewState;
         if (_watcher is not null)
-            _watcher.Changed += (path, kind) =>
-                Dispatcher.UIThread.Post(() => HandleDocumentChanged(path, kind));
+            _watcher.Changed += OnWatcherChanged;
 
         // Shared editor options, restored from settings. Persisted on change, but DEBOUNCED: a Ctrl+wheel
         // zoom spins ZoomIn/ZoomOut per notch, and each immediate _settings.Update did a synchronous
@@ -573,30 +574,18 @@ public partial class MainWindowViewModel : ViewModelBase
         // (the in-memory Editor is still updated instantly); FlushEditorSettings() lands it on close.
         Editor = EditorOptions.FromSettings(_settings.Current.Editor);
         _editorSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
-        _editorSaveTimer.Tick += (_, _) => FlushEditorSettings();
-        Editor.PropertyChanged += (_, _) =>
-        {
-            _editorDirty = true;
-            _editorSaveTimer.Stop();
-            _editorSaveTimer.Start();
-        };
+        _editorSaveTimer.Tick += OnEditorSaveTimerTick;
+        // Editor/Layout are shared singletons; their closures would root this VM for the whole
+        // app/window lifetime, so the handlers are named and detached in Dispose().
+        Editor.PropertyChanged += OnEditorPropertyChanged;
 
         // Shared shell-layout options, same restore-and-persist pattern. Drives the chrome in later phases.
         Layout = LayoutOptions.FromSettings(_settings.Current.Layout);
-        Layout.PropertyChanged += (_, _) =>
-            _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
+        Layout.PropertyChanged += OnLayoutPropertyChanged;
 
-        Tabs.CollectionChanged += (_, _) =>
-        {
-            OnPropertyChanged(nameof(HasTabs));
-            SyncWatchedPaths();
-        };
-        _theme.Changed += (_, _) => OnPropertyChanged(nameof(CurrentTheme));
-        _recent.Changed += (_, _) =>
-        {
-            OnPropertyChanged(nameof(HasRecent));
-            RefreshRecentItems();
-        };
+        Tabs.CollectionChanged += OnTabsCollectionChanged;
+        _theme.Changed += OnThemeChanged;
+        _recent.Changed += OnRecentChanged;
         RefreshRecentItems(); // seed from any persisted recent files
 
         // Startup precedence: an explicit file argument wins, then the last session, else welcome.
@@ -617,6 +606,65 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         _editorDirty = false;
         _settings.Update(_settings.Current with { Editor = Editor.ToSettings() });
+    }
+
+    // Named subscription handlers — kept as methods (not lambdas) so Dispose() can detach them and
+    // free this VM, which would otherwise be rooted by the shared Editor/Layout/watcher singletons.
+    private void OnWatcherChanged(string path, DocumentChangeKind kind) =>
+        Dispatcher.UIThread.Post(() => HandleDocumentChanged(path, kind));
+
+    private void OnEditorSaveTimerTick(object? sender, EventArgs e) => FlushEditorSettings();
+
+    private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _editorDirty = true;
+        _editorSaveTimer.Stop();
+        _editorSaveTimer.Start();
+    }
+
+    private void OnLayoutPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
+        _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
+
+    private void OnTabsCollectionChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasTabs));
+        SyncWatchedPaths();
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) => OnPropertyChanged(nameof(CurrentTheme));
+
+    private void OnRecentChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(HasRecent));
+        RefreshRecentItems();
+    }
+
+    /// <summary>Detach every subscription this VM made and stop the editor-save timer (flushing any
+    /// pending change first so no setting is lost). <see cref="Editor"/>/<see cref="Layout"/> and the
+    /// injected <c>_watcher</c> are SHARED singletons — we only detach our handlers from them, never
+    /// dispose them (the watcher is a DI singleton disposed at app shutdown in App.axaml.cs). Called by
+    /// the window on close so a recreated/multi-window VM doesn't leak via those long-lived closures.</summary>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+
+        // Land any debounced editor-option change, then stop the timer.
+        FlushEditorSettings();
+        _editorSaveTimer.Tick -= OnEditorSaveTimerTick;
+        _editorSaveTimer.Stop();
+
+        Editor.PropertyChanged -= OnEditorPropertyChanged;
+        Layout.PropertyChanged -= OnLayoutPropertyChanged;
+        Tabs.CollectionChanged -= OnTabsCollectionChanged;
+        _theme.Changed -= OnThemeChanged;
+        _recent.Changed -= OnRecentChanged;
+        if (_watcher is not null)
+            _watcher.Changed -= OnWatcherChanged;
+        // NOTE: _watcher is a DI singleton (App.axaml.cs) shared across windows and disposed at app
+        // shutdown — detach only, do NOT dispose it here.
     }
 
     /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active

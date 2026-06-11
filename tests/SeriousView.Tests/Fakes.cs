@@ -71,6 +71,12 @@ internal sealed class FakeDocumentWatcher : IDocumentWatcher
 
     public event Action<string, DocumentChangeKind>? Changed;
 
+    /// <summary>True while a handler is attached — lets a test assert the VM detached on Dispose.</summary>
+    public bool HasSubscribers => Changed is not null;
+
+    /// <summary>The VM must NOT dispose this shared DI singleton — only detach. Tests assert it stays false.</summary>
+    public bool Disposed { get; private set; }
+
     public void Watch(string path) => Watched.Add(path);
 
     public void Unwatch(string path) => Watched.Remove(path);
@@ -78,7 +84,7 @@ internal sealed class FakeDocumentWatcher : IDocumentWatcher
     /// <summary>Simulate a (debounced) file-system event — synchronous, same thread.</summary>
     public void Raise(string path, DocumentChangeKind kind) => Changed?.Invoke(path, kind);
 
-    public void Dispose() { }
+    public void Dispose() => Disposed = true;
 }
 
 internal sealed class FakeThemeService : IThemeService
