@@ -249,6 +249,7 @@ public partial class DocumentView : UserControl
             InvalidatePreviewHeadingTops();
             FixupEmbeddedCodeEditors();
             PreviewTableSorter.AttachAll(Preview); // ported click-to-sort, idempotent
+            PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections, idempotent
         }
         if (_vm is { IsActive: true, ShowPreview: true })
         {
