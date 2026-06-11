@@ -31,9 +31,21 @@ public partial class DocumentView : UserControl
     private bool _indentGuidesAttached;
     private AvaloniaEdit.Folding.FoldingManager? _foldingManager;
 
+    // Debounce for the heavy preview-reflow passes (heading-Y rebuild, embedded code-editor height
+    // pinning, sorter/collapser attach). A resize drag raises ScrollChanged every frame; without
+    // this they ran 3-4 full visual-tree walks per frame — the resize lag, worst in preview. The
+    // first layout runs them immediately (the opened document is complete at once); every later
+    // reflow is coalesced into one trailing run. Reset per content (DataContext change).
+    private readonly DispatcherTimer _previewReflowTimer;
+    private bool _previewReflowPrimed;
+    private int _previewReflowPassCount;
+
     public DocumentView()
     {
         InitializeComponent();
+
+        _previewReflowTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        _previewReflowTimer.Tick += OnPreviewReflowTick;
 
         // Configure the existing engine (rather than replace it) so the auto-selected
         // theme-aware FluentAvalonia style stays intact:
@@ -201,6 +213,8 @@ public partial class DocumentView : UserControl
         if (_vm is null || !_vm.IsMarkdown || _vm.ShowNotice)
             return;
 
+        FlushPendingPreviewReflow(); // fresh heading Ys before capturing/applying across modes
+
         var gen = ++_syncGeneration;
         // Apply AFTER the newly shown view has laid out (Background runs below layout), else
         // the target scroller still reports a stale/zero extent and clamps the offset away.
@@ -265,15 +279,14 @@ public partial class DocumentView : UserControl
 
     private void OnPreviewScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
-        // An extent change means reflow (first layout, images, zoom, resize) → cached heading
-        // Ys are stale. Offset-only changes keep the cache (content space is scroll-invariant).
+        // An extent change means the rendered markdown reflowed (first layout, images, zoom,
+        // resize) → cached heading Ys are stale. Rather than rebuild + re-walk the whole preview on
+        // EVERY frame of a resize drag, the first layout primes immediately and later reflows are
+        // coalesced onto a short debounce (see SchedulePreviewReflow). The cache is deliberately
+        // kept (not nulled) between schedule and trailing run, so the scroll-spy below stays a cheap
+        // binary search during the drag; the trailing run refreshes it.
         if (e.ExtentDelta.Y != 0)
-        {
-            InvalidatePreviewHeadingTops();
-            FixupEmbeddedCodeEditors();
-            PreviewTableSorter.AttachAll(Preview); // ported click-to-sort, idempotent
-            PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections, idempotent
-        }
+            SchedulePreviewReflow();
         if (_vm is { IsActive: true, ShowPreview: true })
         {
             RecomputeActiveHeading();
@@ -286,6 +299,60 @@ public partial class DocumentView : UserControl
         // Back-to-top appears once the reader is a screen below the start (ported).
         BackToTopButton.IsVisible = PreviewScroll.Offset.Y > PreviewScroll.Viewport.Height;
     }
+
+    // First layout: run the heavy passes now so the opened document is complete in one frame.
+    // Later reflows (resize/zoom storms): restart the debounce so they collapse into one trailing
+    // run instead of one-per-frame. _previewReflowPrimed resets per content in Unsubscribe.
+    private void SchedulePreviewReflow()
+    {
+        if (!_previewReflowPrimed)
+        {
+            _previewReflowPrimed = true;
+            RunPreviewReflowPasses();
+        }
+        else
+        {
+            _previewReflowTimer.Stop();
+            _previewReflowTimer.Start();
+        }
+    }
+
+    private void OnPreviewReflowTick(object? sender, EventArgs e)
+    {
+        _previewReflowTimer.Stop();
+        RunPreviewReflowPasses();
+    }
+
+    /// <summary>The heavy preview-reflow passes, coalesced: drop+rebuild the heading-Y cache from
+    /// the settled layout, re-pin embedded code-editor heights, and (idempotently) wire late-realised
+    /// tables/sections. Internal so a headless test can count invocations.</summary>
+    private void RunPreviewReflowPasses()
+    {
+        _previewReflowPassCount++;
+        InvalidatePreviewHeadingTops();
+        FixupEmbeddedCodeEditors();
+        PreviewTableSorter.AttachAll(Preview); // ported click-to-sort, idempotent
+        PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections, idempotent
+        RecomputeActiveHeading(); // marker/breadcrumbs correct against the fresh cache (guards internally)
+    }
+
+    /// <summary>If a debounced reflow is pending, run it now — so an explicit navigation (TOC jump,
+    /// mode-toggle sync) reads a fresh heading-Y cache instead of stale mid-drag positions.</summary>
+    private void FlushPendingPreviewReflow()
+    {
+        if (_previewReflowTimer.IsEnabled)
+        {
+            _previewReflowTimer.Stop();
+            RunPreviewReflowPasses();
+        }
+    }
+
+    // Test seams (headless): assert the resize storm coalesces instead of running per frame.
+    internal int PreviewReflowPassCount => _previewReflowPassCount;
+
+    internal bool PreviewReflowPending => _previewReflowTimer.IsEnabled;
+
+    internal void SimulatePreviewExtentChangeForTest() => SchedulePreviewReflow();
 
     private void OnBackToTopClick(object? sender, RoutedEventArgs e)
         => PreviewScroll.Offset = PreviewScroll.Offset.WithY(0);
@@ -772,6 +839,8 @@ public partial class DocumentView : UserControl
     private void Unsubscribe()
     {
         CancelPendingSync();
+        _previewReflowTimer.Stop();
+        _previewReflowPrimed = false; // new content re-primes its first reflow immediately
         if (_vm is not null)
         {
             _vm.EditorTextProvider = null;
@@ -854,6 +923,7 @@ public partial class DocumentView : UserControl
             return;
 
         CancelPendingSync(); // an explicit jump always beats a pending mode-toggle sync
+        FlushPendingPreviewReflow(); // settle a mid-drag reflow so heading Ys are fresh for the jump
 
         // In preview, scroll the rendered document in place; if the heading control can't be
         // located, fall back to the reliable line-based source scroll (switching mode first).
