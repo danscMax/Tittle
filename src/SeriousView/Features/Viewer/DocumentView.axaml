@@ -169,20 +169,28 @@
       <ScrollViewer x:Name="PreviewScroll" Background="Transparent" Padding="40,24,40,8"
                     BringIntoViewOnFocusChange="False"
                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <md:MarkdownScrollViewer x:Name="Preview"
-                                 Markdown="{Binding PreviewMarkdown}"
-                                 AssetPathRoot="{Binding AssetPathRoot}"
-                                 SelectionEnabled="True"
-                                 MaxWidth="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}}"
-                                 HorizontalAlignment="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}, ConverterParameter=align}">
-          <!-- Inner vertical scroll off → the outer (dark) ScrollViewer scrolls; the inner still
-               handles horizontal overflow (wide code blocks / tables). -->
-          <md:MarkdownScrollViewer.Styles>
-            <Style Selector="ScrollViewer">
-              <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
-            </Style>
-          </md:MarkdownScrollViewer.Styles>
-        </md:MarkdownScrollViewer>
+        <!-- Centering wrapper: a ScrollViewer's ScrollContentPresenter ignores its DIRECT child's
+             HorizontalAlignment (it arranges the child at the left edge of the extent), so the
+             reading-column presets (Comfort/Narrow) rendered left-aligned with all the slack dumped
+             on the right. This stretching Panel is the scroll child and fills the viewport; the
+             MarkdownScrollViewer nested inside it honours MaxWidth + HorizontalAlignment=Center the
+             normal way. Full stays full-width (Stretch + unbounded MaxWidth). Don't flatten this back. -->
+        <Panel HorizontalAlignment="Stretch">
+          <md:MarkdownScrollViewer x:Name="Preview"
+                                   Markdown="{Binding PreviewMarkdown}"
+                                   AssetPathRoot="{Binding AssetPathRoot}"
+                                   SelectionEnabled="True"
+                                   MaxWidth="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}}"
+                                   HorizontalAlignment="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}, ConverterParameter=align}">
+            <!-- Inner vertical scroll off → the outer (dark) ScrollViewer scrolls; the inner still
+                 handles horizontal overflow (wide code blocks / tables). -->
+            <md:MarkdownScrollViewer.Styles>
+              <Style Selector="ScrollViewer">
+                <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+              </Style>
+            </md:MarkdownScrollViewer.Styles>
+          </md:MarkdownScrollViewer>
+        </Panel>
       </ScrollViewer>
       <!-- Back-to-top (ported): floats over the preview once it's scrolled a screen down.
            Visibility is driven from OnPreviewScrollChanged in code-behind. -->

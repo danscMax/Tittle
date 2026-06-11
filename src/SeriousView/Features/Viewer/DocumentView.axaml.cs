@@ -486,6 +486,13 @@ public partial class DocumentView : UserControl
 
     internal void SettlePreviewResizeForTest() => OnResizeSettleTick(null, EventArgs.Empty);
 
+    // Test seams (headless): the rendered preview column's left offset within its (viewport-filling)
+    // wrapper and its laid-out width — used to prove the reading-column presets actually CENTER
+    // (offset > 0), not just that the converter returns Center (a ScrollViewer would swallow it).
+    internal double PreviewColumnLeftOffsetForTest => Preview.Bounds.X;
+
+    internal double PreviewColumnWidthForTest => Preview.Bounds.Width;
+
     private void OnBackToTopClick(object? sender, RoutedEventArgs e)
         => PreviewScroll.Offset = PreviewScroll.Offset.WithY(0);
 
