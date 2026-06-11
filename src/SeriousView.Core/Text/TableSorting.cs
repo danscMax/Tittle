@@ -16,12 +16,17 @@ public static class TableSorting
     {
         var sampled = values.Take(NumericSample).Where(v => v.Length > 0).ToList();
         return sampled.Count > 0 && sampled.All(v =>
-            double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out _));
+            double.TryParse(Normalize(v), NumberStyles.Any, CultureInfo.InvariantCulture, out _));
     }
 
     /// <summary>Sort key for a numeric column; garbage sorts last.</summary>
     public static double NumericKey(string value)
-        => double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
+        => double.TryParse(Normalize(value), NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
             ? d
             : double.MaxValue;
+
+    // Russian-styled numbers ("1 000", "1,5", NBSP groups) must sort numerically too —
+    // the target content is ru, and the cv-* layer renders exactly this convention.
+    private static string Normalize(string value)
+        => value.Trim().Replace(" ", "").Replace(" ", "").Replace(',', '.');
 }

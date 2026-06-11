@@ -77,15 +77,20 @@ public partial class DocumentView : UserControl
         Preview.AddHandler(PointerPressedEvent, OnPreviewPointerPressed);
         // Code minimap (ported): clicks land the clicked line at the viewport top.
         Minimap.LineRequested += line => ScrollSourceToLine(line);
-        // In-place editing (M15): track the unsaved-changes flag. Length-first keeps the
-        // common keystroke O(1); a programmatic full reload compares equal and stays clean.
+        // In-place editing (M15): track the unsaved-changes flag. TextLength is O(1) and
+        // alloc-free, so the common keystroke never materialises the document string
+        // (TextEditor.Text copies the WHOLE buffer — megabytes per keypress on big files).
+        // Only the rare equal-length case (char replacement, undo back to loaded) pays the
+        // full compare; a programmatic reload compares equal and stays clean.
         Source.TextChanged += (_, _) =>
         {
             if (_vm is null)
                 return;
-            var current = Source.Text ?? string.Empty;
             var loaded = _vm.SourceText ?? string.Empty;
-            _vm.IsEdited = current.Length != loaded.Length || current != loaded;
+            if ((Source.Document?.TextLength ?? 0) != loaded.Length)
+                _vm.IsEdited = true;
+            else
+                _vm.IsEdited = (Source.Text ?? string.Empty) != loaded;
         };
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
@@ -306,12 +311,15 @@ public partial class DocumentView : UserControl
     /// <summary>Clickable width of the leading ☐/☑ glyph, px.</summary>
     private const double TaskGlyphZoneWidth = 26;
 
-    /// <summary>Index of a task-glyph block among ALL task-glyph blocks of the preview, in
-    /// visual (= document) order — the contract <c>TaskListToggle</c> maps back to the raw
-    /// text. Null when the block is not a task item. Internal for headless tests.</summary>
+    /// <summary>Index of a task-glyph block among the preview's TOP-LEVEL task-glyph blocks,
+    /// in visual (= document) order — the contract <c>TaskListToggle</c> maps back to the raw
+    /// text. Admonition-nested glyphs are excluded on BOTH ends: their raw lines carry a
+    /// <c>&gt;</c> prefix the toggle regex doesn't match (the callout pass de-quotes them only
+    /// for display), so counting them would desync every later index. Null when the block is
+    /// not a (toggleable) task item. Internal for headless tests.</summary>
     internal int? TaskGlyphIndexOf(ColorTextBlock.Avalonia.CTextBlock block)
     {
-        if (!StartsWithTaskGlyph(block.Text))
+        if (!IsToggleableTaskGlyph(block))
             return null;
 
         var index = 0;
@@ -320,16 +328,18 @@ public partial class DocumentView : UserControl
         {
             if (ReferenceEquals(candidate, block))
                 return index;
-            if (StartsWithTaskGlyph(candidate.Text))
+            if (IsToggleableTaskGlyph(candidate))
                 index++;
         }
 
         return null;
 
-        static bool StartsWithTaskGlyph(string? text)
+        static bool IsToggleableTaskGlyph(ColorTextBlock.Avalonia.CTextBlock candidate)
         {
-            var trimmed = text?.TrimStart();
-            return trimmed is not null && trimmed.Length > 0 && trimmed[0] is '☐' or '☑';
+            var trimmed = candidate.Text?.TrimStart();
+            return trimmed is not null && trimmed.Length > 0 && trimmed[0] is '☐' or '☑'
+                && !candidate.GetVisualAncestors().OfType<Border>()
+                    .Any(b => b.Classes.Contains("admonition"));
         }
     }
 

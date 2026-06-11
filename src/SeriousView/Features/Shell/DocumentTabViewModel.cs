@@ -451,9 +451,11 @@ public partial class DocumentTabViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(Breadcrumbs));
         // Reading a heading marks it visited (ported md-visited-*): the TOC unread dot fades.
-        if (FilePath is not null && value >= 0 && ViewState is { } store)
+        // Version bumps ONLY on a genuinely new visit — a revisit fires per scroll tick and
+        // would otherwise recompute every visible TOC row's multi-bindings at scroll rate.
+        if (FilePath is not null && value >= 0 && ViewState is { } store
+            && store.MarkVisited(FilePath, value))
         {
-            store.MarkVisited(FilePath, value);
             ViewStateVersion++;
         }
     }

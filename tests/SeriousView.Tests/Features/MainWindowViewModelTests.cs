@@ -1294,6 +1294,7 @@ public class MainWindowViewModelTests
             vm.OpenSampleCommand.Execute(null);
             var tab = vm.SelectedTab!;
             tab.EditorTextProvider = () => "# Из примера";
+            tab.IsEdited = true; // an unedited save writes the raw DocumentText instead
 
             await vm.SaveActiveTabCommand.ExecuteAsync(null);
 
@@ -1304,6 +1305,76 @@ public class MainWindowViewModelTests
         {
             dir.Delete(recursive: true);
         }
+    }
+
+    [AvaloniaFact]
+    public async Task Save_UneditedTabWithADisplayTransform_WritesTheRawTruth()
+    {
+        // The editor SHOWS pretty JSON; an unedited Ctrl+S must not reformat the file (audit #1).
+        var dir = Directory.CreateTempSubdirectory("sv-save");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "data.json");
+            File.WriteAllText(path, "{\"a\":1}");
+            var vm = CreateVm(fileReader: new FileReader());
+            await vm.OpenPathAsync(path);
+            var tab = vm.SelectedTab!;
+            tab.JsonPrettyEnabled = true;
+            Assert.NotEqual(tab.DocumentText, tab.SourceText); // the transform is live
+            tab.EditorTextProvider = () => tab.SourceText;     // editor buffer = the display text
+            Assert.False(tab.IsEdited);
+
+            await vm.SaveActiveTabCommand.ExecuteAsync(null);
+
+            Assert.Equal("{\"a\":1}", File.ReadAllText(path)); // raw truth, not the pretty print
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task SettingsExport_OmitsTheSession_AndImportKeepsIt()
+    {
+        // Audit #5: the session (absolute open-file paths) is machine-private, not a preference.
+        var dir = Directory.CreateTempSubdirectory("sv-settings");
+        try
+        {
+            var target = Path.Combine(dir.FullName, "prefs.json");
+            var holder = Holder(new AppSettings
+            {
+                Session = new SessionState(new List<string> { @"C:\private\doc.md" }, 0),
+            });
+            var vm = CreateVm(settings: holder, savePath: target, dialogPath: target);
+
+            await vm.ExportSettingsCommand.ExecuteAsync(null);
+            Assert.DoesNotContain("private", File.ReadAllText(target));
+
+            // Importing the exported prefs must not clobber this machine's session.
+            await vm.ImportSettingsCommand.ExecuteAsync(null);
+            Assert.NotNull(holder.Current.Session);
+            Assert.Contains(@"C:\private\doc.md", holder.Current.Session!.OpenFiles);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public void ViewState_Revisit_DoesNotBumpTheVersion()
+    {
+        var store = new ViewStateStore(new FakeSettingsStore());
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# A\n\ntext\n\n# B", viewState: store);
+        var tab = vm.SelectedTab!;
+
+        tab.ActiveHeadingOrdinal = 1;
+        var afterFirst = tab.ViewStateVersion;
+        tab.ActiveHeadingOrdinal = 0;
+        tab.ActiveHeadingOrdinal = 1; // revisit — already recorded
+
+        Assert.Equal(afterFirst + 1, tab.ViewStateVersion); // only ordinal 0 added a bump
     }
 
     [AvaloniaFact]

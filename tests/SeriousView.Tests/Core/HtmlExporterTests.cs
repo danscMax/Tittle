@@ -8,6 +8,21 @@ public class HtmlExporterTests
     private static string Export(string md, bool dark = true, System.Func<string, bool>? wiki = null)
         => HtmlExporter.Export(md, "doc", dark, wiki);
 
+    [Theory]
+    [InlineData("<script>alert(1)</script>")]
+    [InlineData("safe <img src=x onerror=\"fetch('https://evil')\"> text")]
+    public void Export_RawHtmlInTheDocument_IsEscapedNotExecuted(string hostile)
+    {
+        // The export lands in a browser (print path) and on the clipboard — a hostile
+        // document must never smuggle live markup through it (SEC-001).
+        var html = Export($"# Doc\n\n{hostile}");
+
+        // No LIVE tags survive — the markup is escaped to inert visible text.
+        Assert.DoesNotContain("<script", html);
+        Assert.DoesNotContain("<img", html);
+        Assert.Contains("&lt;", html);
+    }
+
     [Fact]
     public void Export_FrontMatter_IsConsumedNotRendered()
     {

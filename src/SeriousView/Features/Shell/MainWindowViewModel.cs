@@ -100,7 +100,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            var dark = _theme.Mode != ThemeMode.Light;
+            var dark = IsAppEffectivelyDark(_theme.Mode);
             var html = HtmlExporter.Export(tab.DocumentText, tab.Header, dark, tab.BuildWikiResolver());
             await File.WriteAllTextAsync(target, html);
             StatusText = $"Экспортировано: {Path.GetFileName(target)}";
@@ -153,7 +153,11 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedTab is not { } tab || tab.EditorTextProvider is not { } pull)
             return;
 
-        var text = pull();
+        // The editor shows SourceText — possibly a DISPLAY transform (pretty JSON, smart
+        // typography). An unedited save must write the raw truth, never silently reformat
+        // the file with the transform. Once the user really edited, the buffer is what
+        // they see and intend to keep (WYSIWYG save).
+        var text = tab.IsEdited ? pull() : tab.DocumentText;
         var target = tab.FilePath;
         if (target is null)
         {
@@ -202,6 +206,16 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>One "is the app dark" answer for every HTML export flavour: the dark family
+    /// is dark, Light is light, and Auto resolves against the variant the OS actually gave
+    /// us — so export and copy-as-rich-text can never disagree about the same screen.</summary>
+    private static bool IsAppEffectivelyDark(ThemeMode mode) => mode switch
+    {
+        ThemeMode.Light => false,
+        ThemeMode.Auto => Avalonia.Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark,
+        _ => true, // Dark, Midnight, Ocean
+    };
+
     /// <summary>Copy-as-rich-text (ported, M13): the themed HTML export goes onto the
     /// clipboard as HTML (CF_HTML on Windows) with the raw markdown as the plain fallback.</summary>
     [RelayCommand]
@@ -210,9 +224,17 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedTab is not { IsMarkdown: true } tab)
             return;
 
-        var html = HtmlExporter.Export(tab.DocumentText, tab.Header, _theme.Mode.IsDark(), tab.BuildWikiResolver());
-        await _clipboard.SetHtmlAsync(html, tab.DocumentText);
-        StatusText = "Скопировано как форматированный текст";
+        try
+        {
+            var html = HtmlExporter.Export(
+                tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver());
+            await _clipboard.SetHtmlAsync(html, tab.DocumentText);
+            StatusText = "Скопировано как форматированный текст";
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, tab.Header));
+        }
     }
 
     // Settings import/export (ported). Whitelisting comes by construction: the file is
@@ -229,8 +251,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
+            // PREFERENCES only: the session (absolute paths of the user's open documents)
+            // and window placement are machine-private state, not shareable settings.
+            var shareable = _settings.Current with { Session = null, Window = null };
             await File.WriteAllTextAsync(target,
-                System.Text.Json.JsonSerializer.Serialize(_settings.Current, SettingsJson));
+                System.Text.Json.JsonSerializer.Serialize(shareable, SettingsJson));
             StatusText = $"Настройки сохранены: {Path.GetFileName(target)}";
         }
         catch (Exception ex)
@@ -256,7 +281,14 @@ public partial class MainWindowViewModel : ViewModelBase
                 return;
             }
 
-            _settings.Update(parsed);
+            // Merge the PREFERENCE fields only — an imported file must never replace this
+            // machine's session (open files) or window placement.
+            _settings.Update(_settings.Current with
+            {
+                Theme = parsed.Theme,
+                Editor = parsed.Editor,
+                Layout = parsed.Layout,
+            });
             _theme.SetMode(parsed.Theme);
             ApplyImportedOptions(parsed);
             StatusText = "Настройки импортированы";

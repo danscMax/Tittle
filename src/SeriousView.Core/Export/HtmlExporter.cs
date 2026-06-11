@@ -18,8 +18,12 @@ public static class HtmlExporter
 {
     // YAML front-matter is consumed, not rendered: the viewer shows it as a metadata panel,
     // but in a portable HTML file raw YAML would just be noise.
+    // DisableHtml is a SECURITY boundary, not a styling choice: the export is written to disk,
+    // copied to the clipboard as CF_HTML and shell-opened in a BROWSER (print path) — raw
+    // passthrough would let a hostile document execute <script> outside the app. Markdig
+    // escapes raw HTML to visible text instead, which matches a viewer's intent.
     private static readonly MarkdownPipeline Pipeline =
-        new MarkdownPipelineBuilder().UseAdvancedExtensions().UseYamlFrontMatter().Build();
+        new MarkdownPipelineBuilder().DisableHtml().UseAdvancedExtensions().UseYamlFrontMatter().Build();
 
     public static string Export(
         string markdown, string title, bool darkTheme, Func<string, bool>? wikiLinkResolver = null)

@@ -17,6 +17,11 @@ namespace SeriousView.Core.Services;
 public sealed class ViewStateStore
 {
     public const int MaxFiles = 200;
+
+    /// <summary>Per-document ordinal ceiling: a hostile/degenerate document with a million
+    /// headings must not bloat viewstate.json (the file map is capped, entries were not).</summary>
+    public const int MaxOrdinal = 10_000;
+
     private const string Key = "viewstate";
 
     private sealed class Entry
@@ -59,16 +64,22 @@ public sealed class ViewStateStore
     public IReadOnlyList<int> BookmarksFor(string path)
         => _files.TryGetValue(Normalize(path), out var e) ? e.Bookmarks.ToList() : Array.Empty<int>();
 
-    public void MarkVisited(string path, int ordinal)
+    /// <summary>Returns true only when the ordinal was NEWLY recorded — callers gate their
+    /// change notifications on it (a revisit per scroll tick must not refresh the TOC).</summary>
+    public bool MarkVisited(string path, int ordinal)
     {
-        if (ordinal < 0)
-            return;
-        _dirty |= TouchEntry(path).Visited.Add(ordinal);
+        if (ordinal is < 0 or > MaxOrdinal)
+            return false;
+        var added = TouchEntry(path).Visited.Add(ordinal);
+        _dirty |= added;
+        return added;
     }
 
     /// <summary>Flips the bookmark; returns the NEW state (true = now bookmarked).</summary>
     public bool ToggleBookmark(string path, int ordinal)
     {
+        if (ordinal is < 0 or > MaxOrdinal)
+            return false;
         var entry = TouchEntry(path);
         _dirty = true;
         if (entry.Bookmarks.Remove(ordinal))

@@ -254,6 +254,20 @@ override only surface tokens; ☰ Вид ▸ Тема radios + palette; cycle wa
 **Markdown extras still open**: checkbox click-to-toggle (write-back guarded by
 `fencedCodeRanges` — ships with M15 save).
 
+**Audit 2026-06-11 (3 parallel reviewers over the port wave) — fixed same day**: SEC
+script-injection via export/print/clipboard (Markdig now `DisableHtml()`); save clobbering
+files with the display transform (unedited save writes `DocumentText`); checkbox index
+desync with admonition-nested tasks (nested glyphs excluded on both ends); inconsistent
+dark-flag across export paths (one `IsAppEffectivelyDark`, Auto resolves the real variant);
+missing try/catch on copy-as-rich-text; settings export leaking the session (preferences
+only, import merges); per-keystroke full-document allocation (TextLength-first);
+per-rendered-line `DateTime.Now` (cached); TOC multi-binding churn on heading revisit
+(`MarkVisited` returns bool); viewstate per-entry cap (`MaxOrdinal`); ru-number table sort.
+**Deferred tech-debt (minor, by reviewer priority)**: merge the three preview reflow tree
+walks (fixup/sorter/collapser) into one pass; cache per-line indent columns (blank-heavy
+files re-scan ±100 neighbours per frame); `RevealInExplorer` Windows branch → ArgumentList
+(hardening; path is never content-derived today); `ExpandUnit` sign-parse cleanup.
+
 **Deferred with reasons**: **HTML-fragment preview / whole-file HTML render** — no HTML
 renderer without a WebView (the original leaned on the browser + DOMPurify); revisit if a
 native HTML-to-Avalonia control appears. **Drop-overlay polish** — a full-window drag overlay

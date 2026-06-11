@@ -724,6 +724,31 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void TaskGlyphIndex_SkipsAdmonitionNestedGlyphs()
+    {
+        // Audit #2: a callout body's "- [ ]" renders a glyph but its RAW line keeps the
+        // "> " prefix the toggle regex doesn't match — counting it would desync every
+        // later index. Such glyphs must be non-toggleable and excluded from the count.
+        const string md = "> [!NOTE]\n> - [ ] inside\n\n- [ ] outside";
+        var vm = DocumentTabViewModel.FromFile(md, "/docs/readme.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var glyphBlocks = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!
+            .GetVisualDescendants().OfType<ColorTextBlock.Avalonia.CTextBlock>()
+            .Where(t => t.Text?.TrimStart() is { Length: > 0 } s && (s[0] == '☐' || s[0] == '☑'))
+            .ToList();
+
+        Assert.Equal(2, glyphBlocks.Count); // both render glyphs…
+        var indices = glyphBlocks.Select(view.TaskGlyphIndexOf).ToList();
+        Assert.Contains(null, indices);     // …but the nested one is not toggleable
+        Assert.Contains(0, indices);        // and the outside one maps to RAW task #0
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void TaskGlyphIndex_MapsPreviewBlocksToDocumentOrder()
     {
         var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md"); // has "- [x] done\n- [ ] todo"

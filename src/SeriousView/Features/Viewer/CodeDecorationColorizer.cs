@@ -18,6 +18,23 @@ public sealed class CodeDecorationColorizer : DocumentColorizingTransformer
     /// <summary>Today's date for the relative-date tooltips/scans; injectable for tests.</summary>
     public Func<DateOnly> Today { get; set; } = () => DateOnly.FromDateTime(DateTime.Now);
 
+    // ColorizeLine runs per visible line per redraw — querying the OS clock thousands of
+    // times a second for a value that changes at midnight is waste. Refresh once a minute.
+    private DateOnly _todayCache;
+    private long _todayStampMs = long.MinValue;
+
+    private DateOnly CachedToday()
+    {
+        var now = Environment.TickCount64;
+        if (now - _todayStampMs > 60_000)
+        {
+            _todayCache = Today();
+            _todayStampMs = now;
+        }
+
+        return _todayCache;
+    }
+
     /// <summary>Swaps the themed brushes (called by the view on load and on theme change).</summary>
     public void SetPalette(IReadOnlyDictionary<CodeDecorationKind, IBrush> palette) => _palette = palette;
 
@@ -27,7 +44,7 @@ public sealed class CodeDecorationColorizer : DocumentColorizingTransformer
             return;
 
         var text = CurrentContext.Document.GetText(line);
-        foreach (var d in CodeDecorations.ScanLine(text, Today()))
+        foreach (var d in CodeDecorations.ScanLine(text, CachedToday()))
         {
             if (!_palette.TryGetValue(d.Kind, out var brush))
                 continue;
