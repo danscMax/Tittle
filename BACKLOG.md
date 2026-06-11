@@ -43,6 +43,14 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
   no re-template on switch). Tech-debt audit: pipe ACL + race fixes, debounced zoom writes, cached TextMate
   `RegistryOptions`, virtualized outline, dead-code removal. *(M7.5 4 Omnibar ✅ · 5 Ctrl+K palette ✅ `653ef20`;
   6 contextual toolbar · 8 Settings▸Layout still open.)*
+- **Post-full-port UX polish (2026-06-11, after the M15/full-port docs commit `b0b25a8`)** — not new
+  milestones, chrome refinement on top of the completed port: **dedup audit #1–#5** (`233a045`,
+  consolidated duplicate implementations) · **chrome icons as vector `PathIcon`** (`8facc7e`, kills the
+  Symbols-font `.notdef` race) · **editable omnibar address field** (`38d7e23`, type-a-path to open) ·
+  **single continuous reading glow** across the body (`e65c86b`) · **«Поддержать автора» donate window**
+  (`c5d688f` — new feature, NOT from the original viewer: pure `Core/Support/DonationDirectory` +
+  `Features/Donate/DonateWindow`, reached from the ☰ menu) · two shell fixes (`b5d356a` caption-button
+  column reserve, `fc8a5ae` tab-title width clamp + thin tab-strip scrollbar).
 
 ---
 
