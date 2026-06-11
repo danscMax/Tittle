@@ -103,6 +103,16 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void FromLoad_WarmsDerivedCaches_OffTheRenderPath()
+    {
+        // Outline + preview markdown must be materialised by construction, so first paint doesn't
+        // parse them lazily on the UI thread during tab-selection (the "empty skeleton flash").
+        var vm = DocumentTabViewModel.FromFile("# First\n\ntext\n\n## Second", "/docs/readme.md");
+
+        Assert.True(vm.DerivedCachesWarm);
+    }
+
+    [Fact]
     public void Outline_ForCodeFile_IsEmpty()
     {
         // A '#'-prefixed line in a non-markdown file must not produce an outline.

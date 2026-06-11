@@ -412,6 +412,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>True when the document has at least one heading (drives the outline pane).</summary>
     public bool HasOutline => Outline.Count > 0;
 
+    /// <summary>Test seam: true once the immutable derived caches (outline + preview markdown) are
+    /// materialised, so a test can assert <see cref="FromLoad"/> warmed them off the render path.</summary>
+    internal bool DerivedCachesWarm => _outline is not null && _previewMarkdown is not null;
+
     /// <summary>True when the file changed (or vanished) on disk since this tab loaded it —
     /// shown as the tab's dirty dot (M14). Reloading clears it by replacing the tab.</summary>
     [ObservableProperty]
@@ -539,6 +543,14 @@ public partial class DocumentTabViewModel : ViewModelBase
             GrammarExtension = Path.GetExtension(path),
         };
         tab.StatusText = tab.BuildStatus();
+
+        // Warm the immutable derived caches NOW, off the render-critical path. Computing Outline /
+        // PreviewMarkdown lazily on first bind happens during tab-selection's property-change
+        // dispatch (UI thread, after the body already painted) — the outline/preview then land a
+        // frame late, the "empty skeleton flash". The document text is immutable, so precomputing
+        // here is correctness-free and makes HasOutline an O(1) read by first paint.
+        _ = tab.Outline;
+        _ = tab.PreviewMarkdown;
         return tab;
     }
 

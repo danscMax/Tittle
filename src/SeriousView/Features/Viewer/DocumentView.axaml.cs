@@ -127,12 +127,16 @@ public partial class DocumentView : UserControl
             _vm.SearchUpdated += OnSearchUpdated;
             _vm.FoldAllRequested += OnFoldAllRequested;
             _vm.PropertyChanged += OnVmPropertyChanged;
-            // After the new document/layout settles: refresh the caret readout and, for a source
-            // tab, focus the editor so the keyboard works immediately (#29).
-            Dispatcher.UIThread.Post(ActivateSource);
-            // Folding/minimap need the bound Document — fill them after the bindings have applied.
-            Dispatcher.UIThread.Post(UpdateSectionFolding);
-            Dispatcher.UIThread.Post(RefreshMinimap);
+            // After the new document/layout settles, in ONE dispatcher turn (no ordering between
+            // them, so three separate Posts only added interleaved paints — part of the empty-frame
+            // cascade): refresh the caret readout and focus a source tab's editor (#29), then fill
+            // folding/minimap, which need the bound Document the bindings have just applied.
+            Dispatcher.UIThread.Post(() =>
+            {
+                ActivateSource();
+                UpdateSectionFolding();
+                RefreshMinimap();
+            });
 
             // A reload's replacement tab carries the old tab's reading position (M14): consume
             // the one-shot anchor and apply it once the fresh view has laid out. The generation
