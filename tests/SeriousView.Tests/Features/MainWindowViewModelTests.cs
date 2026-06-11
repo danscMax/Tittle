@@ -148,9 +148,10 @@ public class MainWindowViewModelTests
 
         vm.ToggleThemeCommand.Execute(null);
 
-        Assert.Equal(ThemeMode.Light, theme.Mode);
+        // The cycle now walks the dark set first (ported DARK_THEMES).
+        Assert.Equal(ThemeMode.Midnight, theme.Mode);
         Assert.Equal(1, theme.ChangeCount);
-        Assert.Equal(ThemeMode.Light, vm.CurrentTheme);
+        Assert.Equal(ThemeMode.Midnight, vm.CurrentTheme);
     }
 
     [AvaloniaFact]

@@ -1,0 +1,27 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ Midnight (ported dark set) ============
+         A near-black, cool variant. Inherits the Dark variant: only the surface tokens are
+         overridden here — admonitions, cv-* decorations etc. fall back to Dark.axaml. -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0A0A0E" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#0F0F14" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#1B1B24" Offset="0" />
+        <GradientStop Color="#14141B" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#15151D" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#262630" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#DEDEE9" />
+    <Color x:Key="ChromeForegroundColor">#DEDEE9</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#8A8A9A" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#7AA2F7" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#93B4FF" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#101017" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#A6A6B8" />
+
+</ResourceDictionary>

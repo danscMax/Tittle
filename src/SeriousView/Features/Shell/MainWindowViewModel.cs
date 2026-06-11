@@ -489,6 +489,8 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Масштаб: меньше", ZoomOutCommand, "Ctrl+−"),
             new("Масштаб: сбросить", ZoomResetCommand, "Ctrl+0"),
             new("Тема: тёмная", SetThemeCommand, parameter: ThemeMode.Dark),
+            new("Тема: полночь", SetThemeCommand, parameter: ThemeMode.Midnight),
+            new("Тема: океан", SetThemeCommand, parameter: ThemeMode.Ocean),
             new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
             new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
             new("Настройки: раскладка…", OpenLayoutSettingsCommand),

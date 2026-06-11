@@ -5,6 +5,16 @@ using SeriousView.Core.Abstractions;
 
 namespace SeriousView.Platform;
 
+/// <summary>The custom dark variants (ported DARK_THEMES). Each inherits
+/// <see cref="ThemeVariant.Dark"/>, so its palette only overrides the surface tokens —
+/// every other key falls back to the Dark dictionary.</summary>
+public static class AppThemeVariants
+{
+    public static ThemeVariant Midnight { get; } = new("Midnight", ThemeVariant.Dark);
+
+    public static ThemeVariant Ocean { get; } = new("Ocean", ThemeVariant.Dark);
+}
+
 /// <summary>
 /// Maps <see cref="ThemeMode"/> to <see cref="Application.RequestedThemeVariant"/>.
 /// Auto → <see cref="ThemeVariant.Default"/>, which makes Avalonia follow the OS
@@ -48,6 +58,8 @@ public sealed class ThemeService : IThemeService
         {
             ThemeMode.Dark => ThemeVariant.Dark,
             ThemeMode.Light => ThemeVariant.Light,
+            ThemeMode.Midnight => AppThemeVariants.Midnight,
+            ThemeMode.Ocean => AppThemeVariants.Ocean,
             _ => ThemeVariant.Default, // follow OS
         };
     }

@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:fa="using:FluentAvalonia.Styling"
+             xmlns:pl="using:SeriousView.Platform"
              x:Class="SeriousView.App"
              RequestedThemeVariant="Dark">
 
@@ -14,6 +15,11 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceInclude x:Key="Light" Source="avares://SeriousView/Themes/Colors/Light.axaml" />
                 <ResourceInclude x:Key="Dark" Source="avares://SeriousView/Themes/Colors/Dark.axaml" />
+                <!-- Ported dark set: each variant inherits Dark, overriding only surface tokens. -->
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Midnight}"
+                                 Source="avares://SeriousView/Themes/Colors/Midnight.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Ocean}"
+                                 Source="avares://SeriousView/Themes/Colors/Ocean.axaml" />
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>

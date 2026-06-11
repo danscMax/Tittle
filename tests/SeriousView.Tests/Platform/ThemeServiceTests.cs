@@ -32,10 +32,14 @@ public class ThemeServiceTests
     }
 
     [AvaloniaFact]
-    public void Cycle_GoesDarkLightAutoDark()
+    public void Cycle_WalksTheWholeSetAndWraps()
     {
         var service = NewService(); // starts Dark
 
+        service.Cycle();
+        Assert.Equal(ThemeMode.Midnight, service.Mode);
+        service.Cycle();
+        Assert.Equal(ThemeMode.Ocean, service.Mode);
         service.Cycle();
         Assert.Equal(ThemeMode.Light, service.Mode);
         service.Cycle();
@@ -65,12 +69,45 @@ public class ThemeServiceTests
     }
 
     [Fact]
-    public void Next_CyclesDarkLightAutoDark()
+    public void Next_CyclesThroughTheDarkSetThenLightAuto()
     {
         // The shared cycle helper reused by ThemeService and FakeThemeService.
-        Assert.Equal(ThemeMode.Light, ThemeMode.Dark.Next());
+        Assert.Equal(ThemeMode.Midnight, ThemeMode.Dark.Next());
+        Assert.Equal(ThemeMode.Ocean, ThemeMode.Midnight.Next());
+        Assert.Equal(ThemeMode.Light, ThemeMode.Ocean.Next());
         Assert.Equal(ThemeMode.Auto, ThemeMode.Light.Next());
         Assert.Equal(ThemeMode.Dark, ThemeMode.Auto.Next());
+    }
+
+    [Fact]
+    public void IsDark_CoversTheWholeDarkFamily()
+    {
+        Assert.True(ThemeMode.Dark.IsDark());
+        Assert.True(ThemeMode.Midnight.IsDark());
+        Assert.True(ThemeMode.Ocean.IsDark());
+        Assert.False(ThemeMode.Light.IsDark());
+        Assert.False(ThemeMode.Auto.IsDark());
+    }
+
+    [AvaloniaFact]
+    public void DarkVariants_OverrideSurfaces_AndInheritTheRest()
+    {
+        var app = Application.Current!;
+        var service = NewService();
+
+        service.SetMode(ThemeMode.Midnight);
+        Assert.Equal(AppThemeVariants.Midnight, app.RequestedThemeVariant);
+
+        // Overridden surface token resolves to the Midnight value…
+        Assert.True(app.TryGetResource("WindowBackgroundBrush", AppThemeVariants.Midnight, out var bg));
+        Assert.Equal(Color.Parse("#0A0A0E"), ((ISolidColorBrush)bg!).Color);
+
+        // …while an un-overridden token falls back to the inherited Dark dictionary.
+        Assert.True(app.TryGetResource("AdmonitionNoteBrush", AppThemeVariants.Midnight, out var note));
+        Assert.Equal(Color.Parse("#4493F8"), ((ISolidColorBrush)note!).Color);
+
+        service.SetMode(ThemeMode.Ocean);
+        Assert.Equal(AppThemeVariants.Ocean, app.RequestedThemeVariant);
     }
 
     [AvaloniaFact]

@@ -2,24 +2,33 @@ using System;
 
 namespace SeriousView.Core.Abstractions;
 
-/// <summary>Light, dark, or follow the OS.</summary>
+/// <summary>Light, one of the dark set (ported DARK_THEMES), or follow the OS.</summary>
 public enum ThemeMode
 {
     Dark,
     Light,
     Auto,
+    Midnight,
+    Ocean,
 }
 
 /// <summary>Helpers for <see cref="ThemeMode"/>.</summary>
 public static class ThemeModeExtensions
 {
-    /// <summary>The next mode in the Dark → Light → Auto → Dark cycle.</summary>
+    /// <summary>The next mode in the Dark → Midnight → Ocean → Light → Auto → Dark cycle.</summary>
     public static ThemeMode Next(this ThemeMode mode) => mode switch
     {
-        ThemeMode.Dark => ThemeMode.Light,
+        ThemeMode.Dark => ThemeMode.Midnight,
+        ThemeMode.Midnight => ThemeMode.Ocean,
+        ThemeMode.Ocean => ThemeMode.Light,
         ThemeMode.Light => ThemeMode.Auto,
         _ => ThemeMode.Dark,
     };
+
+    /// <summary>True for every member of the dark family (drives "is dark" decisions
+    /// like the HTML-export stylesheet).</summary>
+    public static bool IsDark(this ThemeMode mode)
+        => mode is ThemeMode.Dark or ThemeMode.Midnight or ThemeMode.Ocean;
 }
 
 /// <summary>Controls the application theme variant.</summary>
