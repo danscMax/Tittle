@@ -140,15 +140,22 @@ Hard without WebView (Mermaid is JS; PlantUML needs a server/jar — and **leaks
 service, must stay opt-in/off-by-default** as in the original). Chart.js blocks too. Research native
 options or a bundled renderer; may stay deferred. Don't start before M9 lands.
 
-## M13 — Export (HTML / PDF / print) · effort L–XL · ported · **HTML DONE**
+## M13 — Export (HTML / PDF / print) · effort L–XL · ported · **DONE**
 
 **Self-contained HTML export DONE** (`c04dc79` + `40c8815`): pure `Core/Export/HtmlExporter` —
 RAW markdown through **Markdig** (advanced extensions; approved dependency) into one portable
 file with an inline themed stylesheet; wiki links become relative `name.md` hrefs via the SAME
 token regex as the viewer pass; block math stays as authored (no JS in a self-contained file).
 Shell command via `IFileDialogService.SaveFileAsync` — ☰ Файл ▸ «Экспорт в HTML…» + palette;
-errors → InfoBar. **Still open**: PDF (original rasterized via html2pdf — non-selectable text;
-native alternative needs research), native Print, copy-as-rich-text, doc-like Word export.
+errors → InfoBar. **Copy-as-rich-text DONE** (`a308ee1`): pure `Core/Export/ClipboardHtml`
+builds the CF_HTML envelope (byte offsets into the UTF-8 payload, fragment markers inside
+&lt;body&gt;); `IClipboardService.SetHtmlAsync` puts "HTML Format" + plain-markdown fallback
+on the clipboard (non-Windows: "text/html"). **Print / save-as-PDF DONE** (`b4f0412`): the
+LIGHT-theme HTML export goes to a temp file and opens in the default browser
+(`IShellService.OpenWithDefaultApp`) — its print dialog covers paper AND selectable-text PDF.
+A native rasterized PDF was deliberately NOT built: off-screen preview rendering trips the
+embedded-editor geometry, and the browser output is strictly better (selectable text).
+Doc-like Word export: rich-text paste into Word covers the use case.
 
 ## M14 — Live-reload (file watcher) · effort M · **DONE**
 
@@ -165,11 +172,23 @@ survives reload** (`142efc6`): scroll-spy writes the M10 heading anchor per scro
 consumes a one-shot RestoreAnchor after first layout. Removed/renamed files keep their tab and
 last-loaded content (dot + one InfoBar). This also closes the M8 leftover (the dirty-dot row).
 
-## M15 — In-place editing + save · effort L–XL · ported · ⚠ scope decision
+## M15 — In-place editing + save · effort L–XL · ported · **DONE** (approved 2026-06-11)
 
-Turns the viewer into a light editor (the original had this): edit mode over the preview, **Ctrl+S save
-via file write**, paste-image-as-data-URI, spellcheck, edit FAB. **Big scope call — "viewer" vs "editor".**
-Decide before starting; could stay deferred if SeriousView remains read-only.
+**Core DONE** (`3c04a9e`): the source editor was already editable — the missing piece was
+persistence. `DocumentText` stays the loaded truth; the live buffer is reached through a pull
+seam (`EditorTextProvider`, wired by the view) and an `IsEdited` flag (length-first compare —
+keystrokes are O(1), programmatic reloads stay clean) drives a ● unsaved marker on the tab.
+**Ctrl+S** (dispatcher + ☰ Файл ▸ Сохранить + palette) writes UTF-8; a file-backed tab then
+refreshes through the M14 watcher reload (fresh VM, caches + reading position for free); the
+sample asks for a target and opens the saved file. **Checkbox click-to-toggle DONE**
+(`d0c843d`): a click on the ☐/☑ glyph zone in the preview flips the N-th task box in the RAW
+file via pure `Core/Text/TaskListToggle` (same `TaskItem` regex + the `MarkdownCodeRegions`
+fence guard as the glyph pass, so preview order = raw order); guarded against unsaved edits.
+**Deferred with reasons**: paste-image-as-data-URI — Avalonia 11's `IClipboard` has no
+portable image read (platform formats; revisit on the Av12 DataTransfer API); spellcheck —
+AvaloniaEdit has none built in and there is no OS hook outside WebView/TextBox (a Hunspell
+integration would be its own milestone); edit FAB — our preview/source toggle already covers
+mode switching.
 
 ---
 
@@ -279,7 +298,9 @@ settings import/export · back-to-top · help), and **ported batch 2** (cv-* dec
 guides · code-block copy buttons · code/text breadcrumbs · scroll-% · image lightbox ·
 front-matter panel · section folding — see the pool section), **ported batch 3** (sortable
 preview tables · collapsible sections · reading-width presets), and **ported batch 4**
-(heading bookmarks + TOC unread marks · code minimap · Midnight/Ocean dark themes).
-**User decision (2026-06-11): M15 editing+save is APPROVED** — the remaining work, in order:
-M13 beyond HTML (PDF/print/copy-as-rich-text), then M15 (edit mode, Ctrl+S write-back,
-paste-image-as-data-URI, checkbox click-to-toggle), then M12 diagrams (gated/opt-in).
+(heading bookmarks + TOC unread marks · code minimap · Midnight/Ocean dark themes),
+**all of M13** (HTML · rich-text · print/PDF via browser), and **all of M15** (in-place
+editing + Ctrl+S + ● marker + checkbox click-to-toggle; paste-image/spellcheck deferred with
+reasons). **The full-port goal is now COMPLETE except M12 diagrams** (Mermaid is JS-only,
+PlantUML leaks source to an external service and must stay gated opt-in — research/deferred)
+and inline math `\(…\)` (no inline-extension seam in Markdown.Avalonia — deferred).

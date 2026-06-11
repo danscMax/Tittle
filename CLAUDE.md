@@ -193,10 +193,19 @@ reading-width presets (Full/Comfort/Narrow in Настройки ▸ Раскл�
 LRU-capped `viewstate.json`; scroll-spy marks visited, ☆/★ per TOC row, palette
 «Закладка: …»), code minimap (`MinimapStrip` in a sibling column — overlays over
 AvaloniaEdit never repaint), Midnight/Ocean themes (custom `ThemeVariant`s inheriting
-Dark — palettes override only surface tokens). **M15 editing APPROVED by user decision**
-(2026-06-11). **Pool still open**: checkbox toggle (with M15), M12 diagrams (gated),
-M13 beyond HTML (PDF/print/rich-text), M15 editing+save, inline math; HTML preview +
-drop overlay deferred with reasons (no WebView · overlay repaint).
+Dark — palettes override only surface tokens). **M13 COMPLETE**: copy-as-rich-text (pure
+`ClipboardHtml` CF_HTML envelope + `SetHtmlAsync` with a markdown fallback) and print/PDF
+via the browser (light HTML to temp + `IShellService.OpenWithDefaultApp`; native raster PDF
+deliberately rejected — browser output is selectable). **M15 COMPLETE** (user-approved):
+the editor was already editable — added the `EditorTextProvider` pull seam + `IsEdited`
+(length-first compare) ● marker, **Ctrl+S** UTF-8 write-back that refreshes through the M14
+watcher reload (position survives), and **checkbox click-to-toggle** (☐/☑ glyph-zone click →
+pure `TaskListToggle` flips the N-th raw task line — same regex + fence guard as the glyph
+pass; refuses over unsaved edits). **THE FULL-PORT GOAL IS COMPLETE except**: M12 diagrams
+(Mermaid JS-only; PlantUML external service, must stay gated opt-in) and the
+deferred-with-reason list — inline math (no Markdown.Avalonia inline seam), HTML preview
+(no WebView), drop overlay (overlay repaint), paste-image (Av11 clipboard has no portable
+image read; revisit on Av12 DataTransfer), spellcheck (nothing built into AvaloniaEdit).
 Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
 
 ## Conventions
