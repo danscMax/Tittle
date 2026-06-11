@@ -248,6 +248,7 @@ public partial class DocumentView : UserControl
         {
             InvalidatePreviewHeadingTops();
             FixupEmbeddedCodeEditors();
+            PreviewTableSorter.AttachAll(Preview); // ported click-to-sort, idempotent
         }
         if (_vm is { IsActive: true, ShowPreview: true })
         {

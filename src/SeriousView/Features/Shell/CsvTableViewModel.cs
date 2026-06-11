@@ -69,24 +69,15 @@ public sealed partial class CsvTableViewModel : ObservableObject
         SortDescending = column.Index == SortColumn && !SortDescending;
         SortColumn = column.Index;
 
-        var numeric = _source.Count > 0 && _source
-            .Take(200)
-            .Select(r => r[column.Index])
-            .Where(v => v.Length > 0)
-            .All(v => double.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out _));
+        var numeric = TableSorting.IsNumericColumn(_source.Select(r => r[column.Index]));
 
         var sorted = numeric
-            ? _source.OrderBy(r => ParseOrMax(r[column.Index]))
+            ? _source.OrderBy(r => TableSorting.NumericKey(r[column.Index]))
             : _source.OrderBy(r => r[column.Index], StringComparer.CurrentCultureIgnoreCase);
         var list = (SortDescending ? sorted.Reverse() : sorted).ToList();
 
         Rows = Materialize(list, Columns.Select(c => c.Width).ToArray());
     }
-
-    private static double ParseOrMax(string value)
-        => double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
-            ? d
-            : double.MaxValue;
 
     private static IReadOnlyList<Row> Materialize(IReadOnlyList<string[]> rows, IReadOnlyList<double> widths)
         => rows.Select(r => new Row(r.Select((v, i) => new Cell(v, widths[i])).ToList())).ToList();
