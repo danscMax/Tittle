@@ -142,6 +142,8 @@
             <MenuItem Header="Справка">
               <MenuItem Header="Горячие клавиши" InputGesture="F1" Command="{Binding ShowHelpCommand}"/>
               <MenuItem Header="Статистика документа" Command="{Binding ShowStatsCommand}"/>
+              <Separator/>
+              <MenuItem Header="Поддержать автора…" Command="{Binding ShowDonateCommand}"/>
             </MenuItem>
           </MenuFlyout>
         </Button.Flyout>
@@ -303,6 +305,16 @@
     <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"
             Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
       <DockPanel>
+        <!-- Поддержать автора (♥) — far-left status-bar action; opens the donation modal (also in
+             ☰ ▸ Справка and the Ctrl+K palette). Accent-tinted vector heart, always visible; the
+             status bar renders reliably (no caption-button interaction like the title strip). -->
+        <Button DockPanel.Dock="Left" Classes="statusbtn" Margin="0,0,8,0"
+                AutomationProperties.AutomationId="DonateButton"
+                ToolTip.Tip="Поддержать автора" AutomationProperties.Name="Поддержать автора"
+                Command="{Binding ShowDonateCommand}">
+          <PathIcon Data="{StaticResource IconHeart}" Width="14" Height="14"
+                    Foreground="{DynamicResource AccentBrush}"/>
+        </Button>
         <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.StatusText}"
                    IsVisible="{Binding HasTabs}"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"

@@ -54,6 +54,38 @@
     <EllipseGeometry Center="10,16.8" RadiusX="2.4" RadiusY="2.4"/>
   </GeometryGroup>
 
+  <!-- Heart / "support": a single solid filled heart (two lobes meeting at the top dimple, tapering
+       to the bottom point). Tinted by Foreground; used on the title-strip "Поддержать автора" button. -->
+  <GeometryGroup x:Key="IconHeart">
+    <PathGeometry Figures="M12,21 C12,21 3,14.6 3,8.6 C3,5.6 5.2,3.6 7.8,3.6 C9.6,3.6 11.1,4.7 12,6.1 C12.9,4.7 14.4,3.6 16.2,3.6 C18.8,3.6 21,5.6 21,8.6 C21,14.6 12,21 12,21 Z"/>
+  </GeometryGroup>
+
+  <!-- Copy / "two sheets": a front sheet (rounded frame via EvenOdd) with a back sheet peeking
+       top-left. Used on the donation address Copy buttons. -->
+  <GeometryGroup x:Key="IconCopy" FillRule="EvenOdd">
+    <RectangleGeometry Rect="8.5,8.5,11.5,12" RadiusX="2.4" RadiusY="2.4"/>
+    <RectangleGeometry Rect="10.4,10.4,7.7,8.2"/>
+    <PathGeometry Figures="M4.5,3.5 L14.5,3.5 L14.5,5.4 L6.4,5.4 L6.4,15.5 L4.5,15.5 Z"/>
+  </GeometryGroup>
+
+  <!-- Check / "done": a chunky checkmark (filled stroke). Swaps in on the Copy button after a copy. -->
+  <GeometryGroup x:Key="IconCheck">
+    <PathGeometry Figures="M9.6,16.2 L4.4,11 L6.2,9.2 L9.6,12.6 L17.8,4.4 L19.6,6.2 Z"/>
+  </GeometryGroup>
+
+  <!-- External link / "open out": a bracket frame (EvenOdd) plus an arrow leaving the top-right. -->
+  <GeometryGroup x:Key="IconExternalLink" FillRule="EvenOdd">
+    <PathGeometry Figures="M4.5,6.5 C4.5,5.4 5.4,4.5 6.5,4.5 L11,4.5 L11,6.5 L6.5,6.5 L6.5,17.5 L17.5,17.5 L17.5,13 L19.5,13 L19.5,17.5 C19.5,18.6 18.6,19.5 17.5,19.5 L6.5,19.5 C5.4,19.5 4.5,18.6 4.5,17.5 Z"/>
+    <PathGeometry Figures="M13,4.5 L19.5,4.5 L19.5,11 L17.6,11 L17.6,7.74 L11.83,13.5 L10.5,12.17 L16.26,6.4 L13,6.4 Z"/>
+  </GeometryGroup>
+
+  <!-- Card / "payment": a rounded card outline (EvenOdd) with a solid magnetic stripe band. -->
+  <GeometryGroup x:Key="IconCard" FillRule="EvenOdd">
+    <RectangleGeometry Rect="3,5.5,18,13" RadiusX="2.6" RadiusY="2.6"/>
+    <RectangleGeometry Rect="5,7.5,14,9" RadiusX="1" RadiusY="1"/>
+    <RectangleGeometry Rect="3,8.6,18,2.6"/>
+  </GeometryGroup>
+
   <!-- Image / "picture": a frame (EvenOdd outer minus inner rect) with a sun and a mountain inside
        (each adds one more crossing inside the frame's hole, so EvenOdd fills them). -->
   <GeometryGroup x:Key="IconImage" FillRule="EvenOdd">

@@ -349,6 +349,7 @@ public partial class MainWindow : AppWindow
         viewModel.StatsRequested += stats =>
             new Features.Stats.StatsWindow { DataContext = stats }.ShowDialog(this);
         viewModel.HelpRequested += () => new Features.Help.HelpWindow().ShowDialog(this);
+        viewModel.DonateRequested += () => new Features.Donate.DonateWindow().ShowDialog(this);
     }
 
     // Restore the persisted outline width, follow live drags into a field, and expand/collapse the

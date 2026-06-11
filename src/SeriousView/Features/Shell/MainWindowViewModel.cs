@@ -528,6 +528,13 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ShowHelp() => HelpRequested?.Invoke();
 
+    /// <summary>Raised when the user opens "Поддержать автора" (♥ button / menu / palette); the donation
+    /// window is a view concern, so the shell's code-behind shows it.</summary>
+    public event Action? DonateRequested;
+
+    [RelayCommand]
+    private void ShowDonate() => DonateRequested?.Invoke();
+
     /// <summary>Show document statistics for the active tab (palette / menu).</summary>
     [RelayCommand]
     private void ShowStats()
@@ -642,6 +649,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new("Настройки: экспорт…", ExportSettingsCommand),
             new("Настройки: импорт…", ImportSettingsCommand),
             new("Справка: горячие клавиши", ShowHelpCommand, "F1"),
+            new("Поддержать автора…", ShowDonateCommand),
         };
 
         if (SelectedTab is { IsMarkdown: true } tab)
