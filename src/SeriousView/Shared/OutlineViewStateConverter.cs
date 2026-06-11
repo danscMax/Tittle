@@ -22,7 +22,7 @@ public sealed class OutlineViewStateConverter : IMultiValueConverter
             || values[1] is not DocumentTabViewModel tab)
             return string.Equals(parameter as string, "glyph", StringComparison.Ordinal) ? "☆" : false;
 
-        return parameter as string switch
+        return (parameter as string) switch
         {
             "glyph" => tab.IsHeadingBookmarked(ordinal) ? "★" : "☆",
             _ => !tab.IsHeadingVisited(ordinal),
