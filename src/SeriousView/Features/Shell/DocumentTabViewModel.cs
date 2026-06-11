@@ -4,6 +4,7 @@ using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Documents;
+using SeriousView.Core.Services;
 using SeriousView.Core.Text;
 using SeriousView.Shared;
 
@@ -440,7 +441,41 @@ public partial class DocumentTabViewModel : ViewModelBase
     public IReadOnlyList<HeadingOutline> Breadcrumbs =>
         MarkdownOutline.AncestorChain(Outline, ActiveHeadingOrdinal);
 
-    partial void OnActiveHeadingOrdinalChanged(int value) => OnPropertyChanged(nameof(Breadcrumbs));
+    partial void OnActiveHeadingOrdinalChanged(int value)
+    {
+        OnPropertyChanged(nameof(Breadcrumbs));
+        // Reading a heading marks it visited (ported md-visited-*): the TOC unread dot fades.
+        if (FilePath is not null && value >= 0 && ViewState is { } store)
+        {
+            store.MarkVisited(FilePath, value);
+            ViewStateVersion++;
+        }
+    }
+
+    /// <summary>Per-document visited/bookmark state (ported), shared via the shell; null in
+    /// tests or for the sample tab — everything degrades to "no marks".</summary>
+    public ViewStateStore? ViewState { get; set; }
+
+    /// <summary>Bumped on every visited/bookmark mutation so the TOC multi-bindings recompute.</summary>
+    [ObservableProperty]
+    private int _viewStateVersion;
+
+    public bool IsHeadingVisited(int ordinal)
+        => FilePath is null || ViewState is null || ViewState.IsVisited(FilePath, ordinal);
+
+    public bool IsHeadingBookmarked(int ordinal)
+        => FilePath is not null && ViewState is not null && ViewState.IsBookmarked(FilePath, ordinal);
+
+    /// <summary>Bookmark glyph toggle on a TOC item; flushes immediately (a rare, explicit act).</summary>
+    [RelayCommand]
+    private void ToggleBookmark(HeadingOutline? heading)
+    {
+        if (heading is null || FilePath is null || ViewState is null)
+            return;
+        ViewState.ToggleBookmark(FilePath, heading.Ordinal);
+        ViewState.Flush();
+        ViewStateVersion++;
+    }
 
     /// <summary>Raised when the user picks a heading; the view scrolls preview/source to it.</summary>
     public event Action<HeadingOutline>? NavigationRequested;

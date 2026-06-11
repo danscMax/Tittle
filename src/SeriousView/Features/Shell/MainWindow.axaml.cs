@@ -516,6 +516,7 @@ public partial class MainWindow : AppWindow
             Window = new WindowPlacement(w, h, pos.X, pos.Y, maximized),
             Session = vm?.GetSession(),
         });
+        vm?.FlushViewState(); // accumulated visited marks persist alongside the session
     }
 
     private Size CurrentSize() => new(

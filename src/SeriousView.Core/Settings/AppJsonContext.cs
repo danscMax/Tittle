@@ -17,4 +17,5 @@ namespace SeriousView.Core.Settings;
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(AppSettings))]
 [JsonSerializable(typeof(List<string>))]
+[JsonSerializable(typeof(ViewStateFile))]
 public sealed partial class AppJsonContext : JsonSerializerContext;

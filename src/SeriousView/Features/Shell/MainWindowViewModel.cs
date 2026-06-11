@@ -34,6 +34,7 @@ public partial class MainWindowViewModel : ViewModelBase
     // External-change watching (M14). The shadow list makes the diff work even for a Reset
     // (CloseAllTabs clears the collection). Null watcher (tests without one) = no live-reload.
     private readonly IDocumentWatcher? _watcher;
+    private readonly ViewStateStore? _viewState;
     private readonly List<string> _watchedPaths = new();
 
     /// <summary>Mirror the watcher's path set onto the current file-backed tabs (the
@@ -398,7 +399,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
-        IShellService shell, string[] args, IDocumentWatcher? documentWatcher = null)
+        IShellService shell, string[] args, IDocumentWatcher? documentWatcher = null,
+        ViewStateStore? viewState = null)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
@@ -408,6 +410,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _clipboard = clipboard;
         _shell = shell;
         _watcher = documentWatcher;
+        _viewState = viewState;
         if (_watcher is not null)
             _watcher.Changed += (path, kind) =>
                 Dispatcher.UIThread.Post(() => HandleDocumentChanged(path, kind));
@@ -519,6 +522,17 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
 
+        // Bookmarked headings of the active document jump via the same navigation seam (ported).
+        if (_viewState is not null && SelectedTab is { FilePath: { } statePath } bmTab)
+        {
+            foreach (var ordinal in _viewState.BookmarksFor(statePath))
+            {
+                if (ordinal >= 0 && ordinal < bmTab.Outline.Count)
+                    items.Add(new PaletteItem($"Закладка: {bmTab.Outline[ordinal].Text}",
+                        bmTab.NavigateToHeadingCommand, parameter: bmTab.Outline[ordinal]));
+            }
+        }
+
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
 
@@ -554,6 +568,10 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>Snapshot of the open file-backed tabs and the active one, for session persistence.</summary>
+    /// <summary>Persist the per-file visited/bookmark state (called where the session is saved;
+    /// bookmark toggles flush eagerly, visited marks accumulate until here).</summary>
+    public void FlushViewState() => _viewState?.Flush();
+
     public SessionState GetSession()
     {
         var withPath = Tabs.Where(t => t.FilePath is not null).ToList();
@@ -782,6 +800,7 @@ public partial class MainWindowViewModel : ViewModelBase
         tab.Editor = Editor;   // share one editor-options instance across all tabs
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
         tab.Shell = this;      // back-reference for the tab's context-menu commands
+        tab.ViewState = _viewState; // per-file visited/bookmark store (ported)
         tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty;        // persisted default (ported)
         tab.CsvAsTableEnabled = tab.Delimiter is not null && Editor.CsvAsTable; // ditto
         tab.SmartTypographyEnabled = tab.IsPlainText && Editor.SmartTypography; // ditto

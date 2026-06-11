@@ -30,7 +30,7 @@ public class MainWindowViewModelTests
         string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
         IFileReader? fileReader = null, IAppSettingsService? settings = null,
         IClipboardService? clipboard = null, IShellService? shell = null,
-        IDocumentWatcher? watcher = null)
+        IDocumentWatcher? watcher = null, ViewStateStore? viewState = null)
         => new(
             new FakeFileDialogService(dialogPath),
             fileReader ?? new FakeFileReader(content),
@@ -40,7 +40,8 @@ public class MainWindowViewModelTests
             clipboard ?? new FakeClipboardService(),
             shell ?? new FakeShellService(),
             args ?? Array.Empty<string>(),
-            watcher);
+            watcher,
+            viewState);
 
     [AvaloniaFact]
     public void Startup_WithoutArgs_ShowsWelcome_NoTabs()
@@ -1251,5 +1252,54 @@ public class MainWindowViewModelTests
         vm.OpenGoToLineCommand.Execute(null); // welcome, no selected tab — must not throw
 
         Assert.Null(vm.SelectedTab);
+    }
+
+    // ---- per-file visited / bookmarks (ported md-visited-* + bookmarks) ----
+
+    [AvaloniaFact]
+    public void ActiveHeading_MarksVisited_InTheViewState()
+    {
+        var store = new ViewStateStore(new FakeSettingsStore());
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# A\n\ntext\n\n# B", viewState: store);
+        var tab = vm.SelectedTab!;
+        Assert.False(tab.IsHeadingVisited(1));
+
+        tab.ActiveHeadingOrdinal = 1;
+
+        Assert.True(tab.IsHeadingVisited(1));
+        Assert.True(store.IsVisited("/docs/doc.md", 1));
+        Assert.False(tab.IsHeadingVisited(0));
+    }
+
+    [AvaloniaFact]
+    public void ToggleBookmark_Flips_AndSurfacesInThePalette()
+    {
+        var store = new ViewStateStore(new FakeSettingsStore());
+        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# A\n\ntext\n\n# B", viewState: store);
+        var tab = vm.SelectedTab!;
+        var versionBefore = tab.ViewStateVersion;
+
+        tab.ToggleBookmarkCommand.Execute(tab.Outline[1]);
+
+        Assert.True(tab.IsHeadingBookmarked(1));
+        Assert.True(tab.ViewStateVersion > versionBefore);
+        Assert.Contains(vm.BuildPaletteItems(), i => i.Title == "Закладка: B");
+
+        tab.ToggleBookmarkCommand.Execute(tab.Outline[1]);
+        Assert.False(tab.IsHeadingBookmarked(1));
+        Assert.DoesNotContain(vm.BuildPaletteItems(), i => i.Title.StartsWith("Закладка:"));
+    }
+
+    [AvaloniaFact]
+    public void SampleTab_WithoutAFile_HasNoUnreadMarks()
+    {
+        var store = new ViewStateStore(new FakeSettingsStore());
+        var vm = CreateVm(viewState: store);
+        vm.OpenSampleCommand.Execute(null);
+        var tab = vm.SelectedTab!;
+
+        Assert.Null(tab.FilePath);
+        Assert.True(tab.IsHeadingVisited(0));      // "everything visited" → no dots
+        Assert.False(tab.IsHeadingBookmarked(0));
     }
 }
