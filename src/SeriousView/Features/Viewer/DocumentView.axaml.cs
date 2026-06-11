@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -272,8 +273,10 @@ public partial class DocumentView : UserControl
     /// re-run picks up late font/line-height changes.</summary>
     private void FixupEmbeddedCodeEditors()
     {
-        foreach (var editor in Preview.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>())
+        // Materialised: EnsureCodeCopyButton re-parents editors, which a lazy walk can't survive.
+        foreach (var editor in Preview.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().ToList())
         {
+            EnsureCodeCopyButton(editor);
             if (editor.Document is not { LineCount: > 0 } doc)
                 continue;
 
@@ -299,6 +302,63 @@ public partial class DocumentView : UserControl
             if (Math.Abs((double.IsNaN(editor.Height) ? -1 : editor.Height) - target) > 1)
                 editor.Height = target;
         }
+    }
+
+    /// <summary>Floats a ghost «copy» button over an embedded fenced-code editor (ported).
+    /// SyntaxHigh nests the editor in a CodePad inside the code-block Border; we slip a Grid
+    /// between the Border and its child once (the "code-copy-host" class marks a done block).</summary>
+    private void EnsureCodeCopyButton(AvaloniaEdit.TextEditor editor)
+    {
+        // Nearest Border up the logical chain, capped — a miss means an unexpected structure.
+        Border? border = null;
+        var node = editor.Parent;
+        for (var i = 0; i < 3 && node is not null; i++, node = node.Parent)
+        {
+            if (node is Border b)
+            {
+                border = b;
+                break;
+            }
+        }
+
+        if (border?.Child is not { } content)
+            return;
+        if (content is Grid wrapped && wrapped.Classes.Contains("code-copy-host"))
+            return; // already wrapped
+
+        var button = new Button
+        {
+            Content = "⧉",
+            FontSize = 13,
+            Padding = new Thickness(7, 3),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+            Margin = new Thickness(0, 6, 22, 0), // clear of the editor's scrollbar lane
+            Opacity = 0.55,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
+        button.Classes.Add("code-copy");
+        ToolTip.SetTip(button, "Скопировать код");
+        AutomationProperties.SetName(button, "Скопировать код");
+        button.Click += async (_, _) =>
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is null)
+                return;
+            await clipboard.SetTextAsync(editor.Text ?? string.Empty);
+            // Quick inline confirmation, then back to the glyph.
+            button.Content = "✓";
+            DispatcherTimer.RunOnce(() => button.Content = "⧉", TimeSpan.FromSeconds(1.2));
+        };
+
+        // Detach first: a child still parented to the Border can't join the Grid.
+        var grid = new Grid();
+        grid.Classes.Add("code-copy-host");
+        border.Child = null;
+        grid.Children.Add(content);
+        grid.Children.Add(button);
+        border.Child = grid;
     }
 
     private void OnSourceScrollChanged(object? sender, EventArgs e)

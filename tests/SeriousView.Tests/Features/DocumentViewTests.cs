@@ -673,6 +673,33 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // ---- copy button on preview code blocks (ported) ----
+
+    [AvaloniaFact]
+    public void DocumentView_PreviewCodeBlock_GetsACopyButton()
+    {
+        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md"); // Sample has a ```cs fence
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // Search under the preview only — the (hidden) source editor also contains the fence text.
+        var preview = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!;
+        var embedded = preview.GetVisualDescendants().OfType<TextEditor>()
+            .First(e => e.Text?.Contains("var x = 1;") == true);
+        var copy = preview.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.Classes.Contains("code-copy")).ToList();
+
+        Assert.Single(copy);
+        // The wrap is marked and idempotent — a second fixup pass must not nest another grid.
+        var host = Assert.IsType<Grid>(copy[0].Parent);
+        Assert.Contains("code-copy-host", host.Classes);
+        Assert.Single(preview.GetVisualDescendants().OfType<Grid>(),
+            g => g.Classes.Contains("code-copy-host"));
+        window.Close();
+    }
+
     // ---- cv-* code decorations (ported) ----
 
     [AvaloniaFact]
