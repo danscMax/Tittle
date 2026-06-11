@@ -1,11 +1,11 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
+using SeriousView.Shared;
 
 namespace SeriousView.Features.Help;
 
-/// <summary>Static shortcuts reference (ported help modal).</summary>
-public partial class HelpWindow : Window
+/// <summary>Static shortcuts reference (ported help modal). Esc-close comes from <see cref="ModalWindow"/>.</summary>
+public partial class HelpWindow : ModalWindow
 {
     private static readonly (string Keys, string Action)[] Shortcuts =
     {
@@ -36,12 +36,6 @@ public partial class HelpWindow : Window
             row.Children.Add(label);
             ShortcutList.Items.Add(row);
         }
-
-        KeyDown += (_, e) =>
-        {
-            if (e.Key == Key.Escape)
-                Close();
-        };
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();

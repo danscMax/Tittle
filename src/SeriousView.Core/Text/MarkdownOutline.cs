@@ -22,7 +22,7 @@ public static partial class MarkdownOutline
         if (string.IsNullOrEmpty(markdown))
             return headings;
 
-        var lines = markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        var lines = LineEndings.NormalizeToLf(markdown).Split('\n');
         string? fence = null; // the opening fence run (``` or ~~~) while inside a code block
 
         for (var i = 0; i < lines.Length; i++)

@@ -1,6 +1,7 @@
-<Window xmlns="https://github.com/avaloniaui"
+<shared:ModalWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:text="using:SeriousView.Core.Text"
+        xmlns:shared="using:SeriousView.Shared"
         x:Class="SeriousView.Features.Stats.StatsWindow"
         x:DataType="text:TextStats"
         Title="Статистика"
@@ -45,4 +46,4 @@
       <Button Content="Закрыть" HorizontalAlignment="Right" Click="OnCloseClick"/>
     </StackPanel>
   </Border>
-</Window>
+</shared:ModalWindow>

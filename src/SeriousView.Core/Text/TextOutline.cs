@@ -20,7 +20,7 @@ public static partial class TextOutline
         if (string.IsNullOrEmpty(text))
             return result;
 
-        var lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        var lines = LineEndings.NormalizeToLf(text).Split('\n');
         for (var i = 0; i < lines.Length && result.Count < MaxHeadings; i++)
         {
             var line = lines[i].Trim();

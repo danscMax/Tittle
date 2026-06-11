@@ -22,7 +22,7 @@ public sealed class DelimitedTable
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
-        var records = SplitRecords(text.Replace("\r\n", "\n").Replace('\r', '\n'), delimiter);
+        var records = SplitRecords(LineEndings.NormalizeToLf(text), delimiter);
         if (records.Count == 0)
             return null;
 

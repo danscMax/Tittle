@@ -51,31 +51,16 @@ public static class HtmlExporter
     }
 
     /// <summary>[[name]] → a relative markdown link to the sibling note (Markdig renders the
-    /// anchor), or plain text when nothing resolves. Fence/inline-code aware, like the viewer.</summary>
+    /// anchor), or plain text when nothing resolves. Shares the viewer's scan + guard set via
+    /// <see cref="WikiLinkRewriter"/>; only the URL format (<c>name.md</c>) differs.</summary>
     private static string ConvertWikiLinks(string markdown, Func<string, bool>? resolve)
     {
         if (!markdown.Contains("[[", StringComparison.Ordinal))
             return markdown;
 
-        var lines = markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        var lines = LineEndings.NormalizeToLf(markdown).Split('\n');
         var regions = MarkdownCodeRegions.Scan(lines);
-        for (var i = 0; i < lines.Length; i++)
-        {
-            if (regions.IsFencedLine(i) || !lines[i].Contains("[[", StringComparison.Ordinal))
-                continue;
-
-            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(
-                lines[i], MarkdownPreprocessor.WikiTokenRegex, m =>
-                {
-                    var name = m.Groups[1].Value.Trim();
-                    if (name.Length == 0)
-                        return m.Value;
-                    if (!WikiLink.IsValidName(name) || resolve?.Invoke(name) != true)
-                        return name;
-                    return $"[{name}]({Uri.EscapeDataString(name)}.md)";
-                });
-        }
-
+        WikiLinkRewriter.Rewrite(lines, regions, resolve, name => $"{Uri.EscapeDataString(name)}.md");
         return string.Join("\n", lines);
     }
 

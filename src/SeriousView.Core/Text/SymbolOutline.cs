@@ -27,7 +27,7 @@ public static partial class SymbolOutline
             || !Patterns.TryGetValue(extension.ToLowerInvariant(), out var patterns))
             return result;
 
-        var lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+        var lines = LineEndings.NormalizeToLf(text).Split('\n');
         var count = Math.Min(lines.Length, MaxLines);
 
         // First sweep: collect raw matches with their indentation.

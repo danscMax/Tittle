@@ -13,8 +13,7 @@ public static class CrashLogger
 {
     private const long MaxBytes = 256 * 1024;
 
-    private static readonly string LogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SeriousView", "crash.log");
+    private static readonly string LogPath = Path.Combine(AppPaths.DataDir, "crash.log");
 
     public static void Write(Exception error, string source)
     {

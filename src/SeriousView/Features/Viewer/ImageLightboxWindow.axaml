@@ -1,5 +1,6 @@
-<Window xmlns="https://github.com/avaloniaui"
+<shared:ModalWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="using:SeriousView.Shared"
         x:Class="SeriousView.Features.Viewer.ImageLightboxWindow"
         Title="Просмотр изображения"
         ShowInTaskbar="False" SystemDecorations="None" CanResize="False"
@@ -15,4 +16,4 @@
       <Image x:Name="ImageView" Stretch="Uniform" StretchDirection="DownOnly" Margin="24"/>
     </DockPanel>
   </Border>
-</Window>
+</shared:ModalWindow>

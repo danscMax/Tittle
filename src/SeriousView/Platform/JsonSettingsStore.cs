@@ -24,8 +24,7 @@ public sealed class JsonSettingsStore : ISettingsStore
     /// Overridable so tests can point at a temp directory.</param>
     public JsonSettingsStore(string? directory = null)
     {
-        _dir = directory ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SeriousView");
+        _dir = directory ?? AppPaths.DataDir;
         Directory.CreateDirectory(_dir);
     }
 

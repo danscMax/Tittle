@@ -36,8 +36,7 @@ public static partial class MarkdownPreprocessor
         if (string.IsNullOrEmpty(markdown))
             return markdown ?? string.Empty;
 
-        var lines = new List<string>(
-            markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
+        var lines = new List<string>(LineEndings.NormalizeToLf(markdown).Split('\n'));
 
         // YAML front-matter first (ported): only valid at the very top, before any other pass
         // can mistake its --- fences for thematic breaks or transform inside the block.
@@ -187,25 +186,7 @@ public static partial class MarkdownPreprocessor
     // code spans, link-reference-definition lines and overlong lines.
     private static void ConvertWikiLinksInPlace(
         List<string> lines, MarkdownCodeRegions regions, Func<string, bool>? resolve)
-    {
-        for (var i = 0; i < lines.Count; i++)
-        {
-            var line = lines[i];
-            if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
-                || !line.Contains("[[", StringComparison.Ordinal) || LinkRefDefLine().IsMatch(line))
-                continue;
-
-            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(line, WikiToken(), m =>
-            {
-                var name = m.Groups[1].Value.Trim();
-                if (name.Length == 0)
-                    return m.Value;
-                if (!WikiLink.IsValidName(name) || resolve?.Invoke(name) != true)
-                    return name;
-                return $"[{name}]({WikiLink.CreateUrl(name)})";
-            });
-        }
-    }
+        => WikiLinkRewriter.Rewrite(lines, regions, resolve, WikiLink.CreateUrl);
 
     // _x_ → *x* (display-only): the renderer has no single-underscore italics, while its
     // __x__ renders as UNDERLINE natively (verified against Markdown.Avalonia 11.0.3) — so
@@ -485,6 +466,12 @@ public static partial class MarkdownPreprocessor
     /// <summary>The wiki-link token, shared with the HTML exporter (M13) so the two wiki
     /// passes can never drift apart. Group 1 = the name.</summary>
     internal static Regex WikiTokenRegex => WikiToken();
+
+    /// <summary>The per-line cap and the link-reference-definition guard, exposed to the shared
+    /// <see cref="WikiLinkRewriter"/> so both wiki passes use the viewer's strict guard set.</summary>
+    internal const int MaxInlineLine = MaxInlineLineLength;
+
+    internal static bool IsLinkRefDefLine(string line) => LinkRefDefLine().IsMatch(line);
 
     // A link-reference definition line ("[label]: dest") — skipped by the inline passes; the
     // (?!\^) keeps footnote DEFINITION text eligible (it becomes visible «Сноски» content).

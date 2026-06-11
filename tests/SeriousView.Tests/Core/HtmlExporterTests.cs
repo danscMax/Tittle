@@ -98,6 +98,17 @@ public class HtmlExporterTests
     }
 
     [Fact]
+    public void Export_WikiInOverlongLine_Unchanged()
+    {
+        // The export now shares the viewer's strict guard set (WikiLinkRewriter): a [[note]] in an
+        // over-long line is left as authored, so preview and export agree on the same document.
+        var html = Export("[[note]] " + new string('x', 10_001), wiki: _ => true);
+
+        Assert.Contains("[[note]]", html);
+        Assert.DoesNotContain("note.md", html);
+    }
+
+    [Fact]
     public void Export_Theme_SwitchesThePalette()
     {
         var dark = Export("x", dark: true);

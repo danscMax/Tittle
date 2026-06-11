@@ -17,8 +17,7 @@ public sealed class EnumRadioConverter : IValueConverter
     public static readonly EnumRadioConverter Instance = new();
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is not null && parameter is not null
-           && string.Equals(value.ToString(), parameter.ToString(), StringComparison.Ordinal);
+        => EnumToBoolConverter.NameMatches(value, parameter);
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => value is true && parameter is not null && targetType.IsEnum

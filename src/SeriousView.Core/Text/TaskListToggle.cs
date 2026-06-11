@@ -18,8 +18,7 @@ public static class TaskListToggle
         if (string.IsNullOrEmpty(documentText) || taskIndex < 0)
             return null;
 
-        var lines = new List<string>(
-            documentText.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
+        var lines = new List<string>(LineEndings.NormalizeToLf(documentText).Split('\n'));
         var regions = MarkdownCodeRegions.Scan(lines);
 
         var seen = 0;
