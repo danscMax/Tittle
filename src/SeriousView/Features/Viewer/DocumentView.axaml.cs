@@ -40,12 +40,23 @@ public partial class DocumentView : UserControl
     private bool _previewReflowPrimed;
     private int _previewReflowPassCount;
 
+    // Resize coalescing for the preview. Markdown.Avalonia does NOT virtualise: the whole document is
+    // realised, so Avalonia re-measures every block on EVERY width change — a resize drag re-lays-out
+    // the entire document per frame (measured ~68ms/step on a 120-section doc vs ~0.1ms in the
+    // virtualised source editor). A control with an explicit Width caches its measure, so while a
+    // resize is in flight we PIN Preview.Width (no re-wrap, 0 re-layouts) and release it once on
+    // settle (one re-layout). Reset per content in Unsubscribe.
+    private readonly DispatcherTimer _resizeSettleTimer;
+    private bool _previewFrozen;
+
     public DocumentView()
     {
         InitializeComponent();
 
         _previewReflowTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
         _previewReflowTimer.Tick += OnPreviewReflowTick;
+        _resizeSettleTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+        _resizeSettleTimer.Tick += OnResizeSettleTick;
 
         // Configure the existing engine (rather than replace it) so the auto-selected
         // theme-aware FluentAvalonia style stays intact:
@@ -75,6 +86,8 @@ public partial class DocumentView : UserControl
         Source.TextArea.SelectionChanged += OnSelectionChanged;          // selection word count (ported)
         // Scroll-spy (M10): track the heading at the viewport top in both modes.
         PreviewScroll.ScrollChanged += OnPreviewScrollChanged;
+        // Freeze the preview's width while a resize is in flight (see _resizeSettleTimer).
+        PreviewScroll.SizeChanged += OnPreviewViewportSizeChanged;
         Source.TextArea.TextView.ScrollOffsetChanged += OnSourceScrollChanged;
         // The reader's position is sacred: nothing inside the preview may yank the page via
         // bring-into-view (embedded code editors request it on focus/caret/selection against
@@ -161,9 +174,11 @@ public partial class DocumentView : UserControl
     private void DetachChildHandlers()
     {
         _previewReflowTimer.Tick -= OnPreviewReflowTick;
+        _resizeSettleTimer.Tick -= OnResizeSettleTick;
         Source.TextArea.Caret.PositionChanged -= OnCaretPositionChanged;
         Source.TextArea.SelectionChanged -= OnSelectionChanged;
         PreviewScroll.ScrollChanged -= OnPreviewScrollChanged;
+        PreviewScroll.SizeChanged -= OnPreviewViewportSizeChanged;
         Source.TextArea.TextView.ScrollOffsetChanged -= OnSourceScrollChanged;
         Preview.RemoveHandler(RequestBringIntoViewEvent, OnPreviewRequestBringIntoView);
         Preview.RemoveHandler(PointerPressedEvent, OnPreviewPointerPressed);
@@ -236,7 +251,10 @@ public partial class DocumentView : UserControl
         else if (e.PropertyName == nameof(DocumentTabViewModel.IsSearchOpen))
             Dispatcher.UIThread.Post(OnSearchOpenChanged);
         else if (e.PropertyName == nameof(DocumentTabViewModel.ViewMode))
+        {
+            UnfreezePreviewWidth(); // a mode switch must not carry a stale width pin into the next show
             SyncPositionAcrossModes();
+        }
     }
 
     // --- Position sync on the preview↔source toggle (M10). The reading position is anchored
@@ -411,6 +429,62 @@ public partial class DocumentView : UserControl
     internal bool PreviewReflowPending => _previewReflowTimer.IsEnabled;
 
     internal void SimulatePreviewExtentChangeForTest() => SchedulePreviewReflow();
+
+    // --- Resize freeze: pin the preview width while a resize is in flight, release on settle. The
+    //     root cost on resize is Markdown.Avalonia re-measuring the whole non-virtualised document on
+    //     every width change. An explicit Width caches the measure, so during the drag the document
+    //     keeps its layout (0 re-wraps) and re-lays-out exactly once when the drag settles. ---
+    private void OnPreviewViewportSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        // Only a genuine width change re-wraps the document. Skip the initial 0→size layout and
+        // height-only changes (vertical resize doesn't reflow) — nothing to coalesce there.
+        if (e.PreviousSize.Width <= 0 || e.NewSize.Width == e.PreviousSize.Width)
+            return;
+        HandlePreviewResize();
+    }
+
+    private void HandlePreviewResize()
+    {
+        if (_vm is not { ShowPreview: true })
+            return; // source/notice tabs hide the preview; nothing to freeze
+
+        if (!_previewFrozen)
+        {
+            var width = Preview.Bounds.Width;
+            if (width <= 0)
+                return; // not laid out yet — let the first real layout happen
+            // Pin at the CURRENT (already reading-width-capped) width: the constraint stops changing,
+            // so subsequent resize frames hit the measure cache instead of re-wrapping the document.
+            Preview.Width = width;
+            _previewFrozen = true;
+        }
+
+        _resizeSettleTimer.Stop();
+        _resizeSettleTimer.Start();
+    }
+
+    private void OnResizeSettleTick(object? sender, EventArgs e)
+    {
+        _resizeSettleTimer.Stop();
+        UnfreezePreviewWidth();
+    }
+
+    // Release the pin → the preview re-stretches to the viewport (capped by the reading-width MaxWidth)
+    // and re-lays-out once. Safe to call when not frozen (NaN restores auto width).
+    private void UnfreezePreviewWidth()
+    {
+        if (!_previewFrozen)
+            return;
+        _previewFrozen = false;
+        Preview.Width = double.NaN;
+    }
+
+    // Test seams (headless): assert the preview width pins during a resize and releases on settle.
+    internal bool PreviewWidthFrozen => _previewFrozen;
+
+    internal void SimulatePreviewResizeForTest() => HandlePreviewResize();
+
+    internal void SettlePreviewResizeForTest() => OnResizeSettleTick(null, EventArgs.Empty);
 
     private void OnBackToTopClick(object? sender, RoutedEventArgs e)
         => PreviewScroll.Offset = PreviewScroll.Offset.WithY(0);
@@ -899,6 +973,8 @@ public partial class DocumentView : UserControl
         CancelPendingSync();
         _previewReflowTimer.Stop();
         _previewReflowPrimed = false; // new content re-primes its first reflow immediately
+        _resizeSettleTimer.Stop();
+        UnfreezePreviewWidth(); // new content must start from auto width, not a stale pin
         if (_vm is not null)
         {
             _vm.EditorTextProvider = null;
