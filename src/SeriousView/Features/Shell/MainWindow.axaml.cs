@@ -409,14 +409,27 @@ public partial class MainWindow : AppWindow
     }
 #pragma warning restore CS0618
 
+    // Size Col3 to the exact system caption-button width (DIPs). Sizing the ColumnDefinition (not a
+    // child Border's Width) is what makes the star omnibar column reflow and keep the right-hand
+    // cluster clear of min/max/close. (x:Name on a ColumnDefinition does not generate a field, so we
+    // reach it by index on the named grid — same pattern as OutlineColumn.)
+    private ColumnDefinition CaptionReserveColumn => TitleGrid.ColumnDefinitions[3];
+
+    private void ApplyCaptionReserve() =>
+        CaptionReserveColumn.Width = new GridLength(TitleBar.RightInset);
+
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
         _opened = true; // from here on, size/position changes are real (not XAML/restore writes)
 
-        // Reserve room on the right for the system caption buttons so the title-bar content
-        // (the Open button) never sits under min/max/close. RightInset is valid once shown.
-        CaptionReserve.Width = TitleBar.RightInset;
+        // Reserve the system caption-button band on the COLUMN itself (see the XAML note) so the
+        // right-hand cluster never sits under min/max/close. RightInset is valid once shown and is
+        // already in DIPs for FluentAvalonia (no scale division). Re-apply on resize because RightInset
+        // can change when the window moves to a monitor with a different DPI (WM_DPICHANGED resizes the
+        // window) and the property raises no change notification of its own.
+        ApplyCaptionReserve();
+        Resized += (_, _) => ApplyCaptionReserve();
 
         MeasureChromeOffset();
 

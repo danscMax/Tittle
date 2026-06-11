@@ -69,7 +69,19 @@
     <!-- Chrome fill on a hit-test-invisible layer so the empty title-bar zones still drag the
          window — a non-null Background on the Grid itself swallows the AppWindow drag. -->
     <Border Background="{DynamicResource ChromeOverlayBrush}" IsHitTestVisible="False"/>
-    <Grid ColumnDefinitions="Auto,*,Auto,Auto" MinHeight="40">
+    <!-- Col3 reserves the system caption-button band. Its Width is set on the COLUMN (not on a child
+         Border) in code-behind from TitleBar.RightInset: an Auto column fed by a child's late-set
+         Width does not re-distribute the star omnibar column, leaving the reserve at 0 and the
+         right-hand cluster sliding under min/max/close. Sizing the ColumnDefinition directly is the
+         canonical WinUI/FluentAvalonia padding-column pattern and always reflows correctly. -->
+    <Grid x:Name="TitleGrid" MinHeight="40">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+        <!-- [3] caption-button reserve — Width set from code-behind (TitleGrid.ColumnDefinitions[3]). -->
+        <ColumnDefinition Width="0"/>
+      </Grid.ColumnDefinitions>
       <!-- ☰ menu — the etalon default (MenuPlacement.Hidden). Replaces the "SeriousView" wordmark
            (which crowded the tabs) and gathers File/View commands. First real consumer of Layout:
            shown only for the Hidden placement (Bar / TitleBar presets arrive with Settings → Layout).
@@ -200,10 +212,6 @@
         </Button>
       </StackPanel>
 
-      <!-- Reserve room for the system min/max/close buttons. Width is set in code-behind from
-           TitleBar.RightInset once the native title bar is initialised (the property does not
-           notify, so an XAML binding would stay at its initial 0). -->
-      <Border Grid.Column="3" x:Name="CaptionReserve"/>
     </Grid>
     </Panel>
     </Border>
