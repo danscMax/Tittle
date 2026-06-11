@@ -111,6 +111,38 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Checkbox click-to-toggle (M15): flips the N-th task box in the RAW file and
+    /// reloads the tab (the M14 swap keeps the reading position). Guarded: no file on disk or
+    /// unsaved editor changes → a status hint instead of clobbering anything.</summary>
+    public async Task ToggleTaskAsync(DocumentTabViewModel tab, int taskIndex)
+    {
+        if (tab.FilePath is null)
+        {
+            StatusText = "Файл не сохранён на диске — чекбокс не переключить";
+            return;
+        }
+
+        if (tab.IsEdited)
+        {
+            StatusText = "Сначала сохраните правки (Ctrl+S)";
+            return;
+        }
+
+        var updated = TaskListToggle.ToggleAt(tab.DocumentText, taskIndex);
+        if (updated is null)
+            return;
+
+        try
+        {
+            await File.WriteAllTextAsync(tab.FilePath, updated);
+            await ReloadTabAsync(tab); // immediate; the watcher's debounced reload is a no-op repeat
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, tab.FilePath));
+        }
+    }
+
     /// <summary>Save (M15, Ctrl+S): writes the live editor buffer back to the file (UTF-8 —
     /// same policy as the original's File API write). A file-backed tab then reloads itself
     /// through the M14 watcher (fresh VM, caches and reading position handled); a tab without

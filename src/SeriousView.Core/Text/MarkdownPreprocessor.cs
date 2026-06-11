@@ -465,8 +465,9 @@ public static partial class MarkdownPreprocessor
     private static partial Regex QuoteLine();
 
     // Capture: (1) list marker incl. trailing space, (2) the check char, (3) the item text.
+    // Internal: TaskListToggle flips the SAME shape in the raw text (one regex, one dialect).
     [GeneratedRegex(@"^(\s*[-*+]\s+)\[([ xX])\]\s+(.*)$")]
-    private static partial Regex TaskItem();
+    internal static partial Regex TaskItem();
 
     // A footnote definition line: [^id]: text. Capture (1) id, (2) text.
     [GeneratedRegex(@"^\[\^([^\]]+)\]:\s?(.*)$")]

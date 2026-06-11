@@ -283,8 +283,54 @@ public partial class DocumentView : UserControl
 
     private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(Preview).Properties.IsLeftButtonPressed && TryOpenLightbox(e.Source))
+        if (!e.GetCurrentPoint(Preview).Properties.IsLeftButtonPressed)
+            return;
+        if (TryOpenLightbox(e.Source))
+        {
             e.Handled = true;
+            return;
+        }
+
+        // Checkbox click-to-toggle (M15): only the glyph zone at the line start flips the
+        // box — the rest of the item stays selectable text.
+        if (e.Source is ColorTextBlock.Avalonia.CTextBlock block
+            && TaskGlyphIndexOf(block) is { } taskIndex
+            && e.GetPosition(block).X < TaskGlyphZoneWidth
+            && _vm is { Shell: { } shell } vm)
+        {
+            _ = shell.ToggleTaskAsync(vm, taskIndex);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Clickable width of the leading ☐/☑ glyph, px.</summary>
+    private const double TaskGlyphZoneWidth = 26;
+
+    /// <summary>Index of a task-glyph block among ALL task-glyph blocks of the preview, in
+    /// visual (= document) order — the contract <c>TaskListToggle</c> maps back to the raw
+    /// text. Null when the block is not a task item. Internal for headless tests.</summary>
+    internal int? TaskGlyphIndexOf(ColorTextBlock.Avalonia.CTextBlock block)
+    {
+        if (!StartsWithTaskGlyph(block.Text))
+            return null;
+
+        var index = 0;
+        foreach (var candidate in Preview.GetVisualDescendants()
+                     .OfType<ColorTextBlock.Avalonia.CTextBlock>())
+        {
+            if (ReferenceEquals(candidate, block))
+                return index;
+            if (StartsWithTaskGlyph(candidate.Text))
+                index++;
+        }
+
+        return null;
+
+        static bool StartsWithTaskGlyph(string? text)
+        {
+            var trimmed = text?.TrimStart();
+            return trimmed is not null && trimmed.Length > 0 && trimmed[0] is '☐' or '☑';
+        }
     }
 
     /// <summary>Opens the lightbox when the event source sits inside a rendered image.

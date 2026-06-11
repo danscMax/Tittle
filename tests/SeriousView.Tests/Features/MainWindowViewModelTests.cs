@@ -1317,6 +1317,51 @@ public class MainWindowViewModelTests
         Assert.Null(vm.SelectedTab!.EditorTextProvider);
     }
 
+    [AvaloniaFact]
+    public async Task ToggleTask_FlipsTheBoxInTheFile_AndReloadsTheTab()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-task");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "todo.md");
+            File.WriteAllText(path, "- [ ] one\n- [ ] two");
+            var vm = CreateVm(fileReader: new FileReader());
+            await vm.OpenPathAsync(path);
+
+            await vm.ToggleTaskAsync(vm.SelectedTab!, 1);
+
+            Assert.Equal("- [ ] one\n- [x] two", File.ReadAllText(path));
+            Assert.Equal("- [ ] one\n- [x] two", vm.SelectedTab!.DocumentText); // reloaded
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ToggleTask_WithUnsavedEdits_RefusesWithAHint()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-task");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "todo.md");
+            File.WriteAllText(path, "- [ ] one");
+            var vm = CreateVm(fileReader: new FileReader());
+            await vm.OpenPathAsync(path);
+            vm.SelectedTab!.IsEdited = true;
+
+            await vm.ToggleTaskAsync(vm.SelectedTab!, 0);
+
+            Assert.Equal("- [ ] one", File.ReadAllText(path)); // untouched
+            Assert.Contains("Ctrl+S", vm.StatusText);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
     // ---- copy-as-rich-text (ported, M13) ----
 
     [AvaloniaFact]

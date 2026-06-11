@@ -723,6 +723,26 @@ public class DocumentViewTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void TaskGlyphIndex_MapsPreviewBlocksToDocumentOrder()
+    {
+        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md"); // has "- [x] done\n- [ ] todo"
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var blocks = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!
+            .GetVisualDescendants().OfType<ColorTextBlock.Avalonia.CTextBlock>()
+            .Where(t => t.Text?.TrimStart() is { Length: > 0 } s && (s[0] == '☐' || s[0] == '☑'))
+            .ToList();
+
+        Assert.Equal(2, blocks.Count);
+        Assert.Equal(0, view.TaskGlyphIndexOf(blocks[0]));
+        Assert.Equal(1, view.TaskGlyphIndexOf(blocks[1]));
+        window.Close();
+    }
+
     // ---- in-place editing (M15): the view feeds the edited flag + the pull seam ----
 
     [AvaloniaFact]
