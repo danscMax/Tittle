@@ -67,16 +67,12 @@ public partial class DocumentView : UserControl
             engine.ContainerBlockHandler = new AdmonitionBlockHandler(engine);
         }
 
-        // Relay the editor caret position to the active tab VM (shown in the status bar).
-        Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
-        // Selection word count for the status bar (ported).
-        Source.TextArea.SelectionChanged += (_, _) =>
-        {
-            if (_vm is null)
-                return;
-            var words = Core.Text.TextStatistics.CountWords(Source.SelectedText);
-            _vm.SelectionInfo = words > 0 ? $"выдел.: {words} сл." : string.Empty;
-        };
+        // Child-control / self subscriptions are wired once here and torn down on final detach
+        // (DetachChildHandlers) — the publishers (editor caret, preview scroll, minimap, hover)
+        // outlive a single DataContext, so a closed tab must leave no live delegates. Lambdas became
+        // named handlers so each += has a matching -=.
+        Source.TextArea.Caret.PositionChanged += OnCaretPositionChanged; // caret → status bar
+        Source.TextArea.SelectionChanged += OnSelectionChanged;          // selection word count (ported)
         // Scroll-spy (M10): track the heading at the viewport top in both modes.
         PreviewScroll.ScrollChanged += OnPreviewScrollChanged;
         Source.TextArea.TextView.ScrollOffsetChanged += OnSourceScrollChanged;
@@ -84,47 +80,106 @@ public partial class DocumentView : UserControl
         // bring-into-view (embedded code editors request it on focus/caret/selection against
         // their broken infinite-viewport geometry). All preview navigation goes through
         // explicit PreviewScroll.Offset writes, so swallowing the request loses nothing.
-        Preview.AddHandler(RequestBringIntoViewEvent, (_, e) => e.Handled = true);
+        Preview.AddHandler(RequestBringIntoViewEvent, OnPreviewRequestBringIntoView);
         // Image lightbox (ported): a left-click on a rendered image opens it full-size.
         Preview.AddHandler(PointerPressedEvent, OnPreviewPointerPressed);
         // Code minimap (ported): clicks land the clicked line at the viewport top.
-        Minimap.LineRequested += line => ScrollSourceToLine(line);
-        // In-place editing (M15): track the unsaved-changes flag. TextLength is O(1) and
-        // alloc-free, so the common keystroke never materialises the document string
-        // (TextEditor.Text copies the WHOLE buffer — megabytes per keypress on big files).
-        // Only the rare equal-length case (char replacement, undo back to loaded) pays the
-        // full compare; a programmatic reload compares equal and stays clean.
-        Source.TextChanged += (_, _) =>
-        {
-            if (_vm is null)
-                return;
-            var loaded = _vm.SourceText ?? string.Empty;
-            if ((Source.Document?.TextLength ?? 0) != loaded.Length)
-                _vm.IsEdited = true;
-            else
-                _vm.IsEdited = (Source.Text ?? string.Empty) != loaded;
-        };
+        Minimap.LineRequested += OnMinimapLineRequested;
+        // In-place editing (M15): track the unsaved-changes flag (see OnSourceTextChanged).
+        Source.TextChanged += OnSourceTextChanged;
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
         // Editor context menu (#26): grey out «Копировать» while nothing is selected.
         if (Source.ContextFlyout is MenuFlyout editorMenu)
-            editorMenu.Opening += (_, _) => RefreshEditorMenu();
+            editorMenu.Opening += OnEditorMenuOpening;
         // cv-* decorations (ported): hover shows the resolved value (decoded entity, byte
         // count, relative date) as a native tooltip; brushes follow the theme.
         Source.TextArea.TextView.PointerHover += OnSourceHover;
-        Source.TextArea.TextView.PointerHoverStopped += (_, _) => ToolTip.SetIsOpen(Source, false);
-        AttachedToVisualTree += (_, _) => RefreshCvPalette();
-        ActualThemeVariantChanged += (_, _) =>
-        {
-            RefreshCvPalette();
-            if (_cvAttached || _indentGuidesAttached)
-                Source.TextArea.TextView.Redraw();
-        };
+        Source.TextArea.TextView.PointerHoverStopped += OnSourcePointerHoverStopped;
+        AttachedToVisualTree += OnAttachedRefreshPalette;
+        ActualThemeVariantChanged += OnThemeVariantChangedRefresh;
 
         DataContextChanged += OnDataContextChanged;
-        DetachedFromVisualTree += (_, _) => Unsubscribe();
+        DetachedFromVisualTree += OnViewDetached;
     }
+
+    // --- Constructor-wired handlers (named so each subscription has a matching -=). ---
+
+    private void OnSelectionChanged(object? sender, EventArgs e)
+    {
+        if (_vm is null)
+            return;
+        var words = Core.Text.TextStatistics.CountWords(Source.SelectedText);
+        _vm.SelectionInfo = words > 0 ? $"выдел.: {words} сл." : string.Empty;
+    }
+
+    private void OnPreviewRequestBringIntoView(object? sender, RequestBringIntoViewEventArgs e)
+        => e.Handled = true;
+
+    private void OnMinimapLineRequested(int line) => ScrollSourceToLine(line);
+
+    // TextLength is O(1) and alloc-free, so the common keystroke never materialises the document
+    // string (TextEditor.Text copies the WHOLE buffer — megabytes per keypress on big files). Only
+    // the rare equal-length case (char replacement, undo back to loaded) pays the full compare; a
+    // programmatic reload compares equal and stays clean.
+    private void OnSourceTextChanged(object? sender, EventArgs e)
+    {
+        if (_vm is null)
+            return;
+        var loaded = _vm.SourceText ?? string.Empty;
+        if ((Source.Document?.TextLength ?? 0) != loaded.Length)
+            _vm.IsEdited = true;
+        else
+            _vm.IsEdited = (Source.Text ?? string.Empty) != loaded;
+    }
+
+    private void OnEditorMenuOpening(object? sender, EventArgs e) => RefreshEditorMenu();
+
+    private void OnSourcePointerHoverStopped(object? sender, PointerEventArgs e)
+        => ToolTip.SetIsOpen(Source, false);
+
+    private void OnAttachedRefreshPalette(object? sender, VisualTreeAttachmentEventArgs e)
+        => RefreshCvPalette();
+
+    private void OnThemeVariantChangedRefresh(object? sender, EventArgs e)
+    {
+        RefreshCvPalette();
+        if (_cvAttached || _indentGuidesAttached)
+            Source.TextArea.TextView.Redraw();
+    }
+
+    private void OnViewDetached(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        Unsubscribe();         // VM events + folding + reflow timer stop
+        DetachChildHandlers(); // child-control / self handlers wired once in the constructor
+    }
+
+    /// <summary>Mirror of the constructor's child-control/self subscriptions, torn down on final
+    /// detach so a closed tab's DocumentView retains no live delegates. VM-event handlers live in
+    /// Unsubscribe. Internal flag lets a headless test confirm the teardown ran.</summary>
+    private void DetachChildHandlers()
+    {
+        _previewReflowTimer.Tick -= OnPreviewReflowTick;
+        Source.TextArea.Caret.PositionChanged -= OnCaretPositionChanged;
+        Source.TextArea.SelectionChanged -= OnSelectionChanged;
+        PreviewScroll.ScrollChanged -= OnPreviewScrollChanged;
+        Source.TextArea.TextView.ScrollOffsetChanged -= OnSourceScrollChanged;
+        Preview.RemoveHandler(RequestBringIntoViewEvent, OnPreviewRequestBringIntoView);
+        Preview.RemoveHandler(PointerPressedEvent, OnPreviewPointerPressed);
+        Minimap.LineRequested -= OnMinimapLineRequested;
+        Source.TextChanged -= OnSourceTextChanged;
+        SearchBox.KeyDown -= OnSearchBoxKeyDown;
+        if (Source.ContextFlyout is MenuFlyout editorMenu)
+            editorMenu.Opening -= OnEditorMenuOpening;
+        Source.TextArea.TextView.PointerHover -= OnSourceHover;
+        Source.TextArea.TextView.PointerHoverStopped -= OnSourcePointerHoverStopped;
+        AttachedToVisualTree -= OnAttachedRefreshPalette;
+        ActualThemeVariantChanged -= OnThemeVariantChangedRefresh;
+        ChildHandlersDetached = true;
+    }
+
+    internal bool ChildHandlersDetached { get; private set; }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
