@@ -119,9 +119,11 @@
     </Border>
 
     <Panel>
-    <!-- Source view: any non-markdown file, or a markdown file toggled to Source. -->
+    <!-- Source view: any non-markdown file, or a markdown file toggled to Source.
+         The code minimap (ported) sits in a SIBLING column — floated over the editor
+         it would never repaint (AvaloniaEdit GPU surface, see project memory). -->
+    <Grid IsVisible="{Binding ShowSource}" ColumnDefinitions="*,Auto">
     <ae:TextEditor x:Name="Source"
-                   IsVisible="{Binding ShowSource}"
                    viewer:EditorBehavior.Text="{Binding SourceText}"
                    viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
                    viewer:EditorBehavior.SuppressHighlight="{Binding HighlightSuppressed}"
@@ -144,6 +146,12 @@
         </MenuFlyout>
       </ae:TextEditor.ContextFlyout>
     </ae:TextEditor>
+    <Border Grid.Column="1" Background="{DynamicResource EditorSurfaceBrush}"
+            IsVisible="{Binding ShowMinimap, FallbackValue=False}"
+            ToolTip.Tip="Мини-карта">
+      <viewer:MinimapStrip x:Name="Minimap" Width="15" AutomationProperties.Name="Мини-карта"/>
+    </Border>
+    </Grid>
 
     <!-- Rendered markdown preview: one full-width field with a soft, barely-there accent glow behind
          the text (toggled by «Декоративный фон»). Markdown.Avalonia's own scrollbar can't be themed

@@ -251,6 +251,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowCsvTable))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
+    [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     private bool _csvAsTableEnabled;
 
     /// <summary>Show the table view (delimited file that parsed, table mode on).</summary>
@@ -316,6 +317,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
+    [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     [NotifyPropertyChangedFor(nameof(ViewModeToggleTip))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
@@ -326,6 +328,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// unless the tab is showing its table view.</summary>
     public bool ShowSource =>
         !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
+
+    /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
+    /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>
+    public bool ShowMinimap => ShowSource && !IsMarkdown && HasOutline;
 
     /// <summary>Content classification from the loader (Text / Binary / TooLarge).</summary>
     public FileLoadKind Kind { get; }

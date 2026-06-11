@@ -723,6 +723,50 @@ public class DocumentViewTests
         window.Close();
     }
 
+    // ---- code minimap (ported) ----
+
+    [Theory]
+    [InlineData(1, 101, 200.0, 0.0)]
+    [InlineData(101, 101, 200.0, 200.0)]
+    [InlineData(51, 101, 200.0, 100.0)]
+    public void Minimap_LineToY_IsProportional(int line, int count, double height, double expected)
+        => Assert.Equal(expected, MinimapStrip.YForLine(line, count, height), 3);
+
+    [Theory]
+    [InlineData(0.0, 101, 200.0, 1)]
+    [InlineData(200.0, 101, 200.0, 101)]
+    [InlineData(100.0, 101, 200.0, 51)]
+    [InlineData(-5.0, 101, 200.0, 1)]    // clamped
+    public void Minimap_YToLine_IsProportionalAndClamped(double y, int count, double height, int expected)
+        => Assert.Equal(expected, MinimapStrip.LineForY(y, count, height));
+
+    [AvaloniaFact]
+    public void Minimap_ShowsForCodeTabs_NotForMarkdown()
+    {
+        var code = DocumentTabViewModel.FromFile("class A\n{\n    void M() { }\n}", "/src/a.cs");
+        var md = DocumentTabViewModel.FromFile("# A\n\ntext", "/docs/readme.md");
+
+        Assert.True(code.ShowMinimap);
+        Assert.False(md.ShowMinimap);     // preview
+        md.ViewMode = DocumentViewMode.Source;
+        Assert.False(md.ShowMinimap);     // markdown keeps the TOC sidebar
+    }
+
+    [AvaloniaFact]
+    public void Minimap_RefreshAndRender_DoNotThrow()
+    {
+        var vm = DocumentTabViewModel.FromFile("class A\n{\n    void M() { }\n}", "/src/a.cs");
+        vm.IsActive = true;
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        view.RefreshMinimap(); // feeds outline + viewport; rendering happens in layout
+        Dispatcher.UIThread.RunJobs();
+        window.Close();
+    }
+
     // ---- section folding for text files (ported) ----
 
     private const string FoldableText = "Глава 1. Старт\nстрока\nстрока\n\nГлава 2. Финал\nконец";

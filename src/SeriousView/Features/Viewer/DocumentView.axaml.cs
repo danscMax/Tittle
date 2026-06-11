@@ -75,6 +75,8 @@ public partial class DocumentView : UserControl
         Preview.AddHandler(RequestBringIntoViewEvent, (_, e) => e.Handled = true);
         // Image lightbox (ported): a left-click on a rendered image opens it full-size.
         Preview.AddHandler(PointerPressedEvent, OnPreviewPointerPressed);
+        // Code minimap (ported): clicks land the clicked line at the viewport top.
+        Minimap.LineRequested += line => ScrollSourceToLine(line);
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -112,8 +114,9 @@ public partial class DocumentView : UserControl
             // After the new document/layout settles: refresh the caret readout and, for a source
             // tab, focus the editor so the keyboard works immediately (#29).
             Dispatcher.UIThread.Post(ActivateSource);
-            // Folding needs the bound Document — install after the bindings have applied.
+            // Folding/minimap need the bound Document — fill them after the bindings have applied.
             Dispatcher.UIThread.Post(UpdateSectionFolding);
+            Dispatcher.UIThread.Post(RefreshMinimap);
 
             // A reload's replacement tab carries the old tab's reading position (M14): consume
             // the one-shot anchor and apply it once the fresh view has laid out. The generation
@@ -403,7 +406,22 @@ public partial class DocumentView : UserControl
             if (SourceScroller is { } scroller)
                 _vm.ScrollPercentText = FormatScrollPercent(
                     scroller.Offset.Y, scroller.Extent.Height, scroller.Viewport.Height);
+            RefreshMinimap();
         }
+    }
+
+    /// <summary>Feed the minimap the outline + current viewport band. Internal for tests.</summary>
+    internal void RefreshMinimap()
+    {
+        if (_vm is not { ShowMinimap: true } || Source.Document is not { LineCount: > 0 } doc)
+            return;
+
+        var textView = Source.TextArea.TextView;
+        var docHeight = Math.Max(1, textView.DocumentHeight);
+        Minimap.Update(
+            _vm.Outline, doc.LineCount,
+            Math.Clamp(textView.ScrollOffset.Y / docHeight, 0, 1),
+            Math.Clamp((textView.ScrollOffset.Y + textView.Bounds.Height) / docHeight, 0, 1));
     }
 
     /// <summary>"NN%" through the document, or empty when it fits the viewport (ported).</summary>
@@ -566,6 +584,9 @@ public partial class DocumentView : UserControl
 
         _cvColorizer.SetPalette(palette);
         _indentGuides.GuideBrush = TryBrush("IndentGuideBrush");
+        Minimap.MarkerBrush = TryBrush("AccentBrush");
+        Minimap.ViewportBrush = TryBrush("OutlineItemHoverBrush");
+        Minimap.InvalidateVisual();
     }
 
     private static readonly (CodeDecorationKind Kind, string Key)[] CvBrushKeys =
