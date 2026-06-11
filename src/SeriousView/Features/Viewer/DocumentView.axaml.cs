@@ -151,7 +151,8 @@ public partial class DocumentView : UserControl
             });
 
             // A reload's replacement tab carries the old tab's reading position (M14): consume
-            // the one-shot anchor and apply it once the fresh view has laid out. The generation
+            // the one-shot anchor and apply it once the fresh view has laid out (Loaded = just after
+            // the layout pass, so the content doesn't paint at the top and then jump). The generation
             // guard lets an explicit TOC jump arriving in between win.
             if (_vm.RestoreAnchor is { } restore)
             {
@@ -166,7 +167,7 @@ public partial class DocumentView : UserControl
                         ApplyToPreview(restore, retryAfterLayout: true);
                     else
                         ApplyToSource(restore);
-                }, DispatcherPriority.Background);
+                }, DispatcherPriority.Loaded);
             }
         }
     }
@@ -216,8 +217,10 @@ public partial class DocumentView : UserControl
         FlushPendingPreviewReflow(); // fresh heading Ys before capturing/applying across modes
 
         var gen = ++_syncGeneration;
-        // Apply AFTER the newly shown view has laid out (Background runs below layout), else
-        // the target scroller still reports a stale/zero extent and clamps the offset away.
+        // Apply AFTER the newly shown view has laid out (Loaded runs below the render/layout pass),
+        // else the target scroller still reports a stale/zero extent and clamps the offset away.
+        // Loaded (not Background) lands the scroll in the same post-layout cycle as the first paint,
+        // so the page never paints at the top and then jumps to the restored position.
         if (_vm.ShowSource)
         {
             if (CaptureFromPreview() is { } anchor)
@@ -225,7 +228,7 @@ public partial class DocumentView : UserControl
                 {
                     if (gen == _syncGeneration)
                         ApplyToSource(anchor);
-                }, DispatcherPriority.Background);
+                }, DispatcherPriority.Loaded);
         }
         else
         {
@@ -234,7 +237,7 @@ public partial class DocumentView : UserControl
             {
                 if (gen == _syncGeneration)
                     ApplyToPreview(anchor, retryAfterLayout: true);
-            }, DispatcherPriority.Background);
+            }, DispatcherPriority.Loaded);
         }
     }
 
