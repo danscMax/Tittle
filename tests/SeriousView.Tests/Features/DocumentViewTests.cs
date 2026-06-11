@@ -380,6 +380,36 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void ActiveHeading_CodeTab_FollowsGoToLine()
+    {
+        // Ported "code breadcrumbs": the scroll-spy must drive the marker + crumbs from the
+        // SYMBOL outline of a code tab, not just markdown headings.
+        var code = new StringBuilder("public class First\n{\n");
+        for (var i = 0; i < 60; i++)
+            code.AppendLine($"    // filler {i}");
+        code.AppendLine("    public void Second()\n    {\n    }");
+        for (var i = 0; i < 60; i++)
+            code.AppendLine($"    // tail {i}");
+        code.AppendLine("}");
+
+        var vm = DocumentTabViewModel.FromFile(code.ToString(), "/src/big.cs");
+        vm.IsActive = true;
+        var window = CreateScrollTestWindow(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, vm.Outline.Count); // class + method
+
+        vm.GoToLineText = (vm.Outline[1].Line + 2).ToString();
+        vm.SubmitGoToLineCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(1, vm.ActiveHeadingOrdinal);
+        Assert.Equal(new[] { "First", "Second" }, vm.Breadcrumbs.Select(b => b.Text).ToArray());
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ActiveHeading_Preview_TocClickMarksTheClickedHeading()
     {
         var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");

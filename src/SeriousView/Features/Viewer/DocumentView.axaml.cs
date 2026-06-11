@@ -371,13 +371,15 @@ public partial class DocumentView : UserControl
     }
 
     /// <summary>Scroll-spy recompute — a binary search over cached positions, cheap enough to
-    /// run unthrottled per scroll event. Internal so headless tests can poke it directly.</summary>
+    /// run unthrottled per scroll event. Internal so headless tests can poke it directly.
+    /// Non-markdown tabs participate too (ported "code breadcrumbs"): their symbol/text
+    /// outlines are line-based, so the source branch drives the marker and the crumbs.</summary>
     internal void RecomputeActiveHeading()
     {
-        if (_vm is null || !_vm.IsMarkdown)
+        if (_vm is null || !_vm.HasOutline)
             return;
 
-        if (_vm.ShowPreview)
+        if (_vm.IsMarkdown && _vm.ShowPreview)
         {
             if (EnsurePreviewHeadingTops() is { } tops)
                 _vm.ActiveHeadingOrdinal = HeadingAnchors.ActiveOrdinal(
