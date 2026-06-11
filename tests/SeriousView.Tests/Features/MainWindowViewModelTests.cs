@@ -1392,13 +1392,13 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public void PrintViaBrowser_WritesALightHtmlAndOpensIt()
+    public async Task PrintViaBrowser_WritesALightHtmlAndOpensIt()
     {
         var shell = new FakeShellService();
-        var vm = CreateVm(args: new[] { "/docs/doc.md" }, content: "# Печать", shell: shell);
+        var vm = CreateVm(content: "# Печать", shell: shell);
+        await vm.OpenPathAsync("/docs/doc.md");
 
-        vm.PrintViaBrowserCommand.Execute(null);
-        Dispatcher.UIThread.RunJobs();
+        await vm.PrintViaBrowserCommand.ExecuteAsync(null);
 
         var opened = Assert.Single(shell.Opened);
         Assert.EndsWith(".print.html", opened);
