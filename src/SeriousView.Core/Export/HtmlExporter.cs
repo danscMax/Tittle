@@ -16,8 +16,10 @@ namespace SeriousView.Core.Export;
 /// </summary>
 public static class HtmlExporter
 {
+    // YAML front-matter is consumed, not rendered: the viewer shows it as a metadata panel,
+    // but in a portable HTML file raw YAML would just be noise.
     private static readonly MarkdownPipeline Pipeline =
-        new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().UseYamlFrontMatter().Build();
 
     public static string Export(
         string markdown, string title, bool darkTheme, Func<string, bool>? wikiLinkResolver = null)

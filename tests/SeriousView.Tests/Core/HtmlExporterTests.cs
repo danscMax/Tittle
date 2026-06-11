@@ -9,6 +9,15 @@ public class HtmlExporterTests
         => HtmlExporter.Export(md, "doc", dark, wiki);
 
     [Fact]
+    public void Export_FrontMatter_IsConsumedNotRendered()
+    {
+        var html = Export("---\ntitle: secret-meta\n---\n# Doc");
+
+        Assert.DoesNotContain("secret-meta", html);
+        Assert.Contains("<h1", html);
+    }
+
+    [Fact]
     public void Export_GfmTable_RendersAsAnHtmlTable()
     {
         var html = Export("| A | B |\n|---|---|\n| 1 | 2 |");

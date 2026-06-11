@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using AvaloniaEdit;
@@ -719,6 +720,40 @@ public class DocumentViewTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(vm.IsSearchOpen);
+        window.Close();
+    }
+
+    // ---- YAML front-matter panel (ported) ----
+
+    [AvaloniaFact]
+    public void FrontMatterPanel_RendersKeyValueRows()
+    {
+        var handler = new AdmonitionBlockHandler(new Markdown.Avalonia.Markdown());
+        var encoded = Uri.EscapeDataString("title: Заметка\ntags: a, b");
+
+        var border = handler.ProvideControl("", "frontmatter", encoded);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("frontmatter-block", border.Classes);
+        var texts = border.GetLogicalDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Assert.Contains("Метаданные", texts);
+        Assert.Contains("title", texts);
+        Assert.Contains("Заметка", texts);
+        Assert.Contains("tags", texts);
+        Assert.Contains("a, b", texts);
+    }
+
+    [AvaloniaFact]
+    public void FrontMatterPanel_EndToEnd_ShowsInThePreview()
+    {
+        var vm = DocumentTabViewModel.FromFile("---\nauthor: Иван\n---\n# Doc", "/docs/readme.md");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Assert.Contains("author", texts);
+        Assert.Contains("Иван", texts);
         window.Close();
     }
 

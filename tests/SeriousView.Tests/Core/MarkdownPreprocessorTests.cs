@@ -413,6 +413,48 @@ public class MarkdownPreprocessorTests
     public void Emoji_InsideAFence_Unchanged()
         => Assert.Equal("```\n:tada:\n```", MarkdownPreprocessor.Transform("```\n:tada:\n```"));
 
+    // ---- YAML front-matter (ported): a leading --- block → ::: frontmatter container ----
+
+    [Fact]
+    public void FrontMatter_AtTheTop_BecomesAContainer()
+    {
+        var output = MarkdownPreprocessor.Transform("---\ntitle: Заметка\ntags: a, b\n---\n# Body");
+
+        Assert.StartsWith("::: frontmatter\n", output);
+        Assert.Contains(":::\n", output);
+        Assert.Contains("# Body", output);
+        Assert.DoesNotContain("title: Заметка", output); // travels percent-encoded
+
+        // The opaque line decodes back to the raw YAML.
+        var encoded = output.Split('\n')[1];
+        Assert.Equal("title: Заметка\ntags: a, b", System.Uri.UnescapeDataString(encoded));
+    }
+
+    [Fact]
+    public void FrontMatter_NotAtLineZero_IsAThematicBreak()
+    {
+        const string input = "intro\n\n---\nkey: value\n---";
+        Assert.Equal(input, MarkdownPreprocessor.Transform(input));
+    }
+
+    [Fact]
+    public void FrontMatter_Unclosed_LeftAlone()
+        => Assert.Equal("---\nkey: value\n# Body",
+            MarkdownPreprocessor.Transform("---\nkey: value\n# Body"));
+
+    [Fact]
+    public void FrontMatter_EmptyBody_IsNotFrontMatter()
+        => Assert.Equal("---\n---\ntext", MarkdownPreprocessor.Transform("---\n---\ntext"));
+
+    [Fact]
+    public void FrontMatter_DotsTerminator_Closes()
+    {
+        var output = MarkdownPreprocessor.Transform("---\ntitle: x\n...\nbody");
+
+        Assert.StartsWith("::: frontmatter\n", output);
+        Assert.Contains("body", output);
+    }
+
     private static int CountOccurrences(string haystack, string needle)
     {
         int count = 0, i = 0;

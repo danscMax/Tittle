@@ -37,6 +37,12 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
             return mathBorder;
         }
 
+        // ::: frontmatter (ported): the leading YAML block rendered as a metadata panel.
+        // Same percent-encoded transport as math; top-level "key: value" lines become rows,
+        // anything else (nested YAML, lists) shows as a raw continuation line.
+        if (string.Equals(blockName.Trim(), "frontmatter", StringComparison.OrdinalIgnoreCase))
+            return BuildFrontMatterPanel(System.Uri.UnescapeDataString(lines.Trim()));
+
         var type = NormalizeType(blockName);
 
         var title = new TextBlock { Text = TitleFor(type) };
@@ -68,4 +74,58 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         "caution" => "Осторожно",
         _ => "Примечание",
     };
+
+    private static Border BuildFrontMatterPanel(string yaml)
+    {
+        var title = new TextBlock { Text = "Метаданные" };
+        title.Classes.Add("admonition-title");
+
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+        };
+        var row = 0;
+        foreach (var line in yaml.Split('\n'))
+        {
+            if (line.Trim().Length == 0)
+                continue;
+
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var colon = line.IndexOf(':');
+            var isPair = colon > 0 && line.Length > 0 && !char.IsWhiteSpace(line[0]);
+
+            var key = new TextBlock
+            {
+                Text = isPair ? line[..colon].Trim() : string.Empty,
+                Margin = new Avalonia.Thickness(0, 1, 14, 1),
+                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+            };
+            key.Classes.Add("frontmatter-key");
+            Grid.SetRow(key, row);
+
+            var value = new TextBlock
+            {
+                Text = isPair ? line[(colon + 1)..].Trim() : line.TrimEnd(),
+                Margin = new Avalonia.Thickness(0, 1, 0, 1),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            };
+            value.Classes.Add("frontmatter-value");
+            Grid.SetRow(value, row);
+            Grid.SetColumn(value, 1);
+
+            grid.Children.Add(key);
+            grid.Children.Add(value);
+            row++;
+        }
+
+        var body = new StackPanel { Spacing = 6 };
+        body.Children.Add(title);
+        body.Children.Add(grid);
+
+        var border = new Border { Child = body };
+        border.Classes.Add("admonition");
+        border.Classes.Add("admonition-note");
+        border.Classes.Add("frontmatter-block");
+        return border;
+    }
 }

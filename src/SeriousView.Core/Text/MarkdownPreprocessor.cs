@@ -39,6 +39,10 @@ public static partial class MarkdownPreprocessor
         var lines = new List<string>(
             markdown.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'));
 
+        // YAML front-matter first (ported): only valid at the very top, before any other pass
+        // can mistake its --- fences for thematic breaks or transform inside the block.
+        lines = ExtractFrontMatter(lines);
+
         // Inline passes run first, in place (line count preserved → the fence bitmap stays
         // valid) and before admonition re-wrapping so callout bodies get them too. Wiki before
         // underscore: a [[my_note]] link resolves to its real file first, and the underscore
@@ -63,6 +67,49 @@ public static partial class MarkdownPreprocessor
         ConvertTaskListsInPlace(lines, regions);
 
         return string.Join("\n", lines);
+    }
+
+    /// <summary>How far down the closing front-matter fence may sit; past that the leading
+    /// --- is treated as an ordinary thematic break.</summary>
+    private const int MaxFrontMatterLines = 200;
+
+    // YAML front-matter (ported): a leading --- block becomes a ::: frontmatter container the
+    // viewer renders as a metadata panel. Display-only; the body travels percent-encoded as
+    // one opaque line — the same transport contract as ::: math.
+    private static List<string> ExtractFrontMatter(List<string> lines)
+    {
+        if (lines.Count < 3 || lines[0].TrimEnd() != "---")
+            return lines;
+
+        var close = -1;
+        for (var i = 1; i < lines.Count && i <= MaxFrontMatterLines; i++)
+        {
+            var t = lines[i].TrimEnd();
+            if (t is "---" or "...")
+            {
+                close = i;
+                break;
+            }
+        }
+
+        if (close < 1)
+            return lines; // unclosed → an ordinary thematic break
+
+        var hasContent = false;
+        for (var i = 1; i < close && !hasContent; i++)
+            hasContent = lines[i].Trim().Length > 0;
+        if (!hasContent)
+            return lines; // "---\n---" is two thematic breaks, not metadata
+
+        var result = new List<string>(lines.Count)
+        {
+            "::: frontmatter",
+            Uri.EscapeDataString(string.Join("\n", lines.GetRange(1, close - 1)).Trim()),
+            ":::",
+            string.Empty,
+        };
+        result.AddRange(lines.GetRange(close + 1, lines.Count - close - 1));
+        return result;
     }
 
     // Block math: $$…$$ / \[…\] (single- or multi-line; a single $ is deliberately NOT a
