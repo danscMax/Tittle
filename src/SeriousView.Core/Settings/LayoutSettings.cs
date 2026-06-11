@@ -42,10 +42,11 @@ public enum ViewTogglePlacement
 /// <summary>Reading-column width preset for the markdown preview (ported reading presets).</summary>
 public enum ReadingWidth
 {
-    /// <summary>Full window width (the default — today's look).</summary>
+    /// <summary>Full window width.</summary>
     Full,
 
-    /// <summary>A comfortable centered column (~760 px).</summary>
+    /// <summary>A comfortable centered column (~760 px) — the default: more readable, and resizing
+    /// past the cap doesn't re-wrap the document (so it stays smooth, unlike Full).</summary>
     Comfort,
 
     /// <summary>A narrow book-like column (~620 px).</summary>
@@ -84,6 +85,6 @@ public sealed record LayoutSettings
     /// Default: 240.</summary>
     public double OutlineWidth { get; init; } = 240;
 
-    /// <summary>Reading-column preset for the preview. Default: full width.</summary>
-    public ReadingWidth ReadingWidth { get; init; } = ReadingWidth.Full;
+    /// <summary>Reading-column preset for the preview. Default: comfortable centered column.</summary>
+    public ReadingWidth ReadingWidth { get; init; } = ReadingWidth.Comfort;
 }

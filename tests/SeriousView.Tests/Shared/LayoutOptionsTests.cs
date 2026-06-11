@@ -18,7 +18,7 @@ public class LayoutOptionsTests
         Assert.False(o.ShowRail);
         Assert.True(o.ReadingMode);   // reading column on by default (etalon)
         Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
-        Assert.Equal(ReadingWidth.Full, o.ReadingWidth); // full-width preview by default
+        Assert.Equal(ReadingWidth.Comfort, o.ReadingWidth); // comfortable centered column by default
     }
 
     [Fact]

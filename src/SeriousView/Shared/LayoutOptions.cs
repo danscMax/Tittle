@@ -31,7 +31,7 @@ public partial class LayoutOptions : ObservableObject
     private bool _readingMode = true;
 
     [ObservableProperty]
-    private ReadingWidth _readingWidth = ReadingWidth.Full;
+    private ReadingWidth _readingWidth = ReadingWidth.Comfort;
 
     /// <summary>Outline/TOC sidebar width range (px). Shared by the splitter (view) and persistence.</summary>
     public const double MinOutlineWidth = 180, MaxOutlineWidth = 480, DefaultOutlineWidth = 240;
