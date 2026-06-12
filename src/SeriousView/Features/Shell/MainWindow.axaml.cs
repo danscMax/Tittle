@@ -125,8 +125,10 @@ public partial class MainWindow : AppWindow
         var shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
         var alt = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
 
-        // Ctrl+K opens the command palette — a separate top-level window, not a VM command.
-        if (ctrl && !shift && !alt && e.Key == Key.K)
+        // Ctrl+K (and the VS Code-style Ctrl+Shift+P alias) open the command palette — a separate
+        // top-level window, not a VM command.
+        if ((ctrl && !shift && !alt && e.Key == Key.K) ||
+            (ctrl && shift && !alt && e.Key == Key.P))
         {
             OpenCommandPalette(vm);
             e.Handled = true;

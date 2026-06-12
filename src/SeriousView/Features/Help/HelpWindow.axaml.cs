@@ -10,7 +10,7 @@ public partial class HelpWindow : ModalWindow
     private static readonly (string Keys, string Action)[] Shortcuts =
     {
         ("Ctrl+O", "Открыть файл(ы)"),
-        ("Ctrl+K", "Палитра команд"),
+        ("Ctrl+K · Ctrl+Shift+P", "Палитра команд"),
         ("Ctrl+F", "Найти в документе"),
         ("Ctrl+G", "Перейти к строке"),
         ("Ctrl+W", "Закрыть вкладку"),

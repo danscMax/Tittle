@@ -177,7 +177,7 @@
                   Command="{Binding OpenFileCommand}" Padding="6,3">
             <TextBlock Text="📂" FontSize="14"/>
           </Button>
-          <Button DockPanel.Dock="Right" Classes="chrome-menu" ToolTip.Tip="Команды (Ctrl+K)"
+          <Button DockPanel.Dock="Right" Classes="chrome-menu" ToolTip.Tip="Команды (Ctrl+K · Ctrl+Shift+P)"
                   AutomationProperties.Name="Палитра команд"
                   Click="OnPaletteButtonClick" Padding="8,3">
             <TextBlock Text="⌘" FontSize="14"/>
