@@ -43,6 +43,9 @@ public partial class DocumentView : UserControl
     // P4: embedded editors that already carry a copy button. EnsureCodeCopyButton runs every reflow
     // tick; once an editor is wired, skip the 3-parent walk + class check. Reset per content.
     private readonly HashSet<AvaloniaEdit.TextEditor> _copyHostEditors = new();
+    // P5: document-ordered toggleable task-glyph blocks, built in the reflow pass that already walks
+    // the tree. A checkbox click then indexes into this instead of re-walking. Reset per content.
+    private List<ColorTextBlock.Avalonia.CTextBlock>? _taskGlyphs;
 
     // Resize coalescing for the preview. Markdown.Avalonia does NOT virtualise: the whole document is
     // realised, so Avalonia re-measures every block on EVERY width change — a resize drag re-lays-out
@@ -448,6 +451,7 @@ public partial class DocumentView : UserControl
         var editors = new List<AvaloniaEdit.TextEditor>();
         var tables = new List<Grid>();
         var headings = new List<Control>();
+        var taskGlyphs = new List<ColorTextBlock.Avalonia.CTextBlock>();
         foreach (var visual in Preview.GetVisualDescendants())
         {
             switch (visual)
@@ -458,12 +462,16 @@ public partial class DocumentView : UserControl
                 case Grid grid when grid.Classes.Contains("Table"):
                     tables.Add(grid);
                     break;
+                case ColorTextBlock.Avalonia.CTextBlock glyph when IsToggleableTaskGlyph(glyph):
+                    taskGlyphs.Add(glyph); // P5: cache in document order for click-to-toggle indexing
+                    break;
                 case Control control when IsTopLevelHeading(control):
                     headings.Add(control);
                     break;
             }
         }
 
+        _taskGlyphs = taskGlyphs;
         FixupEmbeddedCodeEditors(editors);
         PreviewTableSorter.AttachAll(tables); // ported click-to-sort, idempotent
         PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections (top-level, idempotent)
@@ -599,26 +607,39 @@ public partial class DocumentView : UserControl
     {
         if (!IsToggleableTaskGlyph(block))
             return null;
+        // P5: index into the reflow-built cache instead of re-walking the whole preview tree per click.
+        // A lazy rebuild covers a click that lands before any reflow has populated it.
+        var glyphs = _taskGlyphs ??= CollectTaskGlyphs();
+        var i = glyphs.IndexOf(block);
+        return i >= 0 ? i : null;
+    }
 
-        var index = 0;
+    // P5 seam: counts the fallback full walks (a cache hit does none).
+    internal int TaskGlyphFullWalkCount { get; private set; }
+
+    private List<ColorTextBlock.Avalonia.CTextBlock> CollectTaskGlyphs()
+    {
+        TaskGlyphFullWalkCount++;
+        var list = new List<ColorTextBlock.Avalonia.CTextBlock>();
         foreach (var candidate in Preview.GetVisualDescendants()
                      .OfType<ColorTextBlock.Avalonia.CTextBlock>())
         {
-            if (ReferenceEquals(candidate, block))
-                return index;
             if (IsToggleableTaskGlyph(candidate))
-                index++;
+                list.Add(candidate);
         }
 
-        return null;
+        return list;
+    }
 
-        static bool IsToggleableTaskGlyph(ColorTextBlock.Avalonia.CTextBlock candidate)
-        {
-            var trimmed = candidate.Text?.TrimStart();
-            return trimmed is not null && trimmed.Length > 0 && trimmed[0] is '☐' or '☑'
-                && !candidate.GetVisualAncestors().OfType<Border>()
-                    .Any(b => b.Classes.Contains("admonition"));
-        }
+    // Admonition-nested glyphs are excluded: their raw lines carry a '>' prefix the toggle regex
+    // doesn't match (the callout pass de-quotes them only for display), so counting them would
+    // desync every later index against the raw text that TaskListToggle maps back to.
+    private static bool IsToggleableTaskGlyph(ColorTextBlock.Avalonia.CTextBlock candidate)
+    {
+        var trimmed = candidate.Text?.TrimStart();
+        return trimmed is { Length: > 0 } && trimmed[0] is '☐' or '☑'
+            && !candidate.GetVisualAncestors().OfType<Border>()
+                .Any(b => b.Classes.Contains("admonition"));
     }
 
     /// <summary>Opens the lightbox when the event source sits inside a rendered image.
@@ -1095,6 +1116,7 @@ public partial class DocumentView : UserControl
         _previewReflowTimer.Stop();
         _previewReflowPrimed = false; // new content re-primes its first reflow immediately
         _copyHostEditors.Clear(); // new content rebuilds the preview tree — re-wire copy buttons
+        _taskGlyphs = null; // new content rebuilds the glyph cache on the next reflow/click
         _resizeSettleTimer.Stop();
         UnfreezePreviewWidth(); // new content must start from auto width, not a stale pin
         if (_vm is not null)

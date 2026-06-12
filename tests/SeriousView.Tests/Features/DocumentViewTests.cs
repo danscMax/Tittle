@@ -797,6 +797,28 @@ public class DocumentViewTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void TaskGlyphIndex_UsesReflowCache_NoFullWalkPerClick()
+    {
+        // P5: the reflow pass already walks the tree and caches the toggleable glyphs, so a click
+        // indexes into that cache instead of re-walking the whole preview per click.
+        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs(); // reflow populates the glyph cache
+
+        var blocks = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!
+            .GetVisualDescendants().OfType<ColorTextBlock.Avalonia.CTextBlock>()
+            .Where(t => t.Text?.TrimStart() is { Length: > 0 } s && (s[0] == '☐' || s[0] == '☑'))
+            .ToList();
+
+        Assert.Equal(0, view.TaskGlyphIndexOf(blocks[0]));
+        Assert.Equal(1, view.TaskGlyphIndexOf(blocks[1]));
+        Assert.Equal(0, view.TaskGlyphFullWalkCount); // cache hit — no per-click tree walk
+        window.Close();
+    }
+
     // ---- in-place editing (M15): the view feeds the edited flag + the pull seam ----
 
     [AvaloniaFact]

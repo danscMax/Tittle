@@ -390,7 +390,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   re-pinning height. **Fix:** early-out when the editor height already equals target within the 1px guard;
   mark a "copy-button-done" flag on the editor so `EnsureCodeCopyButton` is O(1) on repeats. **Test:**
   Headless — second reflow pass does no parent walk / re-add.
-- [ ] **P5 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `TaskGlyphIndexOf` (~L580 region). Walks the
+- [x] **P5 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `TaskGlyphIndexOf` (~L580 region). Walks the
   ENTIRE preview tree (`GetVisualDescendants().OfType<CTextBlock>()`) per checkbox click, with an ancestor
   scan per candidate. **Fix:** cache the document-ordered toggleable-glyph list during the reflow pass (which
   already walks the tree once) and index into it. **Test:** Headless — toggle returns the right index without
