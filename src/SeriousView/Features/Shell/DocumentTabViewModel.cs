@@ -657,8 +657,9 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         // here is correctness-free and makes HasOutline an O(1) read by first paint.
         _ = tab.Outline;
         _ = tab.PreviewMarkdown;
-        _ = tab.CsvTable; // Q17: parse up to 10k rows here (off-thread for big files via BuildTabAsync),
-                          // not synchronously in the getter on first UI bind. O(1) for non-delimited tabs.
+        // Q17: parse the CSV/TSV table here too (off-thread for big files via BuildTabAsync), not
+        // synchronously in the getter on first UI bind. O(1) for non-delimited tabs.
+        _ = tab.CsvTable;
         return tab;
     }
 
