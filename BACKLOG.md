@@ -374,7 +374,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   between raise and pump, assert no throw.
 
 ### Wave B — Performance (hot paths; measure intent, keep it cheap)
-- [ ] **H6 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnPreviewScrollChanged` (L368) /
+- [x] **H6 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnPreviewScrollChanged` (L368) /
   `SchedulePreviewReflow` (L394) / `_previewFrozen` (L50). During a resize the debounce timer is restarted on
   every scroll-changed event even while the preview width is pinned (no reflow is happening). **Fix:**
   `if (e.ExtentDelta.Y != 0 && !_previewFrozen) SchedulePreviewReflow();`. **Test:** Headless — assert no

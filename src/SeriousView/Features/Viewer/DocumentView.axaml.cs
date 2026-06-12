@@ -383,7 +383,7 @@ public partial class DocumentView : UserControl
         // kept (not nulled) between schedule and trailing run, so the scroll-spy below stays a cheap
         // binary search during the drag; the trailing run refreshes it.
         if (e.ExtentDelta.Y != 0)
-            SchedulePreviewReflow();
+            MaybeScheduleReflowOnExtentChange();
         if (_vm is { IsActive: true, ShowPreview: true })
         {
             RecomputeActiveHeading();
@@ -400,8 +400,18 @@ public partial class DocumentView : UserControl
     // First layout: run the heavy passes now so the opened document is complete in one frame.
     // Later reflows (resize/zoom storms): restart the debounce so they collapse into one trailing
     // run instead of one-per-frame. _previewReflowPrimed resets per content in Unsubscribe.
+    // H6: a scroll-changed extent delta during a resize must NOT restart the reflow debounce while the
+    // preview width is pinned (no re-wrap is happening). The pin's release (UnfreezePreviewWidth → NaN)
+    // triggers the real re-layout, whose extent change schedules the single trailing reflow.
+    private void MaybeScheduleReflowOnExtentChange()
+    {
+        if (!_previewFrozen)
+            SchedulePreviewReflow();
+    }
+
     private void SchedulePreviewReflow()
     {
+        PreviewReflowScheduleCount++;
         if (!_previewReflowPrimed)
         {
             _previewReflowPrimed = true;
@@ -474,9 +484,12 @@ public partial class DocumentView : UserControl
     // Test seams (headless): assert the resize storm coalesces instead of running per frame.
     internal int PreviewReflowPassCount => _previewReflowPassCount;
 
+    // H6 seam: counts scheduling attempts; the simulate-extent seam routes through the real guard.
+    internal int PreviewReflowScheduleCount { get; private set; }
+
     internal bool PreviewReflowPending => _previewReflowTimer.IsEnabled;
 
-    internal void SimulatePreviewExtentChangeForTest() => SchedulePreviewReflow();
+    internal void SimulatePreviewExtentChangeForTest() => MaybeScheduleReflowOnExtentChange();
 
     // --- Resize freeze: pin the preview width while a resize is in flight, release on settle. The
     //     root cost on resize is Markdown.Avalonia re-measuring the whole non-virtualised document on

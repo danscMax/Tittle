@@ -56,4 +56,34 @@ public class DocumentViewResizeFreezeTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void FrozenPreview_ExtentChange_DoesNotScheduleReflow()
+    {
+        // H6: while the preview width is pinned (resize in flight) no re-wrap happens, so the
+        // scroll-changed extent deltas must NOT keep restarting the reflow debounce. The pin's
+        // release re-lays-out and schedules the single trailing reflow.
+        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md");
+        vm.IsActive = true;
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Width = 1000, Height = 700, Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(vm.ShowPreview);
+        view.SettlePreviewResizeForTest(); // released baseline
+
+        view.SimulatePreviewResizeForTest();
+        Assert.True(view.PreviewWidthFrozen);
+        var whileFrozen = view.PreviewReflowScheduleCount;
+        for (var i = 0; i < 5; i++)
+            view.SimulatePreviewExtentChangeForTest(); // resize-drag scroll frames
+        Assert.Equal(whileFrozen, view.PreviewReflowScheduleCount); // none scheduled while pinned
+
+        view.SettlePreviewResizeForTest(); // release the pin
+        Assert.False(view.PreviewWidthFrozen);
+        view.SimulatePreviewExtentChangeForTest();
+        Assert.True(view.PreviewReflowScheduleCount > whileFrozen); // allowed again once released
+
+        window.Close();
+    }
 }
