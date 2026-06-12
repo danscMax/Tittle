@@ -435,7 +435,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   with side effects parses up to 10k rows synchronously on first bind (blocks the UI thread). **Fix:** move the
   parse into the `FromLoad` warm-up (like `Outline`/`PreviewMarkdown`, now off-thread via `BuildTabAsync`), so
   the getter is O(1). **Test:** unit — `DerivedCachesWarm`-style assert that `CsvTable` is built after `FromLoad`.
-- [ ] **Q19 (Low)** `Core/Text/TableSorting.cs` · `NumericKey` (L23). Returns `double.MaxValue` for unparseable
+- [x] **Q19 (Low)** `Core/Text/TableSorting.cs` · `NumericKey` (L23). Returns `double.MaxValue` for unparseable
   cells, colliding legit `1.79e308` values with the "sort last" sentinel. **Fix:** sort with a
   `(bool parsed, double value)` tuple key so junk always sinks regardless of magnitude. **Test:** unit — a real
   `double.MaxValue` cell sorts before garbage.

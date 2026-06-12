@@ -19,11 +19,13 @@ public static class TableSorting
             double.TryParse(Normalize(v), NumberStyles.Any, CultureInfo.InvariantCulture, out _));
     }
 
-    /// <summary>Sort key for a numeric column; garbage sorts last.</summary>
-    public static double NumericKey(string value)
+    /// <summary>Sort key for a numeric column. Q19: a (Unparsed, Value) tuple keeps garbage in its
+    /// own partition so a real <c>double.MaxValue</c> cell no longer collides with the "sort last"
+    /// sentinel — ascending puts parsed values first (by magnitude), unparsable cells last.</summary>
+    public static (bool Unparsed, double Value) NumericKey(string value)
         => double.TryParse(Normalize(value), NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
-            ? d
-            : double.MaxValue;
+            ? (false, d)
+            : (true, 0d);
 
     // Russian-styled numbers ("1 000", "1,5", NBSP groups) must sort numerically too —
     // the target content is ru, and the cv-* layer renders exactly this convention.
