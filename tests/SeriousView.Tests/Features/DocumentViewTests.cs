@@ -1043,8 +1043,8 @@ public class DocumentViewTests
         Assert.Equal(firstWalks, view.CopyButtonWalkCount); // no re-walk on repeat reflows
 
         var preview = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!;
-        Assert.Single(preview.GetVisualDescendants().OfType<Button>()
-            .Where(b => b.Classes.Contains("code-copy"))); // still exactly one button
+        Assert.Single(preview.GetVisualDescendants().OfType<Button>(),
+            b => b.Classes.Contains("code-copy")); // still exactly one button
         window.Close();
     }
 
@@ -1182,6 +1182,33 @@ public class DocumentViewTests
         var tip = view.CvTooltipAt(docPoint - textView.ScrollOffset);
 
         Assert.Equal("5 242 880 байт", tip);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void DocumentView_CvTooltip_ReusesColorizerScanCache()
+    {
+        // P8: the hover tooltip must reuse the colorizer's version-memoized scan (the line was already
+        // scanned during render), not re-scan the line on every hover.
+        var vm = DocumentTabViewModel.FromFile("вес 5 MB конец", "/var/app.log");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+        var textView = editor.TextArea.TextView;
+        textView.EnsureVisualLines();
+
+        var scansAfterRender = view.CvColorizer.ScanCount;
+        Assert.True(scansAfterRender >= 1); // line 1 scanned during render
+
+        var docPoint = textView.GetVisualPosition(
+            new AvaloniaEdit.TextViewPosition(1, 6), AvaloniaEdit.Rendering.VisualYPosition.LineMiddle);
+        var tip = view.CvTooltipAt(docPoint - textView.ScrollOffset);
+
+        Assert.Equal("5 242 880 байт", tip);
+        Assert.Equal(scansAfterRender, view.CvColorizer.ScanCount); // cache hit, no extra scan
         window.Close();
     }
 

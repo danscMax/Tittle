@@ -395,7 +395,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   scan per candidate. **Fix:** cache the document-ordered toggleable-glyph list during the reflow pass (which
   already walks the tree once) and index into it. **Test:** Headless — toggle returns the right index without
   a full re-walk (assert via a counter seam, or just correctness on a many-task doc).
-- [ ] **P8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `CvTooltipAt` (L944) +
+- [x] **P8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `CvTooltipAt` (L944) +
   `Features/Viewer/CodeDecorationColorizer.cs` · `ScanCached`. The hover tooltip calls
   `CodeDecorations.ScanLine` fresh, bypassing the colorizer's version-memoized cache for the same line.
   **Fix:** expose `ScanCached(version, lineNumber, text)` on the colorizer and route the hover through it.

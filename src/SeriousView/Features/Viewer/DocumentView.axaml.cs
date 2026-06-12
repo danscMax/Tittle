@@ -1046,10 +1046,15 @@ public partial class DocumentView : UserControl
         var line = document.GetLineByNumber(position.Value.Line);
         var column = position.Value.Column - 1;
         var text = document.GetText(line);
-        return CodeDecorations.ScanLine(text, _cvColorizer.Today())
+        // P8: reuse the colorizer's version-memoized scan (the line was already scanned during render)
+        // instead of a fresh CodeDecorations.ScanLine that bypasses the cache on every hover.
+        return _cvColorizer.ScanCached(document.Version, line.LineNumber, text)
             .FirstOrDefault(d => d.Tooltip is not null && column >= d.Start && column < d.Start + d.Length)
             ?.Tooltip;
     }
+
+    // P8 test seam: lets a headless test assert the hover tooltip reuses the colorizer's scan cache.
+    internal CodeDecorationColorizer CvColorizer => _cvColorizer;
 
     private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)
     {
