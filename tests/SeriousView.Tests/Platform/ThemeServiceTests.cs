@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -32,22 +33,24 @@ public class ThemeServiceTests
     }
 
     [AvaloniaFact]
-    public void Cycle_WalksTheWholeSetAndWraps()
+    public void Cycle_WalksEveryCatalogThemeOnceThenWraps()
     {
-        var service = NewService(); // starts Dark
+        var service = NewService(); // starts Dark == ThemeCatalog.All[0]
 
-        service.Cycle();
-        Assert.Equal(ThemeMode.Midnight, service.Mode);
-        service.Cycle();
-        Assert.Equal(ThemeMode.Ocean, service.Mode);
-        service.Cycle();
-        Assert.Equal(ThemeMode.DeepBlue, service.Mode);
-        service.Cycle();
-        Assert.Equal(ThemeMode.Light, service.Mode);
-        service.Cycle();
-        Assert.Equal(ThemeMode.Auto, service.Mode);
-        service.Cycle();
-        Assert.Equal(ThemeMode.Dark, service.Mode);
+        var visited = new System.Collections.Generic.List<ThemeMode> { service.Mode };
+        for (var i = 0; i < ThemeCatalog.All.Count - 1; i++)
+        {
+            service.Cycle();
+            visited.Add(service.Mode);
+        }
+
+        // Every catalog mode visited exactly once…
+        Assert.Equal(
+            ThemeCatalog.All.Select(t => t.Mode).OrderBy(m => m),
+            visited.OrderBy(m => m));
+
+        service.Cycle(); // …and one more wraps back to the first.
+        Assert.Equal(ThemeCatalog.All[0].Mode, service.Mode);
     }
 
     [AvaloniaFact]
@@ -71,26 +74,37 @@ public class ThemeServiceTests
     }
 
     [Fact]
-    public void Next_CyclesThroughTheDarkSetThenLightAuto()
+    public void Next_FollowsTheCatalogOrderAndWraps()
     {
-        // The shared cycle helper reused by ThemeService and FakeThemeService.
-        Assert.Equal(ThemeMode.Midnight, ThemeMode.Dark.Next());
-        Assert.Equal(ThemeMode.Ocean, ThemeMode.Midnight.Next());
-        Assert.Equal(ThemeMode.DeepBlue, ThemeMode.Ocean.Next());
-        Assert.Equal(ThemeMode.Light, ThemeMode.DeepBlue.Next());
-        Assert.Equal(ThemeMode.Auto, ThemeMode.Light.Next());
-        Assert.Equal(ThemeMode.Dark, ThemeMode.Auto.Next());
+        // The shared cycle helper (reused by ThemeService and FakeThemeService) is catalog-driven.
+        for (var i = 0; i < ThemeCatalog.All.Count; i++)
+        {
+            var current = ThemeCatalog.All[i].Mode;
+            var expected = ThemeCatalog.All[(i + 1) % ThemeCatalog.All.Count].Mode;
+            Assert.Equal(expected, current.Next());
+        }
     }
 
     [Fact]
-    public void IsDark_CoversTheWholeDarkFamily()
+    public void IsDark_MatchesTheCatalogFlagForEveryMode()
     {
-        Assert.True(ThemeMode.Dark.IsDark());
-        Assert.True(ThemeMode.Midnight.IsDark());
-        Assert.True(ThemeMode.Ocean.IsDark());
-        Assert.True(ThemeMode.DeepBlue.IsDark());
+        foreach (var theme in ThemeCatalog.All)
+            Assert.Equal(theme.IsDark, theme.Mode.IsDark());
+
+        // Spot-check the two non-dark anchors.
         Assert.False(ThemeMode.Light.IsDark());
         Assert.False(ThemeMode.Auto.IsDark());
+        Assert.True(ThemeMode.Dark.IsDark());
+    }
+
+    [Fact]
+    public void Catalog_HasOneEntryPerThemeMode_NoDuplicates()
+    {
+        var modes = ThemeCatalog.All.Select(t => t.Mode).ToList();
+        Assert.Equal(modes.Count, modes.Distinct().Count());
+        // Every enum member is represented in the gallery/cycle.
+        foreach (ThemeMode mode in System.Enum.GetValues(typeof(ThemeMode)))
+            Assert.Contains(mode, modes);
     }
 
     [AvaloniaFact]
@@ -112,6 +126,50 @@ public class ThemeServiceTests
 
         service.SetMode(ThemeMode.Ocean);
         Assert.Equal(AppThemeVariants.Ocean, app.RequestedThemeVariant);
+    }
+
+    [AvaloniaFact]
+    public void PortedVariants_ResolveTheirOwnSurface_AndInheritTheBase()
+    {
+        var app = Application.Current!;
+        var service = NewService();
+
+        // A ported dark variant (Nord) renders its own background…
+        service.SetMode(ThemeMode.Nord);
+        Assert.Equal(AppThemeVariants.Nord, app.RequestedThemeVariant);
+        Assert.True(app.TryGetResource("WindowBackgroundBrush", AppThemeVariants.Nord, out var nordBg));
+        Assert.Equal(Color.Parse("#2E3440"), ((ISolidColorBrush)nordBg!).Color);
+        // …while an un-overridden token falls back to the inherited Dark dictionary.
+        Assert.True(app.TryGetResource("AdmonitionNoteBrush", AppThemeVariants.Nord, out var nordNote));
+        Assert.Equal(Color.Parse("#4493F8"), ((ISolidColorBrush)nordNote!).Color);
+
+        // A ported light variant (Sepia) renders its own background and inherits the Light base.
+        service.SetMode(ThemeMode.Sepia);
+        Assert.Equal(AppThemeVariants.Sepia, app.RequestedThemeVariant);
+        Assert.True(app.TryGetResource("WindowBackgroundBrush", AppThemeVariants.Sepia, out var sepiaBg));
+        Assert.Equal(Color.Parse("#F7F1E1"), ((ISolidColorBrush)sepiaBg!).Color);
+        Assert.True(app.TryGetResource("AdmonitionNoteBrush", AppThemeVariants.Sepia, out var sepiaNote));
+        Assert.Equal(Color.Parse("#0969DA"), ((ISolidColorBrush)sepiaNote!).Color); // Light.axaml value
+    }
+
+    [AvaloniaFact]
+    public void EveryThemeMode_AppliesAResolvableVariant()
+    {
+        var app = Application.Current!;
+        var service = NewService();
+
+        foreach (var theme in ThemeCatalog.All)
+        {
+            if (theme.Mode == ThemeMode.Auto)
+                continue; // Auto → Default (follow-OS); no concrete dictionary to resolve headless.
+
+            service.SetMode(theme.Mode);
+            // Every concrete theme must resolve its own palette — none silently maps to OS-follow.
+            Assert.True(
+                app.TryGetResource("WindowBackgroundBrush", app.RequestedThemeVariant, out var bg),
+                $"{theme.Mode} did not resolve WindowBackgroundBrush");
+            Assert.NotNull(bg);
+        }
     }
 
     [AvaloniaFact]

@@ -22,6 +22,25 @@
                                  Source="avares://SeriousView/Themes/Colors/Ocean.axaml" />
                 <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.DeepBlue}"
                                  Source="avares://SeriousView/Themes/Colors/DeepBlue.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Nord}"
+                                 Source="avares://SeriousView/Themes/Colors/Nord.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Dracula}"
+                                 Source="avares://SeriousView/Themes/Colors/Dracula.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedDark}"
+                                 Source="avares://SeriousView/Themes/Colors/SolarizedDark.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedDim}"
+                                 Source="avares://SeriousView/Themes/Colors/SolarizedDim.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.GruvboxDark}"
+                                 Source="avares://SeriousView/Themes/Colors/GruvboxDark.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.HighContrast}"
+                                 Source="avares://SeriousView/Themes/Colors/HighContrast.axaml" />
+                <!-- Light family: each inherits the Light variant. -->
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Sepia}"
+                                 Source="avares://SeriousView/Themes/Colors/Sepia.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedLight}"
+                                 Source="avares://SeriousView/Themes/Colors/SolarizedLight.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.GruvboxLight}"
+                                 Source="avares://SeriousView/Themes/Colors/GruvboxLight.axaml" />
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>

@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ Gruvbox Light (ported, light family) ============
+         Warm cream base, burnt-orange accent. Inherits the Light variant — only surface/chrome/
+         accent tokens here; admonitions, cv-* decorations etc. fall back to Light.axaml. -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FBF1C7" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#FEFAE6" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#F2E5BC" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#F7ECC0" Offset="0" />
+        <GradientStop Color="#F2E5BC" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#F2E5BC" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#D5C4A1" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#3C3836" />
+    <Color x:Key="ChromeForegroundColor">#3C3836</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#665C54" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#AF3A03" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#C44A0E" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#EFE2B4" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#665C54" />
+
+</ResourceDictionary>

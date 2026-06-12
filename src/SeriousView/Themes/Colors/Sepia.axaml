@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ Sepia (ported, light family) ============
+         Warm paper tone, brown accent. Inherits the Light variant — only surface/chrome/accent
+         tokens here; admonitions, cv-* decorations etc. fall back to Light.axaml. -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F7F1E1" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#FBF6E8" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#EFE6D0" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#FBF7EC" Offset="0" />
+        <GradientStop Color="#EFE6D0" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#EFE6D0" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#DBCCAA" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#5B4636" />
+    <Color x:Key="ChromeForegroundColor">#5B4636</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#7A6553" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#8B4513" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#A0522D" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#EAE0C8" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#7A6553" />
+
+</ResourceDictionary>

@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ Nord (ported) ============
+         Arctic blue-grey. Inherits the Dark variant: only surface/chrome/accent tokens are
+         overridden — admonitions, cv-* decorations etc. fall back to Dark.axaml. -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#2E3440" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#3B4252" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#434C5E" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#434C5E" Offset="0" />
+        <GradientStop Color="#3B4252" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#3B4252" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#4C566A" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#ECEFF4" />
+    <Color x:Key="ChromeForegroundColor">#ECEFF4</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#9AA7BE" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#88C0D0" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#A3CDDA" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#2A303B" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#A9B4C6" />
+
+</ResourceDictionary>

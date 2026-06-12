@@ -5,16 +5,36 @@ using SeriousView.Core.Abstractions;
 
 namespace SeriousView.Platform;
 
-/// <summary>The custom dark variants (ported DARK_THEMES). Each inherits
-/// <see cref="ThemeVariant.Dark"/>, so its palette only overrides the surface tokens —
-/// every other key falls back to the Dark dictionary.</summary>
+/// <summary>The custom theme variants ported from the original viewer. Each inherits either
+/// <see cref="ThemeVariant.Dark"/> or <see cref="ThemeVariant.Light"/>, so its palette only
+/// overrides the surface/chrome/accent tokens — every other key falls back to the base dictionary.</summary>
 public static class AppThemeVariants
 {
+    // Dark family (inherit Dark)
     public static ThemeVariant Midnight { get; } = new("Midnight", ThemeVariant.Dark);
 
     public static ThemeVariant Ocean { get; } = new("Ocean", ThemeVariant.Dark);
 
     public static ThemeVariant DeepBlue { get; } = new("DeepBlue", ThemeVariant.Dark);
+
+    public static ThemeVariant Nord { get; } = new("Nord", ThemeVariant.Dark);
+
+    public static ThemeVariant Dracula { get; } = new("Dracula", ThemeVariant.Dark);
+
+    public static ThemeVariant SolarizedDark { get; } = new("SolarizedDark", ThemeVariant.Dark);
+
+    public static ThemeVariant SolarizedDim { get; } = new("SolarizedDim", ThemeVariant.Dark);
+
+    public static ThemeVariant GruvboxDark { get; } = new("GruvboxDark", ThemeVariant.Dark);
+
+    public static ThemeVariant HighContrast { get; } = new("HighContrast", ThemeVariant.Dark);
+
+    // Light family (inherit Light)
+    public static ThemeVariant Sepia { get; } = new("Sepia", ThemeVariant.Light);
+
+    public static ThemeVariant SolarizedLight { get; } = new("SolarizedLight", ThemeVariant.Light);
+
+    public static ThemeVariant GruvboxLight { get; } = new("GruvboxLight", ThemeVariant.Light);
 }
 
 /// <summary>
@@ -63,6 +83,15 @@ public sealed class ThemeService : IThemeService
             ThemeMode.Midnight => AppThemeVariants.Midnight,
             ThemeMode.Ocean => AppThemeVariants.Ocean,
             ThemeMode.DeepBlue => AppThemeVariants.DeepBlue,
+            ThemeMode.Nord => AppThemeVariants.Nord,
+            ThemeMode.Dracula => AppThemeVariants.Dracula,
+            ThemeMode.SolarizedDark => AppThemeVariants.SolarizedDark,
+            ThemeMode.SolarizedDim => AppThemeVariants.SolarizedDim,
+            ThemeMode.GruvboxDark => AppThemeVariants.GruvboxDark,
+            ThemeMode.HighContrast => AppThemeVariants.HighContrast,
+            ThemeMode.Sepia => AppThemeVariants.Sepia,
+            ThemeMode.SolarizedLight => AppThemeVariants.SolarizedLight,
+            ThemeMode.GruvboxLight => AppThemeVariants.GruvboxLight,
             _ => ThemeVariant.Default, // follow OS
         };
     }

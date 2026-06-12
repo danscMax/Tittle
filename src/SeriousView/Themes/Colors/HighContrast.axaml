@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ High Contrast (ported, accessibility) ============
+         Pure black, white text, yellow accent. Inherits the Dark variant. Beyond the surface set it
+         also overrides AccentForegroundBrush (text on the yellow accent must be black, not white) and
+         the search wash (a solid yellow for maximum visibility). -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#000000" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#0A0A0A" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#050505" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#0A0A0A" Offset="0" />
+        <GradientStop Color="#000000" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#0A0A0A" Opacity="0.85" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#FFFFFF" />
+    <Color x:Key="ChromeForegroundColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#D0D0D0" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#FFFF00" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFFF66" />
+    <!-- Text/glyph drawn on top of the yellow accent — black, not the inherited white. -->
+    <SolidColorBrush x:Key="AccentForegroundBrush" Color="#000000" />
+    <!-- Search match: a strong yellow wash (the inherited amber is too dim against pure black). -->
+    <SolidColorBrush x:Key="SearchMatchBrush" Color="#FFFF00" Opacity="0.45" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#000000" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#E0E0E0" />
+
+</ResourceDictionary>
