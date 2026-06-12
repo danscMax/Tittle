@@ -163,6 +163,22 @@ public class MarkdownPreprocessorTests
     }
 
     [Fact]
+    public void Wiki_ResolverMemo_IsCaseInsensitive()
+    {
+        // Q12: File.Exists is case-insensitive on Windows/macOS, so [[Note]] and [[note]] must share
+        // one memo entry — a single resolver hit, not two (which could even disagree).
+        var calls = new System.Collections.Generic.List<string>();
+        var result = MarkdownPreprocessor.Transform("[[Note]] and [[note]]", name =>
+        {
+            calls.Add(name);
+            return true;
+        });
+
+        Assert.Single(calls);
+        Assert.Equal("[Note](wiki:Note) and [note](wiki:note)", result);
+    }
+
+    [Fact]
     public void Wiki_MultipleAndAdjacentTokens_OnOneLine()
     {
         Assert.Equal("[a](wiki:a) and [b](wiki:b)", TransformWiki("[[a]] and [[b]]", "a", "b"));

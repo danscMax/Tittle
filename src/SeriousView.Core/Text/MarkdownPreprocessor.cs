@@ -306,7 +306,9 @@ public static partial class MarkdownPreprocessor
         if (resolver is null)
             return null;
 
-        var known = new Dictionary<string, bool>(); // default comparer is ordinal
+        // Q12: case-insensitive memo to match the resolver's case-insensitive File.Exists on
+        // Windows/macOS — otherwise [[Note]] and [[note]] each hit the filesystem and could disagree.
+        var known = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         return name => known.TryGetValue(name, out var exists) ? exists : known[name] = resolver(name);
     }
 

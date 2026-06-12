@@ -426,7 +426,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   that is load-bearing-by-accident (the property depends on `SelectedTab.HasOutline`). **Fix:** collapse into the
   single 2-arg overload and document the `SelectedTab`-derived dependency (or make `IsOutlinePaneVisible` a
   computed-from helper). **Test:** existing outline-pane-visible tests still green after the collapse.
-- [ ] **Q12 (Medium)** `Core/Text/MarkdownPreprocessor.cs` · wiki-resolver memo (`var known = new Dictionary<…>`
+- [x] **Q12 (Medium)** `Core/Text/MarkdownPreprocessor.cs` · wiki-resolver memo (`var known = new Dictionary<…>`
   region). The memo uses an ordinal (case-sensitive) dictionary while the resolver does a case-insensitive
   `File.Exists`, so `[[Note]]` and `[[note]]` each hit the filesystem and can disagree. **Fix:**
   `new Dictionary<string,bool>(StringComparer.OrdinalIgnoreCase)`. **Test:** unit — two casings resolve once
