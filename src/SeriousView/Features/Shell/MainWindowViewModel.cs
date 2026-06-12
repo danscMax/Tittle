@@ -858,8 +858,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         catch (Exception ex)
         {
             var message = DescribeError(ex, path);
-            StatusText = message; // the status bar keeps the message for context...
-            ShowError(message);   // ...but the InfoBar is what gets noticed (#28)
+            // With a tab open the left status segment is otherwise empty, so it can echo the error for
+            // context until the next tab change. On the WELCOME screen (no tabs) there is no next tab
+            // change to clear it, so the error would stick forever over the welcome hint — keep the
+            // hint there and let the (prominent, auto-dismissing) InfoBar carry the error instead.
+            StatusText = HasTabs ? message : WelcomeHint;
+            ShowError(message);
         }
     }
 

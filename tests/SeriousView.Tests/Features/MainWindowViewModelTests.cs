@@ -346,7 +346,10 @@ public class MainWindowViewModelTests
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
-        Assert.Equal("Файл не найден: missing.txt", vm.StatusText);
+        // On welcome the friendly message lives in the InfoBar; the status keeps the hint (see
+        // OpenFile_Error_OnWelcome_KeepsHint_ErrorInBarOnly).
+        Assert.Equal("Файл не найден: missing.txt", vm.ErrorBarMessage);
+        Assert.Contains("Откройте файл", vm.StatusText);
         Assert.Empty(vm.Tabs);
     }
 
@@ -393,16 +396,35 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public async Task OpenFile_Error_ShowsErrorBar_AndStatusText()
+    public async Task OpenFile_Error_OnWelcome_KeepsHint_ErrorInBarOnly()
     {
+        // Bug fix: a failed open on the WELCOME screen (no tabs) must NOT leave the error stuck in the
+        // status bar (nothing would ever clear it). The hint stays; the InfoBar carries the error.
         var vm = CreateVm(dialogPath: "/path/missing.txt",
             fileReader: new FakeFileReader(new FileNotFoundException()));
 
         await vm.OpenFileCommand.ExecuteAsync(null);
 
+        Assert.False(vm.HasTabs);
         Assert.True(vm.IsErrorBarOpen);
         Assert.Equal("Файл не найден: missing.txt", vm.ErrorBarMessage);
-        Assert.Equal("Файл не найден: missing.txt", vm.StatusText); // the status bar keeps duplicating
+        Assert.Contains("Откройте файл", vm.StatusText); // welcome hint, not the stale error
+    }
+
+    [AvaloniaFact]
+    public async Task OpenFile_Error_WithTabOpen_EchoesErrorInStatus()
+    {
+        // With a tab already open the left status segment is otherwise empty, so echoing the error
+        // there for context is fine — it clears on the next tab change.
+        var files = new Dictionary<string, string> { ["/a.md"] = "# A" };
+        var vm = CreateVm(fileReader: new FakeFileReader(files));
+        await vm.OpenPathAsync("/a.md");
+        Assert.True(vm.HasTabs);
+
+        await vm.OpenPathAsync("/missing.txt"); // FakeFileReader throws for unknown paths
+
+        Assert.True(vm.IsErrorBarOpen);
+        Assert.Contains("missing.txt", vm.StatusText);
     }
 
     [AvaloniaFact]
