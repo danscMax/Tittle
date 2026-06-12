@@ -11,14 +11,29 @@ public class AppSettingsMigratorTests
         => Assert.Null(AppSettingsMigrator.Migrate(null));
 
     [Fact]
-    public void Migrate_LegacyV0_StampsV1_AndPreservesData()
+    public void Migrate_LegacyV0_StampsToCurrent_AndPreservesData()
     {
         var legacy = new AppSettings { SchemaVersion = 0, Theme = ThemeMode.Light };
 
         var migrated = AppSettingsMigrator.Migrate(legacy)!;
 
-        Assert.Equal(1, migrated.SchemaVersion);
+        Assert.Equal(AppSettingsMigrator.CurrentSchemaVersion, migrated.SchemaVersion);
         Assert.Equal(ThemeMode.Light, migrated.Theme); // nothing dropped
+    }
+
+    [Fact]
+    public void Migrate_V1ToV2_StampsV2_AndPreservesData_WithSplitDefaults()
+    {
+        // v1→v2 added LayoutSettings.SplitOrientation/SplitRatio — a pure stamp bump. An old Layout
+        // section keeps its data and the new fields default to Horizontal/0.5.
+        var v1 = new AppSettings { SchemaVersion = 1, Layout = new LayoutSettings { ShowRail = true } };
+
+        var migrated = AppSettingsMigrator.Migrate(v1)!;
+
+        Assert.Equal(2, migrated.SchemaVersion);
+        Assert.True(migrated.Layout!.ShowRail); // nothing dropped
+        Assert.Equal(SplitOrientation.Horizontal, migrated.Layout.SplitOrientation);
+        Assert.Equal(0.5, migrated.Layout.SplitRatio);
     }
 
     [Fact]

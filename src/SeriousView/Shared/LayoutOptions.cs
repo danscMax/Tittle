@@ -33,6 +33,27 @@ public partial class LayoutOptions : ObservableObject
     [ObservableProperty]
     private ReadingWidth _readingWidth = ReadingWidth.Comfort;
 
+    [ObservableProperty]
+    private SplitOrientation _splitOrientation = SplitOrientation.Horizontal;
+
+    /// <summary>Source-pane fraction of the split view. Shared by the splitter (view) and persistence.</summary>
+    public const double MinSplitRatio = 0.15, MaxSplitRatio = 0.85, DefaultSplitRatio = 0.5;
+
+    /// <summary>Clamp a split ratio into the allowed range (NaN → default).</summary>
+    public static double ClampSplitRatio(double r) =>
+        Math.Clamp(double.IsNaN(r) ? DefaultSplitRatio : r, MinSplitRatio, MaxSplitRatio);
+
+    [ObservableProperty]
+    private double _splitRatio = DefaultSplitRatio;
+
+    // Keep the ratio sane even if a settings file is hand-edited out of range.
+    partial void OnSplitRatioChanged(double value)
+    {
+        var clamped = ClampSplitRatio(value);
+        if (clamped != value)
+            SplitRatio = clamped; // re-set lands in range; an equal value is a no-op (no loop)
+    }
+
     /// <summary>Outline/TOC sidebar width range (px). Shared by the splitter (view) and persistence.</summary>
     public const double MinOutlineWidth = 180, MaxOutlineWidth = 480, DefaultOutlineWidth = 240;
 
@@ -61,6 +82,8 @@ public partial class LayoutOptions : ObservableObject
         ReadingMode = ReadingMode,
         OutlineWidth = OutlineWidth,
         ReadingWidth = ReadingWidth,
+        SplitOrientation = SplitOrientation,
+        SplitRatio = SplitRatio,
     };
 
     /// <summary>Build options from persisted settings, or the etalon defaults when none are saved.</summary>
@@ -76,5 +99,7 @@ public partial class LayoutOptions : ObservableObject
             ReadingMode = s.ReadingMode,
             OutlineWidth = s.OutlineWidth,
             ReadingWidth = s.ReadingWidth,
+            SplitOrientation = s.SplitOrientation,
+            SplitRatio = s.SplitRatio,
         };
 }

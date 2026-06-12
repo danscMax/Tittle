@@ -18,6 +18,10 @@ public enum DocumentViewMode
 {
     Preview,
     Source,
+
+    /// <summary>Source editor and rendered preview shown side by side (markdown only),
+    /// with live mutual scroll sync. See <see cref="DocumentTabViewModel.ShowSplit"/>.</summary>
+    Split,
 }
 
 /// <summary>One open document = one tab. Holds its content, grammar, header and
@@ -401,6 +405,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
+    [NotifyPropertyChangedFor(nameof(ShowSplit))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     [NotifyPropertyChangedFor(nameof(ZoomApplies))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
@@ -413,9 +418,14 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     public bool ShowSource =>
         !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
 
+    /// <summary>Show source + preview side by side (markdown only). In split, both hosts are
+    /// realized but <see cref="ShowSource"/>/<see cref="ShowPreview"/> are false — the panes are
+    /// revealed by the split grid's track lengths, not by IsVisible (see DocumentView.SplitLayout).</summary>
+    public bool ShowSplit => !ShowNotice && IsMarkdown && ViewMode == DocumentViewMode.Split;
+
     /// <summary>Whether the font-size zoom controls apply to this tab — the source editor or the
     /// markdown preview (zoomed via a layout scale). False for the table view and notice overlays.</summary>
-    public bool ZoomApplies => ShowSource || ShowPreview;
+    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit;
 
     /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
     /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>
@@ -488,6 +498,12 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Show the source (segmented switch).</summary>
     [RelayCommand(CanExecute = nameof(IsMarkdown))]
     private void ShowSourceMode() => ViewMode = DocumentViewMode.Source;
+
+    /// <summary>Toggle the side-by-side split view (markdown only). Off → return to Preview
+    /// (markdown's default reading state).</summary>
+    [RelayCommand(CanExecute = nameof(IsMarkdown))]
+    private void ToggleSplit()
+        => ViewMode = ViewMode == DocumentViewMode.Split ? DocumentViewMode.Preview : DocumentViewMode.Split;
 
     private IReadOnlyList<HeadingOutline>? _outline;
 

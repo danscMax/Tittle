@@ -108,6 +108,57 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void ToggleSplit_FlipsSplitAndPreview_ForMarkdown()
+    {
+        var vm = DocumentTabViewModel.FromFile("# Title", "/docs/readme.md");
+        Assert.True(vm.ToggleSplitCommand.CanExecute(null));
+
+        vm.ToggleSplitCommand.Execute(null);
+        Assert.Equal(DocumentViewMode.Split, vm.ViewMode);
+        Assert.True(vm.ShowSplit);
+        Assert.False(vm.ShowPreview);   // in split, the single-mode flags are false…
+        Assert.False(vm.ShowSource);    // …the panes are revealed by the split grid, not IsVisible
+        Assert.True(vm.ZoomApplies);    // zoom still applies in split
+
+        vm.ToggleSplitCommand.Execute(null); // off → back to Preview (markdown's default)
+        Assert.Equal(DocumentViewMode.Preview, vm.ViewMode);
+        Assert.False(vm.ShowSplit);
+        Assert.True(vm.ShowPreview);
+    }
+
+    [Fact]
+    public void ToggleSplit_Disabled_ForNonMarkdown()
+    {
+        var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
+
+        Assert.False(vm.ToggleSplitCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void ShowSplit_False_ForNoticeTab()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Binary(2048), "/img/pic.png");
+        vm.ViewMode = DocumentViewMode.Split;
+
+        Assert.True(vm.ShowNotice);
+        Assert.False(vm.ShowSplit); // a notice overrides the split panes
+    }
+
+    [Fact]
+    public void OpenSearch_MarkdownInSplit_StaysSplit()
+    {
+        // In split the source pane is already on screen, so find must NOT force a mode switch
+        // (only a pure-Preview tab is flipped to Source).
+        var vm = DocumentTabViewModel.FromFile("# Title\n\nfind me", "/doc.md");
+        vm.ViewMode = DocumentViewMode.Split;
+
+        vm.OpenSearchCommand.Execute(null);
+
+        Assert.True(vm.IsSearchOpen);
+        Assert.Equal(DocumentViewMode.Split, vm.ViewMode);
+    }
+
+    [Fact]
     public void ZoomApplies_ForMarkdownPreviewAndSource_AndAnyCode()
     {
         var md = DocumentTabViewModel.FromFile("# Title", "/docs/readme.md");

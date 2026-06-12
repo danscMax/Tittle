@@ -53,6 +53,16 @@ public enum ReadingWidth
     Narrow,
 }
 
+/// <summary>Orientation of the split view (source + preview shown together).</summary>
+public enum SplitOrientation
+{
+    /// <summary>Side by side: source left, preview right (the default — wide screens).</summary>
+    Horizontal,
+
+    /// <summary>Stacked: source on top, preview below.</summary>
+    Vertical,
+}
+
 /// <summary>
 /// Shell layout / chrome customization. The whole chrome is driven by these knobs rather than being
 /// hard-coded, so presets (hamburger, classic menu-bar, in-title-bar) are just different values.
@@ -87,4 +97,11 @@ public sealed record LayoutSettings
 
     /// <summary>Reading-column preset for the preview. Default: comfortable centered column.</summary>
     public ReadingWidth ReadingWidth { get; init; } = ReadingWidth.Comfort;
+
+    /// <summary>Orientation of the split view (source + preview together). Default: horizontal.</summary>
+    public SplitOrientation SplitOrientation { get; init; } = SplitOrientation.Horizontal;
+
+    /// <summary>Source-pane fraction (0..1) of the split view, user-resizable via a splitter.
+    /// Default: 0.5 (even). Clamped to [0.15, 0.85] on use.</summary>
+    public double SplitRatio { get; init; } = 0.5;
 }

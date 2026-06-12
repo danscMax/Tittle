@@ -327,6 +327,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Layout.ShowRail = layout.ShowRail;
         Layout.ReadingMode = layout.ReadingMode;
         Layout.OutlineWidth = layout.OutlineWidth;
+        Layout.SplitOrientation = layout.SplitOrientation;
+        Layout.SplitRatio = layout.SplitRatio;
     }
 
     /// <summary>Reload a tab from disk (tab context menu / the dirty dot / the palette).</summary>

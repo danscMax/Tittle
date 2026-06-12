@@ -19,6 +19,8 @@ public class LayoutOptionsTests
         Assert.True(o.ReadingMode);   // reading column on by default (etalon)
         Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
         Assert.Equal(ReadingWidth.Comfort, o.ReadingWidth); // comfortable centered column by default
+        Assert.Equal(SplitOrientation.Horizontal, o.SplitOrientation); // side-by-side by default
+        Assert.Equal(0.5, o.SplitRatio); // even split by default
     }
 
     [Fact]
@@ -34,6 +36,8 @@ public class LayoutOptionsTests
             ReadingMode = false,
             OutlineWidth = 320,
             ReadingWidth = ReadingWidth.Narrow,
+            SplitOrientation = SplitOrientation.Vertical,
+            SplitRatio = 0.7,
         };
 
         Assert.Equal(s, LayoutOptions.FromSettings(s).ToSettings());
@@ -63,5 +67,16 @@ public class LayoutOptionsTests
         var o = new LayoutOptions { OutlineWidth = set };
 
         Assert.Equal(expected, o.OutlineWidth);
+    }
+
+    [Theory]
+    [InlineData(0.05, 0.15)]  // below min → clamped up
+    [InlineData(0.95, 0.85)]  // above max → clamped down
+    [InlineData(0.5, 0.5)]    // in range → unchanged
+    public void SplitRatio_IsClampedToRange(double set, double expected)
+    {
+        var o = new LayoutOptions { SplitRatio = set };
+
+        Assert.Equal(expected, o.SplitRatio);
     }
 }
