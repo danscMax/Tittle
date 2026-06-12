@@ -58,7 +58,10 @@ is the ecosystem, not Avalonia itself.
 Markdown.Avalonia on 12 is **alpha only** (`12.0.0-a2`; stable is still `11.0.3`) and FluentAvalonia
 has **no Av12 release yet** (Material.Avalonia / Semi.Avalonia did port). Don't start the Av12
 migration — and the Av12-gated items (paste-image / `DataTransfer`, `ClipboardService` CS0618,
-reduced-motion, FluentAvalonia 2.4.x EOL) stay deferred — until both ship stable 12 builds.
+reduced-motion, FluentAvalonia 2.4.x EOL, **xUnit v3 migration** — `Avalonia.Headless.XUnit` 11.x
+depends on `xunit.core` v2; `xunit.v3` support lands only in `Avalonia.Headless.XUnit` 12.0.3+,
+which pulls the Av12 runtime — issue #18356, no 11.x backport) stay deferred — until both ship stable
+12 builds.
 
 ## Roadmap
 

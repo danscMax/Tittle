@@ -305,9 +305,11 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 **Status (2026-06-12):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
 (Waves A–D, 22 findings, `8af0fd0`…`32f385b`; 802 tests). **Genuinely open for the next session** (pick by
 priority, all below the tech-debt checklist): new capability — **split-view live sync** (`HeadingAnchors` seam
-ready) or **M12 diagrams** (hard, WebView-less); maintainability — **DocumentView code-behind split** + **xUnit
-v3**; cleanup — **re-verify & clear the carried-over Lows**. **Av12 migration stays blocked** (Markdown.Avalonia
-alpha-only, FluentAvalonia not ported — re-verified 2026-06-12). The historical log of completed work follows.
+ready) or **M12 diagrams** (hard, WebView-less); maintainability — **DocumentView code-behind split** (xUnit v3
+is NOT freely open — it's **Av12-gated**, see «Deferred by decision»); cleanup — the carried-over Lows were
+re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
+FluentAvalonia not ported — re-verified 2026-06-12; it also gates xUnit v3 via `Avalonia.Headless.XUnit`). The
+historical log of completed work follows.
 
 Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, **M8 core**
 (reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18), and the
@@ -472,8 +474,20 @@ still open for a future session is **«Deferred by decision»**, the carried-ove
   focused attached behaviours **when next touching the viewer** (Wave B above already reopens this file —
   opportunistic extraction welcome). `MainWindowViewModel` was already split (`DocumentExportService` +
   `SettingsTransfer`).
-- **xUnit v3 migration (Low).** v2 (2.9.3) is maintenance-only; v3 (3.2.x) is active. Test-only — schedule a
-  focused migration pass (it changes the test SDK + a few APIs).
+- **xUnit v3 migration (Low) — BLOCKED on Av11, Av12-gated (re-investigated 2026-06-12).** v2 (2.9.3) is
+  maintenance-only; v3 (3.2.x) is active — the motive stands, but the migration is **not doable on the Av11
+  line**: `Avalonia.Headless.XUnit` 11.3.17 depends on `xunit.core >= 2.4.0` (xUnit **v2**), and the
+  `[AvaloniaFact]`/`[AvaloniaTheory]` attributes derive from v2's `FactAttribute` — incompatible with the
+  separate `xunit.v3.*` assemblies. `xunit.v3` support was added only to `Avalonia.Headless.XUnit` **12.0.3+**
+  (depends on `xunit.v3.extensibility.core >= 3.2.2`), which pulls `Avalonia.Headless >= 12.x` → the whole
+  Avalonia runtime to 12; CPM can't mix versions. Issue
+  [AvaloniaUI/Avalonia#18356](https://github.com/AvaloniaUI/Avalonia/issues/18356) (a request for a standalone
+  `Avalonia.Headless.XUnit.v3`) was resolved by folding v3 into the 12.x package — **no 11.x backport**. Scope
+  if forced: the ~560 Core/pure tests migrate trivially (no `IClassFixture`/`ICollectionFixture`/
+  `ITestOutputHelper`/`Record.Exception` — only `[Fact]`/`[Theory]`/`[InlineData]`/`Assert.*`, and
+  `xunit.runner.visualstudio` 3.1.5 + `Microsoft.NET.Test.Sdk` 18.6.0 already support v3), but **139
+  `[AvaloniaFact]`/`[AvaloniaTheory]` tests across 19 files break**. **Gate = the Av12 migration** (same blocker
+  family as `DataTransfer`/`ClipboardService` CS0618); once on Av12 the test-side change is ~mechanical.
 - **CSharpMath fork monitoring (Low).** `Sylinko.CSharpMath.Avalonia` 11.3.1 — single-maintainer MIT fork
   (~3.6k downloads, "no deep optimization" disclaimer); upstream dormant. Watch the GitHub repo for archival;
   no alternative for Av11 block math.
