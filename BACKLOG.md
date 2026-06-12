@@ -400,7 +400,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   `CodeDecorations.ScanLine` fresh, bypassing the colorizer's version-memoized cache for the same line.
   **Fix:** expose `ScanCached(version, lineNumber, text)` on the colorizer and route the hover through it.
   **Test:** unit — a warm line hit doesn't re-scan (assert via a scan counter).
-- [ ] **P9 (Medium)** `Features/Viewer/IndentGuideRenderer.cs` · `_effectiveCache` (L26, cleared L54). Unbounded
+- [x] **P9 (Medium)** `Features/Viewer/IndentGuideRenderer.cs` · `_effectiveCache` (L26, cleared L54). Unbounded
   per-line cache for a static (never-edited) document keeps growing while the tab lives. **Fix:** LRU-cap it
   (e.g. last N visible lines) or clear on detach. **Test:** unit — cache size stays bounded after scanning
   many lines at a fixed document version.

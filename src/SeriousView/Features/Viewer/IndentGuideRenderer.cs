@@ -23,7 +23,12 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
     // EffectiveColumns scans up to ±BlankScanLimit neighbours for a blank line; Draw runs every
     // frame, so on a blank-heavy file an uncached scroll re-walks ~200 lines per visible blank line.
     // Memoize per line, invalidated when the document version (advances on edit) or tab size changes.
+    // P9: a never-edited document keeps the same version, so without a cap the memo grows by one entry
+    // per line scrolled — unbounded for a huge static file. Cap it FIFO (insertion order ≈ scroll
+    // order, so the evicted entry is the farthest off-screen); eviction is O(1).
+    private const int CacheCap = 4096;
     private readonly Dictionary<int, int> _effectiveCache = new();
+    private readonly Queue<int> _cacheOrder = new();
     private ITextSourceVersion? _cacheVersion;
     private int _cacheTabSize = -1;
 
@@ -46,15 +51,7 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
             return;
 
         var tabSize = Math.Max(1, textView.Options?.IndentationSize ?? 4);
-
-        // Drop the memo when the text changed (Version advances on edit) or the tab size moved.
         var version = document.Version;
-        if (tabSize != _cacheTabSize || !ReferenceEquals(version, _cacheVersion))
-        {
-            _effectiveCache.Clear();
-            _cacheVersion = version;
-            _cacheTabSize = tabSize;
-        }
 
         string? LineAt(int n)
         {
@@ -64,18 +61,9 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
             return document.GetText(line.Offset, Math.Min(line.Length, MaxIndentProbe));
         }
 
-        int EffectiveColumns(int lineNumber)
-        {
-            if (_effectiveCache.TryGetValue(lineNumber, out var cached))
-                return cached;
-            var computed = IndentGuides.EffectiveColumns(LineAt, lineNumber, tabSize);
-            _effectiveCache[lineNumber] = computed;
-            return computed;
-        }
-
         foreach (var visualLine in textView.VisualLines)
         {
-            var columns = EffectiveColumns(visualLine.FirstDocumentLine.LineNumber);
+            var columns = EffectiveColumns(LineAt, visualLine.FirstDocumentLine.LineNumber, tabSize, version);
             var top = visualLine.VisualTop - textView.ScrollOffset.Y;
             var bottom = top + visualLine.Height;
             foreach (var column in IndentGuides.GuideColumnsFor(columns, tabSize))
@@ -86,4 +74,33 @@ public sealed class IndentGuideRenderer : IBackgroundRenderer
             }
         }
     }
+
+    /// <summary>Effective indent columns for a line, version+tab-size memoized and FIFO-capped.
+    /// Internal so a test can drive the cache directly without a TextView.</summary>
+    internal int EffectiveColumns(Func<int, string?> lineAt, int lineNumber, int tabSize,
+        ITextSourceVersion? version)
+    {
+        // Drop the memo when the text changed (Version advances on edit) or the tab size moved.
+        if (tabSize != _cacheTabSize || !ReferenceEquals(version, _cacheVersion))
+        {
+            _effectiveCache.Clear();
+            _cacheOrder.Clear();
+            _cacheVersion = version;
+            _cacheTabSize = tabSize;
+        }
+
+        if (_effectiveCache.TryGetValue(lineNumber, out var cached))
+            return cached;
+
+        if (_effectiveCache.Count >= CacheCap && _cacheOrder.Count > 0)
+            _effectiveCache.Remove(_cacheOrder.Dequeue()); // evict the oldest (farthest off-screen)
+
+        var computed = IndentGuides.EffectiveColumns(lineAt, lineNumber, tabSize);
+        _effectiveCache[lineNumber] = computed;
+        _cacheOrder.Enqueue(lineNumber);
+        return computed;
+    }
+
+    /// <summary>Test seam: the bounded per-line memo's current size.</summary>
+    internal int CacheCount => _effectiveCache.Count;
 }
