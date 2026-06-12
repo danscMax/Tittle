@@ -204,6 +204,7 @@ public partial class DocumentView : UserControl
         if (_vm is not null)
         {
             _vm.EditorTextProvider = () => Source.Text ?? string.Empty; // M15 save pulls from here
+            ApplySourceEditMode(); // read-only while a display transform (pretty-JSON/typography) is on
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
             _vm.SearchUpdated += OnSearchUpdated;
@@ -255,7 +256,18 @@ public partial class DocumentView : UserControl
             UnfreezePreviewWidth(); // a mode switch must not carry a stale width pin into the next show
             SyncPositionAcrossModes();
         }
+        else if (e.PropertyName == nameof(DocumentTabViewModel.IsSourceTransformActive))
+        {
+            ApplySourceEditMode();
+        }
     }
+
+    // A display transform (pretty-JSON / smart typography) shows text that is NOT the raw file, so
+    // editing it would let Save persist the transformed buffer back over the document (lossy —
+    // re-indentation, «guillemets», em-dashes). Make the source editor read-only while a transform
+    // is active; toggling it off restores the raw text and editing.
+    private void ApplySourceEditMode()
+        => Source.IsReadOnly = _vm?.IsSourceTransformActive == true;
 
     // --- Position sync on the preview↔source toggle (M10). The reading position is anchored
     //     as (nearest heading above the viewport top, fractional progress to the next one) and

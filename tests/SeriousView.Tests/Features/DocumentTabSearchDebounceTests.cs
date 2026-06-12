@@ -23,6 +23,21 @@ public class DocumentTabSearchDebounceTests
     }
 
     [AvaloniaFact]
+    public void Dispose_StopsThePendingDebouncedScan()
+    {
+        // Audit V12: disposing the tab (on close) must stop the debounce timer so it can't keep the
+        // closed VM and its document string rooted on the dispatcher timer queue.
+        var big = new string('a', 250_000) + "\nneedle";
+        var vm = DocumentTabViewModel.FromFile(big, "/big.txt");
+        vm.SearchQuery = "needle";
+        Assert.True(vm.SearchDebouncePending);
+
+        vm.Dispose();
+
+        Assert.False(vm.SearchDebouncePending);
+    }
+
+    [AvaloniaFact]
     public void SearchQuery_SmallDocument_ScansSynchronously()
     {
         var vm = DocumentTabViewModel.FromFile("alpha needle beta", "/small.txt");

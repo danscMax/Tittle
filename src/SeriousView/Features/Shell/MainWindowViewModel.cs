@@ -12,6 +12,7 @@ using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Export;
 using SeriousView.Core.Services;
+using SeriousView.Core.Support;
 using SeriousView.Core.Text;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
@@ -30,6 +31,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IAppSettingsService _settings;
     private readonly IClipboardService _clipboard;
     private readonly IShellService _shell;
+    private readonly DocumentExportService _export; // HTML export / print / rich-text copy collaborator
     private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
     private bool _editorDirty;
 
@@ -86,6 +88,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     private readonly HashSet<string> _reloadInFlight = new(StringComparer.OrdinalIgnoreCase);
 
+    // Above this size, FromLoad's heavy immutable derivation (preprocessor + outline, several
+    // full-document passes) is run on a worker so it never blocks the UI thread. Smaller documents
+    // (the common case and every unit fixture) stay synchronous — the compute is instant and the
+    // "open → tab present" contract holds without pumping the dispatcher.
+    private const int WarmupOffloadThreshold = 200_000;
+
+    private static Task<DocumentTabViewModel> BuildTabAsync(FileLoadResult result, string path)
+        => result.Text.Length > WarmupOffloadThreshold
+            ? Task.Run(() => DocumentTabViewModel.FromLoad(result, path))
+            : Task.FromResult(DocumentTabViewModel.FromLoad(result, path));
+
     /// <summary>Export the active markdown tab as one self-contained HTML file (M13). The
     /// theme follows the app (Auto reads as dark — our default); wiki links resolve against
     /// the document's folder, exactly like the preview.</summary>
@@ -102,10 +115,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var dark = IsAppEffectivelyDark(_theme.Mode);
-            var html = HtmlExporter.Export(tab.DocumentText, tab.Header, dark, tab.BuildWikiResolver());
-            await File.WriteAllTextAsync(target, html);
-            StatusText = $"Экспортировано: {Path.GetFileName(target)}";
+            StatusText = await _export.ExportHtmlAsync(tab, target);
         }
         catch (Exception ex)
         {
@@ -136,7 +146,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            await File.WriteAllTextAsync(tab.FilePath, updated);
+            await AtomicFile.WriteAllTextAsync(tab.FilePath, updated);
             await ReloadTabAsync(tab); // immediate; the watcher's debounced reload is a no-op repeat
         }
         catch (Exception ex)
@@ -155,10 +165,19 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (SelectedTab is not { } tab || tab.EditorTextProvider is not { } pull)
             return;
 
+        // Never silently clobber a file that changed on disk since we loaded it. M14 marks the dot,
+        // but a reload that failed (file briefly locked) or never ran leaves a stale buffer — saving
+        // it would overwrite the newer on-disk content. Require an explicit reload or Save-As.
+        if (tab.FilePath is not null && tab.IsChangedOnDisk)
+        {
+            ShowError("Файл изменён на диске — перезагрузите вкладку (контекстное меню/палитра) " +
+                "или сохраните как новый файл.");
+            return;
+        }
+
         // The editor shows SourceText — possibly a DISPLAY transform (pretty JSON, smart
-        // typography). An unedited save must write the raw truth, never silently reformat
-        // the file with the transform. Once the user really edited, the buffer is what
-        // they see and intend to keep (WYSIWYG save).
+        // typography). Editing is blocked while a transform is active (the editor is read-only),
+        // so an edited buffer is always the raw text; an unedited save writes the raw truth.
         var text = tab.IsEdited ? pull() : tab.DocumentText;
         var target = tab.FilePath;
         if (target is null)
@@ -170,7 +189,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            await File.WriteAllTextAsync(target, text);
+            await AtomicFile.WriteAllTextAsync(target, text);
             tab.IsEdited = false;
             StatusText = $"Сохранено: {Path.GetFileName(target)}";
             if (tab.FilePath is null)
@@ -194,29 +213,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var html = HtmlExporter.Export(tab.DocumentText, tab.Header, darkTheme: false, tab.BuildWikiResolver());
-            var dir = Path.Combine(Path.GetTempPath(), "SeriousView");
-            Directory.CreateDirectory(dir);
-            var target = Path.Combine(dir, Path.GetFileNameWithoutExtension(tab.Header) + ".print.html");
-            await File.WriteAllTextAsync(target, html);
-            _shell.OpenWithDefaultApp(target);
-            StatusText = "Открыто в браузере — печать: Ctrl+P";
+            StatusText = await _export.PrintViaBrowserAsync(tab);
         }
         catch (Exception ex)
         {
             ShowError(DescribeError(ex, tab.Header));
         }
     }
-
-    /// <summary>One "is the app dark" answer for every HTML export flavour: the dark family
-    /// is dark, Light is light, and Auto resolves against the variant the OS actually gave
-    /// us — so export and copy-as-rich-text can never disagree about the same screen.</summary>
-    private static bool IsAppEffectivelyDark(ThemeMode mode) => mode switch
-    {
-        ThemeMode.Light => false,
-        ThemeMode.Auto => Avalonia.Application.Current?.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark,
-        _ => true, // Dark, Midnight, Ocean
-    };
 
     /// <summary>Copy-as-rich-text (ported, M13): the themed HTML export goes onto the
     /// clipboard as HTML (CF_HTML on Windows) with the raw markdown as the plain fallback.</summary>
@@ -228,21 +231,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var html = HtmlExporter.Export(
-                tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver());
-            await _clipboard.SetHtmlAsync(html, tab.DocumentText);
-            StatusText = "Скопировано как форматированный текст";
+            StatusText = await _export.CopyAsRichTextAsync(tab);
         }
         catch (Exception ex)
         {
             ShowError(DescribeError(ex, tab.Header));
         }
     }
-
-    // Settings import/export (ported). Whitelisting comes by construction: the file is
-    // deserialized into the typed AppSettings record — unknown keys are simply ignored.
-    private static readonly System.Text.Json.JsonSerializerOptions SettingsJson =
-        new() { TypeInfoResolver = AppJsonContext.Default, WriteIndented = true };
 
     [RelayCommand]
     private async Task ExportSettingsAsync()
@@ -253,11 +248,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            // PREFERENCES only: the session (absolute paths of the user's open documents)
-            // and window placement are machine-private state, not shareable settings.
-            var shareable = _settings.Current with { Session = null, Window = null };
-            await File.WriteAllTextAsync(target,
-                System.Text.Json.JsonSerializer.Serialize(shareable, SettingsJson));
+            await AtomicFile.WriteAllTextAsync(target, SettingsTransfer.Serialize(_settings.Current));
             StatusText = $"Настройки сохранены: {Path.GetFileName(target)}";
         }
         catch (Exception ex)
@@ -275,9 +266,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var parsed = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(
-                await File.ReadAllTextAsync(paths[0]), SettingsJson);
-            if (parsed is null)
+            var raw = await File.ReadAllTextAsync(paths[0]);
+            var (status, parsed) = SettingsTransfer.Parse(raw);
+            if (status == SettingsTransfer.ParseStatus.NotSettings)
+            {
+                ShowError($"Файл не содержит настроек: {Path.GetFileName(paths[0])}");
+                return;
+            }
+
+            if (status != SettingsTransfer.ParseStatus.Ok || parsed is null)
             {
                 ShowError($"Не удалось открыть файл: {Path.GetFileName(paths[0])}");
                 return;
@@ -353,7 +350,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                 result = await _fileReader.LoadAsync(path);
             }
 
-            var fresh = DocumentTabViewModel.FromLoad(result, path);
+            // Build the fresh tab off the UI thread for large files (immutable data → thread-safe);
+            // ReplaceTab marshals back here. Small files stay synchronous (see BuildTabAsync).
+            var fresh = await BuildTabAsync(result, path);
             fresh.ViewMode = tab.ViewMode;          // the reader's preview/source choice survives
             fresh.RestoreAnchor = tab.ReadingAnchor; // ...and so does the reading position (C3)
             ReplaceTab(tab, fresh);
@@ -384,6 +383,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Tabs[index] = newTab;
         if (wasSelected || SelectedTab is null)
             SelectedTab = newTab;
+        oldTab.Dispose(); // release the swapped-out tab's debounce timer
     }
 
     public ObservableCollection<DocumentTabViewModel> Tabs { get; } = new();
@@ -563,6 +563,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _settings = settings;
         _clipboard = clipboard;
         _shell = shell;
+        _export = new DocumentExportService(theme, shell, clipboard);
         _watcher = documentWatcher;
         _viewState = viewState;
         if (_watcher is not null)
@@ -665,6 +666,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             _watcher.Changed -= OnWatcherChanged;
         // NOTE: _watcher is a DI singleton (App.axaml.cs) shared across windows and disposed at app
         // shutdown — detach only, do NOT dispose it here.
+
+        // Release each open tab's debounce timer so a closing window with live tabs leaves nothing
+        // rooted on the dispatcher timer queue.
+        foreach (var tab in Tabs)
+            tab.Dispose();
     }
 
     /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active
@@ -758,10 +764,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             try
             {
                 var result = await _fileReader.LoadAsync(path);
-                AddTab(DocumentTabViewModel.FromLoad(result, path));
+                AddTab(await BuildTabAsync(result, path));
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
+                // A genuinely missing/unreadable file from the last session is expected; an
+                // unexpected type (e.g. an NRE in FromLoad) must surface to the crash logger
+                // instead of masquerading as "не удалось открыть".
                 missing.Add(Path.GetFileName(path));
             }
         }
@@ -775,7 +784,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                 : $"Не удалось открыть файлы из прошлой сессии: {string.Join(", ", missing)}");
     }
 
-    /// <summary>Snapshot of the open file-backed tabs and the active one, for session persistence.</summary>
     /// <summary>Persist the per-file visited/bookmark state (called where the session is saved;
     /// bookmark toggles flush eagerly, visited marks accumulate until here).</summary>
     public void FlushViewState() => _viewState?.Flush();
@@ -825,7 +833,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             }
 
             var result = await _fileReader.LoadAsync(path);
-            AddTab(DocumentTabViewModel.FromLoad(result, path));
+            AddTab(await BuildTabAsync(result, path));
             _recent.Add(path);
         }
         catch (Exception ex)
@@ -860,6 +868,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             return;
 
         Tabs.Remove(tab);
+        tab.Dispose();
 
         if (Tabs.Count == 0)
             SelectedTab = null;
@@ -883,7 +892,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             return;
 
         foreach (var other in Tabs.Where(t => !ReferenceEquals(t, tab)).ToList())
+        {
             Tabs.Remove(other);
+            other.Dispose();
+        }
 
         SelectedTab = tab;
     }
@@ -901,7 +913,11 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             return;
 
         for (var i = Tabs.Count - 1; i > index; i--)
+        {
+            var removed = Tabs[i];
             Tabs.RemoveAt(i);
+            removed.Dispose();
+        }
 
         if (SelectedTab is null || !Tabs.Contains(SelectedTab))
             SelectedTab = tab;
@@ -911,6 +927,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void CloseAllTabs()
     {
+        foreach (var tab in Tabs)
+            tab.Dispose();
         Tabs.Clear();
         SelectedTab = null;
     }

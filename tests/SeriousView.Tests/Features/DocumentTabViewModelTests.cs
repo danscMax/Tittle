@@ -21,6 +21,38 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void IsSourceTransformActive_TracksPrettyJson_AndDrivesAReadOnlyStatusHint()
+    {
+        var vm = DocumentTabViewModel.FromFile("{\"a\":1}", "/data/x.json");
+        Assert.False(vm.IsSourceTransformActive);
+        var baseStatus = vm.StatusText;
+
+        vm.JsonPrettyEnabled = true;
+        Assert.True(vm.IsSourceTransformActive);          // pretty-JSON transform is live
+        Assert.Contains("Только чтение", vm.StatusText);  // the read-only state is surfaced
+
+        vm.JsonPrettyEnabled = false;
+        Assert.False(vm.IsSourceTransformActive);
+        Assert.Equal(baseStatus, vm.StatusText);          // the plain encoding·EOL status returns
+    }
+
+    [Fact]
+    public void IsSourceTransformActive_TracksSmartTypography_ForPlainText()
+    {
+        var vm = DocumentTabViewModel.FromFile("text -- dash", "/notes/a.txt");
+        Assert.False(vm.IsSourceTransformActive);
+
+        vm.SmartTypographyEnabled = true;
+        Assert.True(vm.IsSourceTransformActive);
+
+        // A markdown tab has no source transform regardless of the toggles.
+        var md = DocumentTabViewModel.FromFile("# h", "/docs/r.md");
+        md.JsonPrettyEnabled = true;
+        md.SmartTypographyEnabled = true;
+        Assert.False(md.IsSourceTransformActive);
+    }
+
+    [Fact]
     public void FromFile_CodeFile_IsSourceOnly()
     {
         var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");

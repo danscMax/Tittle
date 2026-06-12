@@ -22,7 +22,7 @@ public enum DocumentViewMode
 /// <summary>One open document = one tab. Holds its content, grammar, header and
 /// per-document status metrics. Content is pushed to the editor via
 /// <c>EditorBehavior.Text</c> (AvaloniaEdit can't bind Document directly).</summary>
-public partial class DocumentTabViewModel : ViewModelBase
+public partial class DocumentTabViewModel : ViewModelBase, IDisposable
 {
     [ObservableProperty]
     private string _header;
@@ -167,6 +167,19 @@ public partial class DocumentTabViewModel : ViewModelBase
     {
         _searchDebounceTimer?.Stop();
         RecomputeSearch();
+    }
+
+    /// <summary>Stop and detach the large-doc search debounce timer when the tab closes, so a
+    /// pending tick can't keep the closed tab VM (and its whole document string) rooted on the
+    /// dispatcher timer queue. Called by the shell from every tab-close / replace path.</summary>
+    public void Dispose()
+    {
+        if (_searchDebounceTimer is { } timer)
+        {
+            timer.Stop();
+            timer.Tick -= OnSearchDebounceTick;
+            _searchDebounceTimer = null;
+        }
     }
 
     // Run a pending (debounced) scan now — so next/prev act on fresh matches after a fast type+Enter.
@@ -319,6 +332,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <see cref="Shared.EditorOptions.JsonPretty"/> when the shell adopts them.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceText))]
+    [NotifyPropertyChangedFor(nameof(IsSourceTransformActive))]
     private bool _jsonPrettyEnabled;
 
     private string? _prettyJson;
@@ -331,6 +345,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// <summary>Per-tab smart-typography state; inherits the persisted default on adoption.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceText))]
+    [NotifyPropertyChangedFor(nameof(IsSourceTransformActive))]
     private bool _smartTypographyEnabled;
 
     /// <summary>Toggle smart typography for this tab (and remember it as the default).</summary>
@@ -351,6 +366,25 @@ public partial class DocumentTabViewModel : ViewModelBase
         : IsPlainText && SmartTypographyEnabled
             ? _smartText ??= SmartTypography.Apply(DocumentText)
         : DocumentText;
+
+    /// <summary>True while the source editor shows a DISPLAY transform (pretty-JSON or smart
+    /// typography) instead of the raw file. In-place editing is suppressed in this state so a
+    /// save can never persist the transformed buffer back over the file — the transform
+    /// (re-indentation, «guillemets», em-dashes) is lossy/irreversible. Toggling the transform
+    /// off restores the raw text and re-enables editing.</summary>
+    public bool IsSourceTransformActive =>
+        (IsJson && JsonPrettyEnabled) || (IsPlainText && SmartTypographyEnabled);
+
+    // Any path that flips a transform (toolbar toggle, EditorOptions adoption, settings import)
+    // refreshes the status hint, so the read-only-under-transform state is always discoverable and
+    // the plain encoding·EOL status returns the moment the transform is off.
+    partial void OnJsonPrettyEnabledChanged(bool value) => RefreshTransformStatus();
+    partial void OnSmartTypographyEnabledChanged(bool value) => RefreshTransformStatus();
+
+    private void RefreshTransformStatus()
+        => StatusText = IsSourceTransformActive
+            ? "Только чтение: трансформация включена — выключите её для редактирования"
+            : BuildStatus();
 
     /// <summary>Toggle pretty-print for this tab (and remember it as the default).</summary>
     [RelayCommand]

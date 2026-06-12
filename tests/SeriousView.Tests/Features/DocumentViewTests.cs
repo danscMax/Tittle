@@ -53,6 +53,30 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void DocumentView_SourceEditor_ReadOnlyWhileTransformActive()
+    {
+        // Audit V3: editing must be blocked while a display transform is shown, so Save can never
+        // persist the transformed (lossy) buffer back over the file.
+        var vm = DocumentTabViewModel.FromFile("{\"a\":1}", "/data/x.json");
+        var window = new Window { Content = new DocumentView { DataContext = vm } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var editor = window.GetVisualDescendants().OfType<TextEditor>().First();
+
+        Assert.False(editor.IsReadOnly); // raw JSON is editable
+
+        vm.JsonPrettyEnabled = true;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(editor.IsReadOnly); // read-only while pretty-JSON is displayed
+
+        vm.JsonPrettyEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(editor.IsReadOnly); // editing restored once the raw text returns
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void DocumentView_ReadingModeOn_RendersWithoutThrowing()
     {
         var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md");

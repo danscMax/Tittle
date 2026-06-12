@@ -804,6 +804,40 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task CsvTable_DescendingSort_IsStable_PreservingTieOrder()
+    {
+        // Audit V8: two rows share age 30; their file order (Аня before Зоя) must survive a
+        // descending sort — OrderByDescending is stable, unlike the old OrderBy().Reverse().
+        var vm = CreateVm(content: "name,age\nАня,30\nБорис,9\nЗоя,30");
+        await vm.OpenPathAsync("/data/people.csv");
+        var table = vm.SelectedTab!.CsvTable!;
+        var ageColumn = table.Columns[1];
+
+        table.SortByCommand.Execute(ageColumn); // ascending
+        table.SortByCommand.Execute(ageColumn); // descending
+
+        Assert.Equal(new[] { "Аня", "Зоя", "Борис" },
+            System.Linq.Enumerable.Select(table.Rows, r => r.Cells[0].Text)); // ties keep file order
+    }
+
+    [AvaloniaFact]
+    public async Task CloseTab_DisposesTheTab_StoppingItsPendingScan()
+    {
+        // Audit V12: closing a large-doc tab with a pending search debounce must stop the timer so
+        // the closed VM (and its whole document string) isn't rooted on the dispatcher timer queue.
+        var big = new string('a', 250_000) + "\nneedle";
+        var vm = CreateVm(content: big);
+        await vm.OpenPathAsync("/big.txt");
+        var tab = vm.SelectedTab!;
+        tab.SearchQuery = "needle";
+        Assert.True(tab.SearchDebouncePending);
+
+        vm.CloseActiveTabCommand.Execute(null);
+
+        Assert.False(tab.SearchDebouncePending); // CloseTab → tab.Dispose() stopped the timer
+    }
+
+    [AvaloniaFact]
     public async Task BrokenCsv_FallsBackToTheSourceView()
     {
         var vm = CreateVm(content: "   ");
@@ -1402,6 +1436,50 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task OpenLargeFile_WarmsCachesOffTheUiThread_AndStillLands()
+    {
+        // Audit V4: a large document's heavy derivation runs on a worker (BuildTabAsync above the
+        // size threshold) — the tab still opens correctly with its immutable caches warm.
+        var big = "# Title\n\n" + new string('x', 300_000);
+        var vm = CreateVm(content: big);
+
+        await vm.OpenPathAsync("/big.md");
+
+        Assert.Equal("big.md", vm.SelectedTab!.Header);
+        Assert.True(vm.SelectedTab.DerivedCachesWarm); // FromLoad ran (on the worker) and warmed them
+    }
+
+    [AvaloniaFact]
+    public async Task Save_RefusedWhenFileChangedOnDisk_DoesNotOverwrite()
+    {
+        // Audit V1: a tab whose file changed on disk (a failed/never-run reload leaves the dot only)
+        // must not be silently clobbered by Ctrl+S — the newer on-disk content would be lost.
+        var dir = Directory.CreateTempSubdirectory("sv-save");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "doc.md");
+            File.WriteAllText(path, "# disk truth");
+            var vm = CreateVm(fileReader: new FileReader());
+            await vm.OpenPathAsync(path);
+            var tab = vm.SelectedTab!;
+            tab.EditorTextProvider = () => "# stale buffer";
+            tab.IsEdited = true;
+            tab.IsChangedOnDisk = true; // external change the user hasn't reloaded
+
+            await vm.SaveActiveTabCommand.ExecuteAsync(null);
+
+            Assert.Equal("# disk truth", File.ReadAllText(path)); // the newer disk content survives
+            Assert.True(vm.IsErrorBarOpen);
+            Assert.Contains("изменён на диске", vm.ErrorBarMessage);
+            Assert.True(tab.IsEdited); // nothing was saved — still dirty
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
     public async Task SettingsExport_OmitsTheSession_AndImportKeepsIt()
     {
         // Audit #5: the session (absolute open-file paths) is machine-private, not a preference.
@@ -1422,6 +1500,37 @@ public class MainWindowViewModelTests
             await vm.ImportSettingsCommand.ExecuteAsync(null);
             Assert.NotNull(holder.Current.Session);
             Assert.Contains(@"C:\private\doc.md", holder.Current.Session!.OpenFiles);
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task SettingsImport_EmptyJson_IsRejected_AndPreferencesUntouched()
+    {
+        // Audit V5: an empty `{}` deserializes to all-default AppSettings; importing it would
+        // silently reset theme/editor/layout. The import must reject a non-settings file instead.
+        var dir = Directory.CreateTempSubdirectory("sv-settings");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "blank.json");
+            File.WriteAllText(path, "{}");
+            var holder = Holder(new AppSettings
+            {
+                Theme = ThemeMode.Light,
+                Editor = new EditorSettings(20, true, true),
+            });
+            var vm = CreateVm(settings: holder, dialogPath: path);
+
+            await vm.ImportSettingsCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsErrorBarOpen);
+            Assert.Contains("не содержит настроек", vm.ErrorBarMessage);
+            Assert.Equal(ThemeMode.Light, holder.Current.Theme); // preferences left intact
+            Assert.NotNull(holder.Current.Editor);
+            Assert.Equal(20, holder.Current.Editor!.FontSize);
         }
         finally
         {
