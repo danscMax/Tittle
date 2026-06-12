@@ -1025,6 +1025,29 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void TogglingJsonPretty_DoesNotFalseFlagIsEdited()
+    {
+        // Q7: toggling a display transform pushes a new SourceText into the editor (a programmatic
+        // change). That must NOT look like a user edit — IsEdited stays false on/off.
+        var vm = DocumentTabViewModel.FromFile("{\"a\":1,\"b\":[2,3]}", "/data/x.json");
+        vm.IsActive = true;
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Width = 700, Height = 500, Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsEdited);
+
+        vm.JsonPrettyEnabled = true; // transform on → pretty SourceText pushed into the editor
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsEdited);
+
+        vm.JsonPrettyEnabled = false; // transform off → raw text restored
+        Dispatcher.UIThread.RunJobs();
+        Assert.False(vm.IsEdited);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ReflowReruns_DoNotReWalkWiredCopyButtons()
     {
         // P4: EnsureCodeCopyButton runs every reflow tick. Once an editor is wired, later passes must

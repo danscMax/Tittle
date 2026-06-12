@@ -415,7 +415,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   existing `TextStatisticsTests` must still pass + a perf-shape note.
 
 ### Wave C — Quality / correctness
-- [ ] **Q7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceTextChanged` (L139). Toggling a
+- [x] **Q7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceTextChanged` (L139). Toggling a
   display transform pushes new `SourceText` into the editor, which can momentarily diverge from the captured
   baseline and false-flag `IsEdited`. (Mitigated but not closed by the V3 read-only editor.) **Fix:** suppress
   `IsEdited` while a programmatic `SourceText` push is in flight (a guard flag set around the transform toggle),
