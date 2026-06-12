@@ -360,7 +360,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   async-void foot-gun). **Fix:** wrap the await in try/catch (no-op/status on failure); guard the
   `DispatcherTimer.RunOnce` content swap with an is-still-attached check. **Test:** Headless — a failing
   clipboard fake doesn't throw out of the click.
-- [ ] **R8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnVmPropertyChanged` ViewMode branch (~L254).
+- [x] **R8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnVmPropertyChanged` ViewMode branch (~L254).
   The `ViewMode`-change branch runs `SyncPositionAcrossModes()` (full `GetVisualDescendants` reflow walk)
   with no `IsActive` guard, unlike the IsActive/IsSearchOpen branches — a kept-alive background tab whose
   ViewMode is mutated (palette path) does a whole-tree walk while hidden. **Fix:** gate on

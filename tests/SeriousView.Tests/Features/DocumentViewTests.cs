@@ -280,6 +280,7 @@ public class DocumentViewTests
         var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
         var window = CreateScrollTestWindow(vm);
         window.Show();
+        vm.IsActive = true; // a ViewMode toggle only ever happens on the active tab (R8 precondition)
         Dispatcher.UIThread.RunJobs();
 
         vm.NavigateToHeadingCommand.Execute(vm.Outline[2]); // heading 2 at the preview top
@@ -299,6 +300,7 @@ public class DocumentViewTests
         vm.ViewMode = DocumentViewMode.Source;
         var window = CreateScrollTestWindow(vm);
         window.Show();
+        vm.IsActive = true; // a ViewMode toggle only ever happens on the active tab (R8 precondition)
         Dispatcher.UIThread.RunJobs();
 
         double OffsetAfterToggleFrom(int ordinal)
@@ -326,6 +328,7 @@ public class DocumentViewTests
         var vm = DocumentTabViewModel.FromFile(LongMarkdown(), "/docs/long.md");
         var window = CreateScrollTestWindow(vm);
         window.Show();
+        vm.IsActive = true; // a ViewMode toggle only ever happens on the active tab (R8 precondition)
         Dispatcher.UIThread.RunJobs();
 
         vm.NavigateToHeadingCommand.Execute(vm.Outline[2]);
@@ -1031,6 +1034,32 @@ public class DocumentViewTests
         var detached = new Button { Content = "⧉" };
         await DocumentView.PerformCodeCopy(detached, _ => Task.CompletedTask, "code");
         Assert.Equal("⧉", detached.Content);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ViewModeChange_OnHiddenTab_SkipsReflowSync()
+    {
+        // R8: tabs are kept alive, so an inactive tab's DocumentView still hears ViewMode changes.
+        // A mutate from the palette while hidden must NOT run the full GetVisualDescendants sync.
+        var vm = DocumentTabViewModel.FromFile("# H\n\npara", "/docs/d.md");
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(vm.IsActive);
+        var hiddenBefore = view.SyncRunCount;
+        vm.ViewMode = DocumentViewMode.Source;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(hiddenBefore, view.SyncRunCount); // no sync while hidden
+
+        vm.IsActive = true;
+        Dispatcher.UIThread.RunJobs();
+        var activeBefore = view.SyncRunCount;
+        vm.ViewMode = DocumentViewMode.Preview;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(view.SyncRunCount > activeBefore); // active tab re-anchors
         window.Close();
     }
 

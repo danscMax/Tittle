@@ -255,7 +255,11 @@ public partial class DocumentView : UserControl
         else if (e.PropertyName == nameof(DocumentTabViewModel.ViewMode))
         {
             UnfreezePreviewWidth(); // a mode switch must not carry a stale width pin into the next show
-            SyncPositionAcrossModes();
+            // R8: only a visible tab needs to re-anchor its scroll now (a full GetVisualDescendants
+            // reflow walk). A kept-alive background tab whose ViewMode is mutated (palette path) syncs
+            // when it next activates, not while hidden.
+            if (_vm?.IsActive == true)
+                SyncPositionAcrossModes();
         }
         else if (e.PropertyName == nameof(DocumentTabViewModel.IsSourceTransformActive))
         {
@@ -295,11 +299,15 @@ public partial class DocumentView : UserControl
         }
     }
 
+    // Test seam: counts sync runs that pass the early-return (R8 asserts a hidden tab does none).
+    internal int SyncRunCount { get; private set; }
+
     private void SyncPositionAcrossModes()
     {
         if (_vm is null || !_vm.IsMarkdown || _vm.ShowNotice)
             return;
 
+        SyncRunCount++;
         FlushPendingPreviewReflow(); // fresh heading Ys before capturing/applying across modes
 
         var gen = ++_syncGeneration;
