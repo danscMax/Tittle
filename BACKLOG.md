@@ -348,7 +348,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   in `Dispose()`, so a window closed with an error bar showing leaks a 7 s `Task.Delay` that then pokes
   `IsErrorBarOpen` on a disposed VM. **Fix:** in `Dispose()` add `_errorBarCts?.Cancel(); _errorBarCts?.Dispose();`.
   **Test:** Headless — show an error, `Dispose()`, assert no throw and the dismissal task is cancelled/completed.
-- [ ] **R5 (Medium)** `App.axaml.cs` · `ShutdownRequested` (L36/L73) + `Features/Shell/MainWindow.axaml.cs` ·
+- [x] **R5 (Medium)** `App.axaml.cs` · `ShutdownRequested` (L36/L73) + `Features/Shell/MainWindow.axaml.cs` ·
   `SaveOnClose`. VM flush (`FlushEditorSettings`/`FlushViewState`/`Dispose`) runs only from the window's
   `OnClosing`; a programmatic `desktop.Shutdown()` / OS session-end fires `ShutdownRequested` WITHOUT
   `OnClosing`, losing the last zoom/layout/visited change. **Fix:** also flush+dispose the VM from a

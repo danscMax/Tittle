@@ -25,6 +25,7 @@ namespace SeriousView.Features.Shell;
 public partial class MainWindow : AppWindow
 {
     private readonly IAppSettingsService? _settings;
+    private bool _saved;
 
     // Window-state persistence. AppWindow with ExtendsContentIntoTitleBar reports Height as
     // (content + title-bar) but the Height *setter* takes the content height — so a naive
@@ -546,10 +547,13 @@ public partial class MainWindow : AppWindow
     }
 
     // Persist window placement and the open-tab session together in one atomic write on close.
-    private void SaveOnClose()
+    // Idempotent (the _saved guard): a programmatic desktop.Shutdown() / OS session-end fires
+    // ShutdownRequested which also calls this (R5), and that may or may not be paired with OnClosing.
+    internal void SaveOnClose()
     {
-        if (_settings is null)
+        if (_settings is null || _saved)
             return;
+        _saved = true;
 
         // Land any debounced editor-option change (e.g. a last-moment zoom) before the window goes away.
         (DataContext as MainWindowViewModel)?.FlushEditorSettings();

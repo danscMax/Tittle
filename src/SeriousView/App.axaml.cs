@@ -34,6 +34,11 @@ public partial class App : Application
 
             // Deterministic watcher teardown on the normal close path (M14 live-reload).
             desktop.ShutdownRequested += (_, _) => Services.GetService<IDocumentWatcher>()?.Dispose();
+
+            // R5: a programmatic Shutdown() / OS session-end fires ShutdownRequested WITHOUT the
+            // window's OnClosing, which would lose the last zoom/layout/session/visited marks.
+            // SaveOnClose is idempotent, so pairing it with OnClosing on a normal close is harmless.
+            desktop.ShutdownRequested += (_, _) => (desktop.MainWindow as MainWindow)?.SaveOnClose();
         }
 
         base.OnFrameworkInitializationCompleted();

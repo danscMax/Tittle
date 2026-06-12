@@ -432,6 +432,29 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void ShutdownFlush_PersistsDirtyEditorSettings()
+    {
+        // R5: a programmatic Shutdown() / OS session-end fires ShutdownRequested WITHOUT the window's
+        // OnClosing, so the last (debounced) editor change was lost. App now also calls
+        // MainWindow.SaveOnClose() from ShutdownRequested, whose first step is FlushEditorSettings().
+        // The window itself can't be constructed with a live DataContext headless (FluentAvalonia
+        // FontIcon shaping crash — project memory), so this guards the flush contract the shutdown
+        // path depends on; the one-line App wiring mirrors the sibling watcher/gate handlers.
+        var settings = Holder();
+        var vm = CreateVm(settings: settings);
+
+        Assert.Null(settings.Current.Editor); // null = defaults, nothing persisted yet
+        var defaultFont = vm.Editor.FontSize;
+        vm.Editor.ZoomIn(); // dirties the editor; the write is debounced, not yet on disk
+        Assert.Null(settings.Current.Editor); // still not persisted before a flush
+
+        vm.FlushEditorSettings(); // what SaveOnClose runs on the shutdown path
+        Assert.NotNull(settings.Current.Editor);
+        Assert.Equal(vm.Editor.FontSize, settings.Current.Editor!.FontSize);
+        Assert.NotEqual(defaultFont, settings.Current.Editor.FontSize);
+    }
+
+    [AvaloniaFact]
     public void Startup_Session_MissingFiles_SurfaceOneSummaryError()
     {
         var files = new Dictionary<string, string> { ["/a.md"] = "# A" };
