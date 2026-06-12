@@ -814,6 +814,33 @@ public class MainWindowViewModelTests
         }
     }
 
+    [AvaloniaFact]
+    public async Task ImportSettings_OversizedFile_IsRejectedWithFriendlyMessage()
+    {
+        // S7: an oversized file is refused before File.ReadAllTextAsync (no OOM/spin on a giant JSON).
+        var dir = Directory.CreateTempSubdirectory("sv-settings-big-").FullName;
+        try
+        {
+            var file = Path.Combine(dir, "huge.json");
+            File.WriteAllText(file, new string('a', 200)); // 200 bytes — over the lowered cap below
+            var settings = Holder();
+            var vm = new MainWindowViewModel(new FakeFileDialogService(file),
+                new FakeFileReader("x"), new FakeThemeService(), new FakeRecentFilesStore(),
+                settings, new FakeClipboardService(), new FakeShellService(), Array.Empty<string>())
+            { MaxImportBytes = 16 };
+
+            await vm.ImportSettingsCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsErrorBarOpen);
+            Assert.Contains("слишком большой", vm.ErrorBarMessage);
+            Assert.Null(settings.Current.Editor); // nothing imported
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // --- Ported: document statistics ---
 
     [AvaloniaFact]

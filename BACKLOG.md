@@ -456,7 +456,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   markers around a wrapper whose body boundaries we control, or assert the body contains no literal marker
   strings before computing offsets. **Test:** unit — a doc containing `<!--StartFragment-->` text still yields a
   well-formed envelope.
-- [ ] **S7 (Low)** `Features/Shell/MainWindowViewModel.cs` · `ImportSettingsAsync` (read of `paths[0]`). The
+- [x] **S7 (Low)** `Features/Shell/MainWindowViewModel.cs` · `ImportSettingsAsync` (read of `paths[0]`). The
   validation guard (`SettingsTransfer.Parse`) is in place, but there is no size cap before `File.ReadAllTextAsync`
   — a multi-GB / deeply-nested JSON could OOM/spin. **Fix:** reject files over ~1 MB before reading (settings are
   < a few KB); the typed-record whitelist already blocks gadget attacks. **Test:** unit/Headless — an oversized

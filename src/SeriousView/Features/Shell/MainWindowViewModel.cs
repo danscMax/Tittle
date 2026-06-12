@@ -266,6 +266,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
+            // S7: settings are a few KB; reject anything pathological before reading it all into
+            // memory (a multi-GB / deeply-nested JSON could OOM or spin). The typed-record whitelist
+            // in SettingsTransfer.Parse already blocks gadget payloads — this guards size only.
+            if (new FileInfo(paths[0]).Length > MaxImportBytes)
+            {
+                ShowError($"Файл слишком большой для настроек: {Path.GetFileName(paths[0])}");
+                return;
+            }
+
             var raw = await File.ReadAllTextAsync(paths[0]);
             var (status, parsed) = SettingsTransfer.Parse(raw);
             if (status == SettingsTransfer.ParseStatus.NotSettings)
@@ -435,6 +444,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     /// <summary>Auto-dismiss delay for the error InfoBar; tests shorten it.</summary>
     internal TimeSpan ErrorBarAutoDismissDelay { get; set; } = TimeSpan.FromSeconds(7);
+
+    /// <summary>Max size of an importable settings file (S7); tests lower it. ~1 MB ≫ any real
+    /// settings.json (a few KB), small enough to refuse a pathological/oversized file before reading.</summary>
+    internal long MaxImportBytes { get; set; } = 1024 * 1024;
 
     /// <summary>The pending auto-dismiss, for tests to await. A superseded timer completes
     /// without touching the bar (its token is cancelled by the newer error).</summary>
