@@ -436,6 +436,14 @@
                     Command="{Binding SelectedTab.ShowSourceModeCommand}"/>
           </StackPanel>
         </Border>
+        <!-- Split toggle (markdown only): source + preview side by side with live mutual scroll.
+             A separate toggle beside the segmented pair; on → Split, off → Preview. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                AutomationProperties.AutomationId="ViewModeSplit"
+                Command="{Binding SelectedTab.ToggleSplitCommand}"
+                ToolTip.Tip="Разделённый вид (Ctrl+\)" AutomationProperties.Name="Разделённый вид"
+                Content="&#x25EB;"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
         <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
                 Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <!-- Left segment: status messages, replaced by the go-to-line input (Ctrl+G) while open.

@@ -56,6 +56,17 @@
                      IsChecked="{Binding ReadingWidth, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Narrow}"/>
       </StackPanel>
 
+      <StackPanel Spacing="6">
+        <TextBlock Text="Ориентация разделённого вида" FontSize="12.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <RadioButton GroupName="SplitOrientation" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Горизонтальная (рядом)"
+                     IsChecked="{Binding SplitOrientation, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Horizontal}"/>
+        <RadioButton GroupName="SplitOrientation" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Вертикальная (друг над другом)"
+                     IsChecked="{Binding SplitOrientation, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Vertical}"/>
+      </StackPanel>
+
       <Button Content="Готово" HorizontalAlignment="Right" Classes="accent"
               AutomationProperties.Name="Закрыть настройки" Click="OnDone"/>
     </StackPanel>

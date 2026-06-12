@@ -54,6 +54,42 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public void ToggleSplitOrientation_FlipsTheSharedLayout()
+    {
+        var vm = CreateVm();
+        Assert.Equal(SplitOrientation.Horizontal, vm.Layout.SplitOrientation);
+
+        vm.ToggleSplitOrientationCommand.Execute(null);
+        Assert.Equal(SplitOrientation.Vertical, vm.Layout.SplitOrientation);
+
+        vm.ToggleSplitOrientationCommand.Execute(null);
+        Assert.Equal(SplitOrientation.Horizontal, vm.Layout.SplitOrientation);
+    }
+
+    [AvaloniaFact]
+    public async Task Palette_ForMarkdownTab_OffersSplitAndOrientation()
+    {
+        var vm = CreateVm(dialogPath: "/docs/a.md", content: "# H\n\ntext");
+        await vm.OpenFileCommand.ExecuteAsync(null);
+        Dispatcher.UIThread.RunJobs();
+
+        var items = vm.BuildPaletteItems();
+        Assert.Contains(items, i => i.Title == "Разделённый вид (вкл/выкл)");
+        Assert.Contains(items, i => i.Title.StartsWith("Ориентация разделения"));
+    }
+
+    [AvaloniaFact]
+    public async Task Palette_ForCodeTab_NoSplitEntry()
+    {
+        var vm = CreateVm(dialogPath: "/src/a.cs", content: "var x = 1;");
+        await vm.OpenFileCommand.ExecuteAsync(null);
+        Dispatcher.UIThread.RunJobs();
+
+        var items = vm.BuildPaletteItems();
+        Assert.DoesNotContain(items, i => i.Title == "Разделённый вид (вкл/выкл)");
+    }
+
+    [AvaloniaFact]
     public void Welcome_StatusBar_ShowsHint_NotReady()
     {
         var vm = CreateVm();

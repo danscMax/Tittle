@@ -565,6 +565,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void OpenLayoutSettings() => LayoutSettingsRequested?.Invoke();
 
+    /// <summary>Flip the split-view orientation (side-by-side ⟷ stacked). A shared-layout knob, so it
+    /// applies to every split tab and persists.</summary>
+    [RelayCommand]
+    private void ToggleSplitOrientation()
+        => Layout.SplitOrientation = Layout.SplitOrientation == SplitOrientation.Horizontal
+            ? SplitOrientation.Vertical
+            : SplitOrientation.Horizontal;
+
     public MainWindowViewModel(
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
@@ -731,6 +739,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (SelectedTab is { IsMarkdown: true } tab)
         {
             items.Add(new PaletteItem("Переключить предпросмотр / исходник", tab.ToggleViewModeCommand));
+            items.Add(new PaletteItem("Разделённый вид (вкл/выкл)", tab.ToggleSplitCommand, "Ctrl+\\"));
+            items.Add(new PaletteItem("Ориентация разделения (гориз./верт.)", ToggleSplitOrientationCommand));
             items.Add(new PaletteItem("Экспорт в HTML…", ExportHtmlCommand));
             items.Add(new PaletteItem("Копировать как форматированный текст", CopyAsRichTextCommand));
             items.Add(new PaletteItem("Печать / PDF (через браузер)…", PrintViaBrowserCommand));

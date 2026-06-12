@@ -37,6 +37,22 @@ public class SettingsTransferTests
         Assert.Equal(18, parsed.Editor!.FontSize);
     }
 
+    [Fact]
+    public void Parse_RoundTripsSplitLayoutFields()
+    {
+        var original = new AppSettings
+        {
+            Layout = new LayoutSettings { SplitOrientation = SplitOrientation.Vertical, SplitRatio = 0.7 },
+        };
+        var json = SettingsTransfer.Serialize(original);
+
+        var (status, parsed) = SettingsTransfer.Parse(json);
+
+        Assert.Equal(SettingsTransfer.ParseStatus.Ok, status);
+        Assert.Equal(SplitOrientation.Vertical, parsed!.Layout!.SplitOrientation);
+        Assert.Equal(0.7, parsed.Layout.SplitRatio);
+    }
+
     [Theory]
     [InlineData("{}")]              // empty object — would reset preferences
     [InlineData("not json at all")] // garbage
