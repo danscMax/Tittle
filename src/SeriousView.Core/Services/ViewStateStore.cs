@@ -33,6 +33,9 @@ public sealed class ViewStateStore
 
     private readonly ISettingsStore _store;
     private readonly Dictionary<string, Entry> _files = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Test seam: number of files held in memory (capped to <see cref="MaxFiles"/> on Flush).</summary>
+    internal int TrackedCount => _files.Count;
     private long _touchCounter;
     private bool _dirty;
 
@@ -107,6 +110,15 @@ public sealed class ViewStateStore
                     Touch = kv.Value.Touch,
                 },
                 StringComparer.OrdinalIgnoreCase);
+
+        // Prune the in-memory map to the same retained set, so a long session that opens many files
+        // doesn't keep every entry live in RAM and re-serialize the whole set on the next Flush.
+        if (_files.Count > kept.Count)
+        {
+            foreach (var stale in _files.Keys.Where(k => !kept.ContainsKey(k)).ToList())
+                _files.Remove(stale);
+        }
+
         _store.Save(Key, new ViewStateFile { Files = kept });
     }
 

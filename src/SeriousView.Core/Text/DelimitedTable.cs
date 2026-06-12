@@ -54,6 +54,9 @@ public sealed class DelimitedTable
         var fields = new List<string>();
         var field = new System.Text.StringBuilder();
         var inQuotes = false;
+        // A quoted token (even an empty "") makes a single-field value EXPLICIT, so it must not be
+        // confused with a bare blank line and dropped.
+        var recordHasExplicitField = false;
 
         void EndField()
         {
@@ -63,11 +66,13 @@ public sealed class DelimitedTable
 
         void EndRecord()
         {
-            EndField();
-            // Skip blank records (e.g. the trailing newline) — but keep genuine single-empty-field rows out too.
-            if (fields.Count > 1 || fields[0].Length > 0)
+            EndField(); // always appends, so fields is never empty below
+            // Drop a bare blank line (a single, empty, unquoted field), but keep a genuine record:
+            // any multi-field row, a non-empty value, or an explicit quoted "" empty value.
+            if (fields.Count > 1 || fields[0].Length > 0 || recordHasExplicitField)
                 records.Add(fields.ToArray());
             fields.Clear();
+            recordHasExplicitField = false;
         }
 
         for (var i = 0; i < text.Length; i++)
@@ -95,6 +100,7 @@ public sealed class DelimitedTable
             else if (ch == '"' && field.Length == 0)
             {
                 inQuotes = true;
+                recordHasExplicitField = true;
             }
             else if (ch == delimiter)
             {

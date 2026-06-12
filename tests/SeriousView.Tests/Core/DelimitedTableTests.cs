@@ -19,6 +19,18 @@ public class DelimitedTableTests
     }
 
     [Fact]
+    public void Parse_QuotedEmptyValue_IsKept_BareBlankLineIsSkipped()
+    {
+        // Audit V13: a quoted "" is an EXPLICIT empty value and must survive (not be confused with a
+        // bare blank separator line, which is still skipped).
+        var table = DelimitedTable.Parse("name\nАня\n\"\"\n\nБорис", ',');
+
+        Assert.NotNull(table);
+        // Аня, the explicit empty "" value, then Борис — the bare blank line between is dropped.
+        Assert.Equal(new[] { "Аня", "", "Борис" }, table!.Rows.Select(r => r[0]));
+    }
+
+    [Fact]
     public void Parse_QuotedFields_WithDelimitersEscapesAndNewlines()
     {
         var table = DelimitedTable.Parse("a,b\n\"x,y\",\"he said \"\"hi\"\"\"\n\"multi\nline\",2", ',');

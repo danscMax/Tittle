@@ -71,12 +71,18 @@ public sealed partial class CsvTableViewModel : ObservableObject
 
         var numeric = TableSorting.IsNumericColumn(_source.Select(r => r[column.Index]));
 
-        var sorted = numeric
-            ? _source.OrderBy(r => TableSorting.NumericKey(r[column.Index]))
-            : _source.OrderBy(r => r[column.Index], StringComparer.CurrentCultureIgnoreCase);
-        var list = (SortDescending ? sorted.Reverse() : sorted).ToList();
+        // LINQ OrderBy/OrderByDescending are stable, so flipping direction with OrderByDescending
+        // (rather than OrderBy().Reverse()) preserves the relative order of equal-key rows instead
+        // of reshuffling ties on every descending click.
+        IEnumerable<string[]> sorted = (numeric, SortDescending) switch
+        {
+            (true, false) => _source.OrderBy(r => TableSorting.NumericKey(r[column.Index])),
+            (true, true) => _source.OrderByDescending(r => TableSorting.NumericKey(r[column.Index])),
+            (false, false) => _source.OrderBy(r => r[column.Index], StringComparer.CurrentCultureIgnoreCase),
+            (false, true) => _source.OrderByDescending(r => r[column.Index], StringComparer.CurrentCultureIgnoreCase),
+        };
 
-        Rows = Materialize(list, Columns.Select(c => c.Width).ToArray());
+        Rows = Materialize(sorted.ToList(), Columns.Select(c => c.Width).ToArray());
     }
 
     private static IReadOnlyList<Row> Materialize(IReadOnlyList<string[]> rows, IReadOnlyList<double> widths)

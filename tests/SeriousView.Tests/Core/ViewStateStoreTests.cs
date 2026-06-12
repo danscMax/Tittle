@@ -100,6 +100,19 @@ public class ViewStateStoreTests
     }
 
     [Fact]
+    public void Flush_PrunesTheInMemoryMap_NotJustTheSerializedSnapshot()
+    {
+        // Audit V11: a long session that opens many files must not keep every entry live in RAM.
+        var store = new ViewStateStore(new FakeStore());
+        for (var i = 0; i < ViewStateStore.MaxFiles + 50; i++)
+            store.MarkVisited($"/docs/f{i}.md", 0);
+
+        Assert.Equal(ViewStateStore.MaxFiles + 50, store.TrackedCount); // all held before Flush
+        store.Flush();
+        Assert.Equal(ViewStateStore.MaxFiles, store.TrackedCount);      // trimmed to the cap in memory
+    }
+
+    [Fact]
     public void BookmarksFor_ReturnsOrdinalsInOrder()
     {
         var store = new ViewStateStore(new FakeStore());
