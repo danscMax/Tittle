@@ -302,10 +302,14 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 - Improvements 1–40 are fully placed. Ported-only features (search, sync-scroll, math, diagrams,
   export, live-reload, editing, + the pool) are M9–M16 and the ported pool.
 
-**Suggested next:** the M7.5 foundations (menu, single-instance, persistence, keyboard, resizable sidebar,
-Ctrl+K palette, omnibar) and a tech-debt hardening pass are done. **Chosen direction: audit quick-wins + a11y**
-(background GC, 8 KB-head binary classification, accessible names + focus visuals; reduced-motion deferred to
-Av12). Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, **M8 core**
+**Status (2026-06-12):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
+(Waves A–D, 22 findings, `8af0fd0`…`32f385b`; 802 tests). **Genuinely open for the next session** (pick by
+priority, all below the tech-debt checklist): new capability — **split-view live sync** (`HeadingAnchors` seam
+ready) or **M12 diagrams** (hard, WebView-less); maintainability — **DocumentView code-behind split** + **xUnit
+v3**; cleanup — **re-verify & clear the carried-over Lows**. **Av12 migration stays blocked** (Markdown.Avalonia
+alpha-only, FluentAvalonia not ported — re-verified 2026-06-12). The historical log of completed work follows.
+
+Done since: **M7.5** chrome (6 contextual toolbar · 8 Settings▸Layout), **M9** find, **M8 core**
 (reuse-tab #11, context menu #25, tooltip #30, copy path/name #17, reveal #27, drag-reorder #18), and the
 **M8 polish** (#28 open-error InfoBar + session-restore summary, #24 ✕ tooltip, #23 tab entrance fade,
 #26 editor context menu, #18b multi-file open) — M8 is closed except the "changed on disk" dirty dot,
@@ -329,18 +333,18 @@ and inline math `\(…\)` (no inline-extension seam in Markdown.Avalonia — def
 
 ---
 
-## Tech-debt backlog — remaining (audit 2026-06-12)
+## Tech-debt backlog — audit 2026-06-12 (Waves A–D ✅ DONE)
 
 A full 6-axis audit (5 analysts → Devil's Advocate → personal verification) ran; **18 findings fixed** across
-5 waves (now on `main`, commits `d54c7af`…`656c956`). Full evidence per finding (file:line, code quote,
-refute notes): `plans/tech-debt-full/2026-06-12/{security,reliability,performance,quality}-findings.md`,
+5 waves (commits `d54c7af`…`656c956`). Full evidence per finding (file:line, code quote, refute notes):
+`plans/tech-debt-full/2026-06-12/{security,reliability,performance,quality}-findings.md`,
 `advocate-validation.md`, `verified-findings.md`, `report.md`.
 
-**What remains below is self-contained and actionable.** Line numbers are as of HEAD `656c956` and drift on
-edit — anchor on the named symbol (grep it). Each item: problem → **Fix** → **Test**. Convention holds: one
-finding = one commit, comments in English, every fix ships a test (Core unit or Headless UI), build +
-`dotnet test` green before the next. `IsChangedOnDisk`, atomic writes, `IDisposable` on the tab, transform
-read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build on them, don't redo them.
+**Then all 22 actionable Wave A–D findings below were implemented (2026-06-12, `8af0fd0`…`32f385b`)** — one
+finding = one commit + test, build + `dotnet test` green between each (776 → 802 tests). S5 and Q7 were found
+already-mitigated and closed with regression tests only. The checklist is kept ticked for traceability; what's
+still open for a future session is **«Deferred by decision»**, the carried-over Lows, and the roadmap features
+(all below the checklist).
 
 ### Wave A — Reliability (do first; small, low-risk, real leaks/loss)
 - [x] **R4 (Medium)** `Features/Shell/MainWindowViewModel.cs` · `Dispose` (~L718) + `ShowError` (~L444) /

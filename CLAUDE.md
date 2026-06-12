@@ -54,6 +54,12 @@ We stay on the 11.3.x line until those two ship stable 12 builds, then migrate. 
 Markdown.Avalonia + FluentAvalonia on 12 (NuGet) before proposing the upgrade** — the blocker
 is the ecosystem, not Avalonia itself.
 
+**Re-verified 2026-06-12 — blocker still holds:** Avalonia 12 shipped stable (12.0.x), but
+Markdown.Avalonia on 12 is **alpha only** (`12.0.0-a2`; stable is still `11.0.3`) and FluentAvalonia
+has **no Av12 release yet** (Material.Avalonia / Semi.Avalonia did port). Don't start the Av12
+migration — and the Av12-gated items (paste-image / `DataTransfer`, `ClipboardService` CS0618,
+reduced-motion, FluentAvalonia 2.4.x EOL) stay deferred — until both ship stable 12 builds.
+
 ## Roadmap
 
 Roadmap-driven, one milestone at a time; each feature is its own commit.
