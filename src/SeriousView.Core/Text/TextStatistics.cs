@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text.RegularExpressions;
 
 namespace SeriousView.Core.Text;
@@ -11,7 +12,7 @@ public sealed record TextStats(
 public static partial class TextStatistics
 {
     private const int WordsPerMinute = 200;
-    private const string Vowels = "аеёиоуыэюяaeiouy";
+    private static readonly SearchValues<char> Vowels = SearchValues.Create("аеёиоуыэюяaeiouy");
 
     public static TextStats Compute(string? text)
     {
@@ -20,11 +21,22 @@ public static partial class TextStatistics
 
         var words = CountWords(text);
         var chars = text.Length;
-        var charsNoSpaces = text.Count(c => !char.IsWhiteSpace(c));
         var sentences = Math.Max(1, SentenceEnd().Matches(text).Count);
         var minutes = Math.Max(1, (int)Math.Round(words / (double)WordsPerMinute));
 
-        var syllables = text.ToLowerInvariant().Count(c => Vowels.Contains(c));
+        // One char loop for the two per-character tallies — instead of a separate Count() pass plus a
+        // whole-document ToLowerInvariant() allocation just to count vowels. Lower-case inline; vowel
+        // membership via SearchValues (Cyrillic + Latin) instead of a per-char string scan.
+        var charsNoSpaces = 0;
+        var syllables = 0;
+        foreach (var c in text)
+        {
+            if (!char.IsWhiteSpace(c))
+                charsNoSpaces++;
+            if (Vowels.Contains(char.ToLowerInvariant(c)))
+                syllables++;
+        }
+
         var flesch = words == 0
             ? 0
             : 206.835 - 1.3 * ((double)words / sentences) - 60.1 * ((double)syllables / words);

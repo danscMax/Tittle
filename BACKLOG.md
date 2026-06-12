@@ -409,7 +409,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   PropertyChanged on every scroll tick that moves the ordinal by 1. **Fix:** only raise `Breadcrumbs` when the
   ancestor chain root actually changes (compare to the previous ordinal's chain). **Test:** unit — a +1 ordinal
   step within the same parent raises no `Breadcrumbs` notify.
-- [ ] **P12 (Low)** `Core/Text/TextStatistics.cs` · `Compute` (L23/L27). Four+ full-document passes incl.
+- [x] **P12 (Low)** `Core/Text/TextStatistics.cs` · `Compute` (L23/L27). Four+ full-document passes incl.
   `text.ToLowerInvariant()` (whole-doc alloc) for the syllable count. **Fix:** single char loop computing
   chars/no-spaces/syllables together, lower-casing each char inline. One-shot on panel open, so Low. **Test:**
   existing `TextStatisticsTests` must still pass + a perf-shape note.
