@@ -326,3 +326,26 @@ editing + Ctrl+S + ● marker + checkbox click-to-toggle; paste-image/spellcheck
 reasons). **The full-port goal is now COMPLETE except M12 diagrams** (Mermaid is JS-only,
 PlantUML leaks source to an external service and must stay gated opt-in — research/deferred)
 and inline math `\(…\)` (no inline-extension seam in Markdown.Avalonia — deferred).
+
+---
+
+## Tech-debt deferred (audit 2026-06-12)
+
+A full 6-axis audit (5 analysts → Devil's Advocate → personal verification) ran at HEAD `9a1ba52`.
+18 verified findings were fixed across 5 tested waves (save-safety, security/correctness, reliability/perf,
+collaborator extraction, dependency bump). Full record: `plans/tech-debt-full/2026-06-12/`. Deferred:
+
+- **DocumentView code-behind split (Medium).** `DocumentView.axaml.cs` (~1190 LOC) coordinates scroll-spy,
+  reflow, freeze, folding, minimap, lightbox, cv-decorations and find-bar keys. The DA confirmed no bug
+  traces to the size; extract focused attached behaviours when next touching the viewer. (`MainWindowViewModel`
+  was already split — `DocumentExportService` + `SettingsTransfer` extracted.)
+- **xUnit v3 migration (Low).** v2 (2.9.3) is maintenance-only; v3 (3.x) is the active line. Test-only, no
+  production impact — schedule a focused migration.
+- **CSharpMath fork monitoring (Low).** `Sylinko.CSharpMath.Avalonia` is a single-maintainer fork (MIT,
+  ~3.6k downloads, "no deep optimization" disclaimer). Watch the GitHub repo for archival; no current
+  alternative for Av11 block math.
+- **FluentAvaloniaUI 2.4.x is an EOL line (Low).** 2.5+ is net10-only, so 2.4.1 gets no further patches while
+  we stay on .NET 9 / Avalonia 11. Revisit together with the deliberate Av12 migration.
+- **`ClipboardService` CS0618 deprecations (Low, pre-existing).** Av11's `DataObject`/`DataFormats.Text`/
+  `SetDataObjectAsync` are obsolete; the replacement `DataTransfer` API lands cleanly on Av12. 3 build
+  warnings, no functional impact.

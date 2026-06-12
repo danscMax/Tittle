@@ -49,13 +49,14 @@
 
   <ItemGroup Label="MVVM + DI">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <!-- .NET 9 servicing stream (9.0.0 RTM → 9.0.17 cumulative patches; no API change, same major). -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.17" />
   </ItemGroup>
 
   <ItemGroup Label="BCL (legacy code pages for encoding detection)">
     <!-- Enables Encoding.GetEncoding(1251) etc. via CodePagesEncodingProvider. Works under
          InvariantGlobalization (that affects cultures, not encodings). -->
-    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.0" />
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.17" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
