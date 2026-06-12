@@ -11,13 +11,28 @@
   <Styles.Resources>
     <ResourceDictionary>
       <ResourceDictionary.ThemeDictionaries>
+        <!-- NOTE: the Avalonia 11.3 Fluent ScrollBar Thumb reads its fill from
+             ScrollBarPanningThumbBackground (normal) and ScrollBarThumbFill{PointerOver,Pressed,Disabled}
+             — NOT the WinUI-style ScrollBarThumb*Background names. Overriding only the latter left the
+             expanded/hover thumb on the default (light) brush over a dark theme. We set BOTH families:
+             the correct Fluent keys retint the app's ScrollViewers (welcome list, preview, panels), and
+             the legacy ScrollBarThumb*Background keys are kept for AvaloniaEdit's own scrollbar.
+             Midnight/Ocean (and the other dark-derived variants) inherit these via the Dark parent. -->
         <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#52525F" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#6A6A78" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#7C7C8C" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="#33333D" />
           <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#52525F" />
           <SolidColorBrush x:Key="ScrollBarThumbPointerOverBackground" Color="#6A6A78" />
           <SolidColorBrush x:Key="ScrollBarThumbPressedBackground" Color="#7C7C8C" />
           <SolidColorBrush x:Key="ScrollBarThumbDisabledBackground" Color="#33333D" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#C2C2CE" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#A6A6B6" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#8E8E9E" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="#E2E2EA" />
           <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#C2C2CE" />
           <SolidColorBrush x:Key="ScrollBarThumbPointerOverBackground" Color="#A6A6B6" />
           <SolidColorBrush x:Key="ScrollBarThumbPressedBackground" Color="#8E8E9E" />
