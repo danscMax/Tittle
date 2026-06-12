@@ -413,6 +413,25 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task Dispose_CancelsInFlightErrorBarTimer()
+    {
+        var vm = CreateVm(fileReader: new FakeFileReader(new FileNotFoundException()));
+        vm.ErrorBarAutoDismissDelay = TimeSpan.FromMilliseconds(50);
+
+        await vm.OpenPathAsync("/one.txt");
+        var dismissal = vm.ErrorBarDismissal;
+        Assert.NotNull(dismissal);
+
+        vm.Dispose(); // R4: must cancel _errorBarCts before the 50 ms timer fires
+
+        // Cancelled timer returns early without poking IsErrorBarOpen on the disposed VM.
+        // Without the fix the delay elapses and flips IsErrorBarOpen to false.
+        await dismissal!;
+        Assert.True(dismissal.IsCompleted);
+        Assert.True(vm.IsErrorBarOpen);
+    }
+
+    [AvaloniaFact]
     public void Startup_Session_MissingFiles_SurfaceOneSummaryError()
     {
         var files = new Dictionary<string, string> { ["/a.md"] = "# A" };

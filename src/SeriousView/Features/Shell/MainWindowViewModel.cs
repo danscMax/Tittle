@@ -667,6 +667,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         // NOTE: _watcher is a DI singleton (App.axaml.cs) shared across windows and disposed at app
         // shutdown — detach only, do NOT dispose it here.
 
+        // Cancel any in-flight error-bar auto-dismiss so a window closed with an error showing
+        // doesn't leave a 7 s Task.Delay rooted that then pokes IsErrorBarOpen on this disposed VM.
+        _errorBarCts?.Cancel();
+        _errorBarCts?.Dispose();
+        _errorBarCts = null;
+
         // Release each open tab's debounce timer so a closing window with live tabs leaves nothing
         // rooted on the dispatcher timer queue.
         foreach (var tab in Tabs)

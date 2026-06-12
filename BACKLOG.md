@@ -343,7 +343,7 @@ finding = one commit, comments in English, every fix ships a test (Core unit or 
 read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build on them, don't redo them.
 
 ### Wave A — Reliability (do first; small, low-risk, real leaks/loss)
-- [ ] **R4 (Medium)** `Features/Shell/MainWindowViewModel.cs` · `Dispose` (~L718) + `ShowError` (~L444) /
+- [x] **R4 (Medium)** `Features/Shell/MainWindowViewModel.cs` · `Dispose` (~L718) + `ShowError` (~L444) /
   `_errorBarCts` (L434) / `AutoDismissErrorBarAsync` (L454). The last live `_errorBarCts` is never cancelled
   in `Dispose()`, so a window closed with an error bar showing leaks a 7 s `Task.Delay` that then pokes
   `IsErrorBarOpen` on a disposed VM. **Fix:** in `Dispose()` add `_errorBarCts?.Cancel(); _errorBarCts?.Dispose();`.
