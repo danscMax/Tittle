@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ae="using:AvaloniaEdit"
+             xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:vm="using:SeriousView.Features.Shell"
              xmlns:viewer="using:SeriousView.Features.Viewer"
@@ -8,6 +9,14 @@
              x:Class="SeriousView.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
   <UserControl.Styles>
+    <!-- Line-number gutter: AvaloniaEdit packs the numbers hard against the code with no breathing
+         room, so they visually merge with the text. The LineNumberMargin is added to TextArea.LeftMargins
+         in code (not the template), so style it by type — a right margin opens a gutter gap; a left
+         margin keeps the numbers off the window edge. (Colour is set via LineNumbersForeground on the
+         editor so the numbers read as a muted gutter, not as code.) -->
+    <Style Selector="aeediting|LineNumberMargin">
+      <Setter Property="Margin" Value="6,0,12,0"/>
+    </Style>
     <!-- Find-bar controls: flat compact nav/close buttons; the regex toggle reddens on an invalid pattern. -->
     <Style Selector="Button.findbtn">
       <Setter Property="Background" Value="Transparent"/>
@@ -130,6 +139,7 @@
                    Background="{DynamicResource EditorSurfaceBrush}"
                    FontFamily="Cascadia Code,Consolas,Courier New,monospace"
                    FontSize="{Binding Editor.FontSize, FallbackValue=14}"
+                   LineNumbersForeground="{DynamicResource ChromeForegroundMutedBrush}"
                    ShowLineNumbers="{Binding Editor.ShowLineNumbers, FallbackValue=True}"
                    WordWrap="{Binding Editor.WordWrap, FallbackValue=False}"
                    HorizontalScrollBarVisibility="Auto"

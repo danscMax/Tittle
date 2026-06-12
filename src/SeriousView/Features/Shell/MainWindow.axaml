@@ -32,10 +32,9 @@
          icon). Two flat buttons share one bordered pill; the active segment (driven by a conditional
          seg-on class bound to ShowPreview/ShowSource) fills with the accent. -->
     <Style Selector="Border.segmented">
-      <Setter Property="CornerRadius" Value="5"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource StatusBarForegroundBrush}"/>
-      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="ClipToBounds" Value="True"/>
     </Style>
@@ -326,9 +325,13 @@
         </Button>
         <Border Width="1" Margin="6,2" Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
+                AutomationProperties.Name="Перенос строк" Classes="statusbtn">
+          <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
+        </Button>
         <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
+                AutomationProperties.Name="Номера строк" Classes="statusbtn">
+          <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
+        </Button>
         <Button Command="{Binding SelectedTab.ToggleJsonPrettyCommand}" ToolTip.Tip="Форматировать JSON"
                 AutomationProperties.Name="Форматировать JSON" Content="{}" Classes="statusbtn"
                 IsVisible="{Binding SelectedTab.IsJson, FallbackValue=False}"/>
@@ -398,9 +401,13 @@
             </MultiBinding>
           </StackPanel.IsVisible>
           <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                  AutomationProperties.Name="Перенос строк" Content="↵" Classes="statusbtn"/>
+                  AutomationProperties.Name="Перенос строк" Classes="statusbtn">
+            <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
+          </Button>
           <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                  AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
+                  AutomationProperties.Name="Номера строк" Classes="statusbtn">
+            <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
+          </Button>
         </StackPanel>
         <!-- Table/source toggle for delimited files (ported csv-as-table) — in the status bar,
              which stays visible in both views (the contextual toolbar hides with the editor). -->

@@ -1,11 +1,35 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- Slim, theme-tinted scrollbars (editor + lists). Avalonia's Fluent scrollbar already
-       auto-hides to a thin overlay; here we just tint the thumb to the app palette, round it
-       and slim it so the expanded state reads modern instead of the default chunky grey. -->
+  <!-- Slim, theme-tinted scrollbars (editor + lists + preview). Two things are needed:
+       1. The app's own ScrollViewers honour a Thumb.Background style (see below) — that already gave
+          the preview/lists a dark thumb.
+       2. AvaloniaEdit's editor ScrollViewer ignores that and paints its thumb from the FluentAvalonia
+          WinUI-named resource brushes (ScrollBarThumb*Background) — the default reads light-grey on the
+          dark editor. We override those keys here (this Styles dict is included LAST in App.axaml, after
+          FluentAvaloniaTheme, so it wins) per theme variant. This is what actually retints the editor. -->
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#52525F" />
+          <SolidColorBrush x:Key="ScrollBarThumbPointerOverBackground" Color="#6A6A78" />
+          <SolidColorBrush x:Key="ScrollBarThumbPressedBackground" Color="#7C7C8C" />
+          <SolidColorBrush x:Key="ScrollBarThumbDisabledBackground" Color="#33333D" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#C2C2CE" />
+          <SolidColorBrush x:Key="ScrollBarThumbPointerOverBackground" Color="#A6A6B6" />
+          <SolidColorBrush x:Key="ScrollBarThumbPressedBackground" Color="#8E8E9E" />
+          <SolidColorBrush x:Key="ScrollBarThumbDisabledBackground" Color="#E2E2EA" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+
+  <!-- Slim + rounded; Background tints the app ScrollViewers' thumbs (the editor uses the resources above). -->
   <Style Selector="ScrollBar /template/ Thumb">
-    <Setter Property="Background" Value="{DynamicResource ChromeBorderBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ScrollBarThumbBackground}" />
     <Setter Property="CornerRadius" Value="4" />
     <Setter Property="Transitions">
       <Transitions>
@@ -20,7 +44,7 @@
     <Setter Property="MinHeight" Value="7" />
   </Style>
   <Style Selector="ScrollBar /template/ Thumb:pointerover">
-    <Setter Property="Background" Value="{DynamicResource ChromeForegroundMutedBrush}" />
+    <Setter Property="Background" Value="{DynamicResource ScrollBarThumbPointerOverBackground}" />
   </Style>
 
 </Styles>

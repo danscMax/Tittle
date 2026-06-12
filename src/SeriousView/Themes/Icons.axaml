@@ -35,6 +35,29 @@
     <PathGeometry Figures="M14.6,6.6 L13,8.2 L16.8,12 L13,15.8 L14.6,17.4 L20,12 Z"/>
   </GeometryGroup>
 
+  <!-- Word-wrap / "↵": three text bars; the 2nd wraps with a hooked return arrow back to the left
+       (the universal word-wrap affordance). Filled bars + a solid hook so it reads at 16px. -->
+  <GeometryGroup x:Key="IconWrap" FillRule="NonZero">
+    <RectangleGeometry Rect="3,5,18,1.8" RadiusX="0.9" RadiusY="0.9"/>
+    <RectangleGeometry Rect="3,11,12.5,1.8" RadiusX="0.9" RadiusY="0.9"/>
+    <!-- return hook: out from the line end, curving down and back left -->
+    <PathGeometry Figures="M15.5,11 C19.2,11 19.6,16.9 15,16.9 L12.6,16.9 L12.6,15.1 L15,15.1 C16.9,15.1 16.8,12.8 15.5,12.8 Z"/>
+    <!-- arrowhead at the hook's left end, pointing left -->
+    <PathGeometry Figures="M13.2,14 L9.3,16 L13.2,18 Z"/>
+    <RectangleGeometry Rect="3,17,5,1.8" RadiusX="0.9" RadiusY="0.9"/>
+  </GeometryGroup>
+
+  <!-- Line-numbers / "#": a slim numbered-list glyph — a left column of short ticks (the numbers)
+       beside three longer text bars. -->
+  <GeometryGroup x:Key="IconLineNumbers">
+    <RectangleGeometry Rect="3,5,2.6,1.8" RadiusX="0.6" RadiusY="0.6"/>
+    <RectangleGeometry Rect="3,11,2.6,1.8" RadiusX="0.6" RadiusY="0.6"/>
+    <RectangleGeometry Rect="3,17,2.6,1.8" RadiusX="0.6" RadiusY="0.6"/>
+    <RectangleGeometry Rect="8,5,13,1.8" RadiusX="0.9" RadiusY="0.9"/>
+    <RectangleGeometry Rect="8,11,13,1.8" RadiusX="0.9" RadiusY="0.9"/>
+    <RectangleGeometry Rect="8,17,9.5,1.8" RadiusX="0.9" RadiusY="0.9"/>
+  </GeometryGroup>
+
   <!-- Settings / "sliders": three thin bars with fatter knobs that bulge past them (Nonzero union).
        A tune glyph reads as config without the fiddly tooth geometry of a gear. -->
   <GeometryGroup x:Key="IconSettings">
