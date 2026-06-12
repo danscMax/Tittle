@@ -1039,24 +1039,25 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     // Keep exactly one tab active so the body shows only its (kept-alive) DocumentView.
+    // Q8: one selection-changed hook (the 2-arg overload sees both old and new) instead of two
+    // partials whose split made the IsOutlinePaneVisible notify look incidental.
     partial void OnSelectedTabChanged(DocumentTabViewModel? oldValue, DocumentTabViewModel? newValue)
     {
         if (oldValue is not null)
             oldValue.IsActive = false;
         if (newValue is not null)
             newValue.IsActive = true;
-    }
 
-    partial void OnSelectedTabChanged(DocumentTabViewModel? value)
-    {
-        Title = value is null ? "SeriousView" : value.Header + " — SeriousView";
+        Title = newValue is null ? "SeriousView" : newValue.Header + " — SeriousView";
         // Status bar is segmented: the left segment shows messages — the welcome hint when no tab is
         // open, otherwise cleared (the right segment binds the active tab's metrics directly in the
         // view). A read error overwrites this until the next tab change.
-        StatusText = value is null ? WelcomeHint : "";
+        StatusText = newValue is null ? WelcomeHint : "";
         // Reflect the active document's path in the editable omnibar address field.
-        OmnibarText = value?.FilePath ?? "";
-        // The outline pane depends on the active tab's headings.
+        OmnibarText = newValue?.FilePath ?? "";
+        // IsOutlinePaneVisible reads SelectedTab.HasOutline, but [NotifyPropertyChangedFor] on
+        // _isOutlineVisible only covers that field — a tab change is the OTHER input to the property,
+        // so it must be raised here explicitly (load-bearing, not incidental).
         OnPropertyChanged(nameof(IsOutlinePaneVisible));
     }
 }

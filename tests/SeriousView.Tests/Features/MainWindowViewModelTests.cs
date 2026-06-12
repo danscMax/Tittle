@@ -314,6 +314,29 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task SelectedTabChange_RaisesOutlinePaneVisible()
+    {
+        // Q8: IsOutlinePaneVisible reads SelectedTab.HasOutline, so a tab change must notify it —
+        // the explicit OnPropertyChanged in the merged OnSelectedTabChanged hook is load-bearing.
+        var files = new Dictionary<string, string> { ["/a.md"] = "# H\n\nbody", ["/b.cs"] = "var x = 1;" };
+        var vm = CreateVm(fileReader: new FakeFileReader(files));
+        await vm.OpenPathAsync("/a.md");
+        await vm.OpenPathAsync("/b.cs"); // code tab selected → no outline
+        Assert.False(vm.IsOutlinePaneVisible);
+
+        var raised = 0;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsOutlinePaneVisible))
+                raised++;
+        };
+
+        vm.SelectedTab = vm.Tabs[0]; // back to the markdown-with-heading tab
+        Assert.True(raised >= 1);
+        Assert.True(vm.IsOutlinePaneVisible);
+    }
+
+    [AvaloniaFact]
     public async Task OpenFile_OnReadError_ShowsFriendlyMessage_NoTab()
     {
         var vm = new MainWindowViewModel(

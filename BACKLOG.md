@@ -421,7 +421,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   `IsEdited` while a programmatic `SourceText` push is in flight (a guard flag set around the transform toggle),
   or recompute the baseline atomically on toggle. **Test:** Headless — toggling pretty-JSON on/off leaves
   `IsEdited == false`.
-- [ ] **Q8 (Medium)** `Features/Shell/MainWindowViewModel.cs` · the two `OnSelectedTabChanged` partials
+- [x] **Q8 (Medium)** `Features/Shell/MainWindowViewModel.cs` · the two `OnSelectedTabChanged` partials
   (L1036 two-arg, L1044 one-arg). The one-arg overload hand-writes `OnPropertyChanged(nameof(IsOutlinePaneVisible))`
   that is load-bearing-by-accident (the property depends on `SelectedTab.HasOutline`). **Fix:** collapse into the
   single 2-arg overload and document the `SelectedTab`-derived dependency (or make `IsOutlinePaneVisible` a
