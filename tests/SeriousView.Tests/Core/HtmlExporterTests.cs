@@ -23,6 +23,34 @@ public class HtmlExporterTests
         Assert.Contains("&lt;", html);
     }
 
+    [Theory]
+    [InlineData("[x](javascript:alert(1))", "javascript:")]
+    [InlineData("[x](vbscript:msgbox(1))", "vbscript:")]
+    [InlineData("[x](data:text/html,<script>alert(1)</script>)", "data:")]
+    [InlineData("[x](file:///etc/passwd)", "file:")]
+    public void Export_UnsafeLinkSchemes_AreNeutralized(string md, string scheme)
+    {
+        // Audit V6: DisableHtml() blocks raw <script>, but a markdown link's scheme passes straight
+        // through Markdig into <a href="…"> — the export must filter it (it lands in a browser).
+        var html = Export($"# Doc\n\n{md}");
+
+        Assert.DoesNotContain(scheme, html);  // the dangerous scheme never reaches an href
+        Assert.Contains(">x</a>", html);      // the visible anchor text is preserved
+    }
+
+    [Theory]
+    [InlineData("[w](https://example.com)", "https://example.com")]
+    [InlineData("[m](mailto:a@b.com)", "mailto:a@b.com")]
+    [InlineData("[rel](notes/other.md)", "notes/other.md")]
+    [InlineData("[anchor](#section)", "#section")]
+    public void Export_SafeAndRelativeLinks_ArePreserved(string md, string href)
+    {
+        // Relative links (sibling notes, anchors) and http/https/mailto stay intact.
+        var html = Export($"# Doc\n\n{md}");
+
+        Assert.Contains($"href=\"{href}\"", html);
+    }
+
     [Fact]
     public void Export_FrontMatter_IsConsumedNotRendered()
     {

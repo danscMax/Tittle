@@ -1,5 +1,11 @@
+using System;
+using System.IO;
+using System.Linq;
 using System.Net;
 using Markdig;
+using Markdig.Renderers;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 using SeriousView.Core.Text;
 
 namespace SeriousView.Core.Export;
@@ -29,7 +35,7 @@ public static class HtmlExporter
         string markdown, string title, bool darkTheme, Func<string, bool>? wikiLinkResolver = null)
     {
         var prepared = ConvertWikiLinks(markdown ?? string.Empty, wikiLinkResolver);
-        var body = Markdown.ToHtml(prepared, Pipeline);
+        var body = RenderSanitized(prepared);
         var safeTitle = WebUtility.HtmlEncode(title);
 
         return $"""
@@ -48,6 +54,38 @@ public static class HtmlExporter
             </body>
             </html>
             """;
+    }
+
+    /// <summary>Parse → sanitize link hrefs → render. Markdig's own docs are explicit: it is a
+    /// markdown processor, NOT an HTML sanitizer — <c>DisableHtml()</c> escapes raw HTML blocks but
+    /// does nothing to a markdown link's scheme, so <c>[x](javascript:…)</c> would otherwise reach
+    /// the exported file (shell-opened in a browser, copied as CF_HTML). We neutralize any absolute
+    /// non-web scheme, mirroring the viewer's <see cref="MarkdownLink.IsSafe"/> allow-list, while
+    /// keeping relative links (<c>name.md</c>, <c>#anchor</c>) and http/https/mailto.</summary>
+    private static string RenderSanitized(string prepared)
+    {
+        var document = Markdown.Parse(prepared, Pipeline);
+        foreach (var link in document.Descendants().OfType<LinkInline>())
+        {
+            // Images can't execute a scheme (raw on* handlers are already escaped by DisableHtml);
+            // anchors are the executable surface, so only their hrefs are filtered.
+            if (link.IsImage)
+                continue;
+            var url = link.Url;
+            if (!string.IsNullOrEmpty(url)
+                && Uri.TryCreate(url, UriKind.Absolute, out _)
+                && !MarkdownLink.IsSafe(url))
+            {
+                link.Url = "#"; // dead anchor — no javascript:/data:/file: scheme reaches the output
+            }
+        }
+
+        using var writer = new StringWriter();
+        var renderer = new HtmlRenderer(writer);
+        Pipeline.Setup(renderer);
+        renderer.Render(document);
+        writer.Flush();
+        return writer.ToString();
     }
 
     /// <summary>[[name]] → a relative markdown link to the sibling note (Markdig renders the

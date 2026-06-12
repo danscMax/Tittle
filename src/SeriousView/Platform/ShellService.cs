@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using SeriousView.Core.Abstractions;
 
 namespace SeriousView.Platform;
@@ -22,6 +23,18 @@ public sealed class ShellService : IShellService
         {
             if (OperatingSystem.IsWindows())
             {
+                // A Windows path can't legitimately contain a double-quote or a control char; one that
+                // does is malformed/hostile and would break out of the quoted /select, token to inject
+                // further explorer switches. Fall back to opening the containing folder (ArgumentList,
+                // no shell parsing) instead of interpolating it raw.
+                if (filePath.Contains('"') || filePath.Any(char.IsControl))
+                {
+                    var folder = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrEmpty(folder))
+                        Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { folder } });
+                    return;
+                }
+
                 // explorer's /select, is finicky about quoting — the raw argument string is the proven form.
                 Process.Start(new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"" });
             }
