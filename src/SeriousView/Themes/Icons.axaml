@@ -3,14 +3,6 @@
   <!-- Custom vector glyphs for PathIcon (tinted by the host's Foreground; theme-aware, cross-platform).
        Authored in a 0..16 / 0..24 box; PathIcon stretches Uniform to its Width/Height. -->
 
-  <!-- Eye / "preview" glyph: almond ring (outer minus inner) + a solid pupil, via EvenOdd.
-       Shown on the status-bar view toggle while the rendered preview is visible. -->
-  <GeometryGroup x:Key="IconEye" FillRule="EvenOdd">
-    <PathGeometry Figures="M2,12 C2,12 5,5 12,5 C19,5 22,12 22,12 C22,12 19,19 12,19 C5,19 2,12 2,12 Z"/>
-    <PathGeometry Figures="M4.5,12 C4.5,12 7,7.5 12,7.5 C17,7.5 19.5,12 19.5,12 C19.5,12 17,16.5 12,16.5 C7,16.5 4.5,12 4.5,12 Z"/>
-    <EllipseGeometry Center="12,12" RadiusX="2.8" RadiusY="2.8"/>
-  </GeometryGroup>
-
   <!-- Sidebar / "panel" glyph: a rounded frame with a solid left column (the right content area is an
        EvenOdd hole). The universal "show/hide the side panel" affordance; used on the outline toggle. -->
   <GeometryGroup x:Key="IconSidebar" FillRule="EvenOdd">

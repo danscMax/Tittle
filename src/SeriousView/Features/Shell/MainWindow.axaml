@@ -28,6 +28,36 @@
       <Setter Property="FontSize" Value="11.5"/>
       <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
     </Style>
+    <!-- Segmented Предпросмотр|Исходник view switch in the status bar (replaces the ambiguous eye
+         icon). Two flat buttons share one bordered pill; the active segment (driven by a conditional
+         seg-on class bound to ShowPreview/ShowSource) fills with the accent. -->
+    <Style Selector="Border.segmented">
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StatusBarForegroundBrush}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style Selector="Button.segment">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="9,2"/>
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
+    </Style>
+    <Style Selector="Button.segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}"/>
+    </Style>
+    <!-- Active segment: accent fill wins over the hover setter (later, more specific). -->
+    <Style Selector="Button.segment.seg-on /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="Button.segment.seg-on">
+      <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+    </Style>
     <!-- Omnibar address field: a borderless TextBox that blends into the omnibar pill (the outer Border
          already draws the box). Editable + selectable so the path can be copied or replaced (Enter opens
          it; see code-behind). We flatten the FluentAvalonia template's PART_BorderElement across all
@@ -372,9 +402,6 @@
           <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
                   AutomationProperties.Name="Номера строк" Content="#" Classes="statusbtn"/>
         </StackPanel>
-        <!-- Preview/source toggle (markdown only) — moved here from the title strip. Compact icon
-             mirrors the current mode (eye = preview, {} = source); the tooltip names the action.
-             Sits just right of the divider, grouped with the editor controls. -->
         <!-- Table/source toggle for delimited files (ported csv-as-table) — in the status bar,
              which stays visible in both views (the contextual toolbar hides with the editor). -->
         <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
@@ -382,18 +409,23 @@
                 ToolTip.Tip="Таблица / исходник" AutomationProperties.Name="Таблица или исходник"
                 Content="▦"
                 IsVisible="{Binding SelectedTab.CsvTable, FallbackValue=False, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
-                AutomationProperties.AutomationId="ViewModeButton"
-                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
-                Command="{Binding SelectedTab.ToggleViewModeCommand}"
-                ToolTip.Tip="{Binding SelectedTab.ViewModeToggleTip}">
-          <Panel>
-            <PathIcon Data="{StaticResource IconCode}" Width="16" Height="16"
-                      IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}"/>
-            <PathIcon Data="{StaticResource IconEye}" Width="16" Height="16"
-                      IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"/>
-          </Panel>
-        </Button>
+        <!-- Preview/source switch (markdown only) — a clearly-labelled segmented toggle replacing the
+             ambiguous eye icon; the active mode fills with the accent. Each segment SETS its mode
+             (ToggleViewModeCommand still backs the palette/keyboard). -->
+        <Border DockPanel.Dock="Right" Classes="segmented" Margin="0,0,6,0"
+                AutomationProperties.AutomationId="ViewModeSwitch"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}">
+          <StackPanel Orientation="Horizontal">
+            <Button Classes="segment" Content="Предпросмотр"
+                    AutomationProperties.AutomationId="ViewModePreview"
+                    Classes.seg-on="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
+                    Command="{Binding SelectedTab.ShowPreviewModeCommand}"/>
+            <Button Classes="segment" Content="Исходник"
+                    AutomationProperties.AutomationId="ViewModeSource"
+                    Classes.seg-on="{Binding SelectedTab.ShowSource, FallbackValue=False}"
+                    Command="{Binding SelectedTab.ShowSourceModeCommand}"/>
+          </StackPanel>
+        </Border>
         <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
                 Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
         <!-- Left segment: status messages, replaced by the go-to-line input (Ctrl+G) while open.

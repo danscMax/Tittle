@@ -368,7 +368,6 @@ public partial class DocumentTabViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowSource))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     [NotifyPropertyChangedFor(nameof(ZoomApplies))]
-    [NotifyPropertyChangedFor(nameof(ViewModeToggleTip))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
     /// <summary>Show the rendered markdown preview (markdown file in Preview mode, has content).</summary>
@@ -442,14 +441,18 @@ public partial class DocumentTabViewModel : ViewModelBase
             ? null
             : name => File.Exists(Path.Combine(root, name + ".md"));
 
-    /// <summary>Tooltip for the status-bar view toggle — names the switch target (the action).</summary>
-    public string ViewModeToggleTip =>
-        ViewMode == DocumentViewMode.Preview ? "Показать исходник" : "Показать предпросмотр";
-
     /// <summary>Flip preview ⟷ source. Only enabled for markdown documents.</summary>
     [RelayCommand(CanExecute = nameof(IsMarkdown))]
     private void ToggleViewMode()
         => ViewMode = ViewMode == DocumentViewMode.Preview ? DocumentViewMode.Source : DocumentViewMode.Preview;
+
+    /// <summary>Show the preview (segmented switch). Setting the same mode is a no-op.</summary>
+    [RelayCommand(CanExecute = nameof(IsMarkdown))]
+    private void ShowPreviewMode() => ViewMode = DocumentViewMode.Preview;
+
+    /// <summary>Show the source (segmented switch).</summary>
+    [RelayCommand(CanExecute = nameof(IsMarkdown))]
+    private void ShowSourceMode() => ViewMode = DocumentViewMode.Source;
 
     private IReadOnlyList<HeadingOutline>? _outline;
 

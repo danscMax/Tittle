@@ -48,13 +48,31 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
-    public void ViewModeToggleTip_NamesTheSwitchTarget()
+    public void SegmentedCommands_SetExplicitMode_ForMarkdown()
     {
         var vm = DocumentTabViewModel.FromFile("# Title", "/docs/readme.md");
-        Assert.Equal("Показать исходник", vm.ViewModeToggleTip);     // in preview → click switches to source
+        Assert.True(vm.ShowPreviewModeCommand.CanExecute(null));
+        Assert.True(vm.ShowSourceModeCommand.CanExecute(null));
 
-        vm.ToggleViewModeCommand.Execute(null);
-        Assert.Equal("Показать предпросмотр", vm.ViewModeToggleTip);  // in source → click switches to preview
+        vm.ShowSourceModeCommand.Execute(null);
+        Assert.Equal(DocumentViewMode.Source, vm.ViewMode);
+        Assert.True(vm.ShowSource);
+
+        vm.ShowSourceModeCommand.Execute(null); // re-setting the active mode is a no-op
+        Assert.Equal(DocumentViewMode.Source, vm.ViewMode);
+
+        vm.ShowPreviewModeCommand.Execute(null);
+        Assert.Equal(DocumentViewMode.Preview, vm.ViewMode);
+        Assert.True(vm.ShowPreview);
+    }
+
+    [Fact]
+    public void SegmentedCommands_Disabled_ForNonMarkdown()
+    {
+        var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
+
+        Assert.False(vm.ShowPreviewModeCommand.CanExecute(null));
+        Assert.False(vm.ShowSourceModeCommand.CanExecute(null));
     }
 
     [Fact]
