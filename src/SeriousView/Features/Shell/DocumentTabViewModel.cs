@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -537,14 +538,24 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private int _activeHeadingOrdinal = -1;
 
+    private IReadOnlyList<HeadingOutline> _breadcrumbs = [];
+
     /// <summary>Ancestor chain of the active heading (top-level first), shown as the
-    /// breadcrumbs strip. Empty above the first heading and for non-markdown.</summary>
-    public IReadOnlyList<HeadingOutline> Breadcrumbs =>
-        MarkdownOutline.AncestorChain(Outline, ActiveHeadingOrdinal);
+    /// breadcrumbs strip. Empty above the first heading and for non-markdown. P10: cached and
+    /// recomputed only on an ordinal change (not per binding read), and the change notification is
+    /// suppressed when the chain is value-equal to the last one (e.g. empty→empty for a headingless
+    /// doc whose scroll-spy still nudges the ordinal).</summary>
+    public IReadOnlyList<HeadingOutline> Breadcrumbs => _breadcrumbs;
 
     partial void OnActiveHeadingOrdinalChanged(int value)
     {
-        OnPropertyChanged(nameof(Breadcrumbs));
+        var chain = MarkdownOutline.AncestorChain(Outline, value);
+        if (!chain.SequenceEqual(_breadcrumbs))
+        {
+            _breadcrumbs = chain;
+            OnPropertyChanged(nameof(Breadcrumbs));
+        }
+
         // Reading a heading marks it visited (ported md-visited-*): the TOC unread dot fades.
         // Version bumps ONLY on a genuinely new visit — a revisit fires per scroll tick and
         // would otherwise recompute every visible TOC row's multi-bindings at scroll rate.

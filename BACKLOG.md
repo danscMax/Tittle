@@ -404,7 +404,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   per-line cache for a static (never-edited) document keeps growing while the tab lives. **Fix:** LRU-cap it
   (e.g. last N visible lines) or clear on detach. **Test:** unit — cache size stays bounded after scanning
   many lines at a fixed document version.
-- [ ] **P10 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `OnActiveHeadingOrdinalChanged` (L545) /
+- [x] **P10 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `OnActiveHeadingOrdinalChanged` (L545) /
   `Breadcrumbs` (L542, calls `MarkdownOutline.AncestorChain` → allocates a list). Raises `Breadcrumbs`
   PropertyChanged on every scroll tick that moves the ordinal by 1. **Fix:** only raise `Breadcrumbs` when the
   ancestor chain root actually changes (compare to the previous ordinal's chain). **Test:** unit — a +1 ordinal

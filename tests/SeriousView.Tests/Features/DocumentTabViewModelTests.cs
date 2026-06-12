@@ -470,4 +470,40 @@ public class DocumentTabViewModelTests
         vm.ActiveHeadingOrdinal = -1;
         Assert.Empty(vm.Breadcrumbs);
     }
+
+    [Fact]
+    public void Breadcrumbs_HeadinglessDoc_OrdinalNudge_DoesNotNotify()
+    {
+        // P10: a doc with no headings has an empty ancestor chain, so a scroll-spy ordinal nudge
+        // produces the same empty chain and must NOT re-raise Breadcrumbs (no notify, no re-alloc).
+        var vm = DocumentTabViewModel.FromFile("just paragraphs\n\nno headings here", "/docs/d.md");
+        Assert.Empty(vm.Outline);
+        var before = vm.Breadcrumbs;
+        var raised = 0;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DocumentTabViewModel.Breadcrumbs))
+                raised++;
+        };
+
+        vm.ActiveHeadingOrdinal = 3; // out of range → empty chain again
+        vm.ActiveHeadingOrdinal = 5;
+
+        Assert.Equal(0, raised);
+        Assert.Same(before, vm.Breadcrumbs); // same cached instance — no allocation
+    }
+
+    [Fact]
+    public void Breadcrumbs_CachedBetweenReads_RecomputedOnlyOnRealChange()
+    {
+        var vm = DocumentTabViewModel.FromFile("# A\n## B", "/docs/d.md");
+        vm.ActiveHeadingOrdinal = 1;
+
+        var first = vm.Breadcrumbs;
+        Assert.Same(first, vm.Breadcrumbs); // P10: cached — reading twice does not re-allocate
+
+        vm.ActiveHeadingOrdinal = 0;
+        Assert.NotSame(first, vm.Breadcrumbs); // recomputed on a genuine ordinal change
+        Assert.Equal(new[] { "A" }, System.Linq.Enumerable.Select(vm.Breadcrumbs, h => h.Text));
+    }
 }
