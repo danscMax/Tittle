@@ -446,7 +446,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   coalesce adjacent blanks. **Test:** the regression test itself.
 
 ### Wave D — Security (Low)
-- [ ] **S5 (Low)** `Features/Shell/MainWindowViewModel.cs` · `DescribeError` (L848) and its call sites. Full
+- [x] **S5 (Low)** `Features/Shell/MainWindowViewModel.cs` · `DescribeError` (L848) and its call sites. Full
   absolute paths (with the user name) are surfaced into the copyable on-screen error InfoBar. **Fix:** use
   `Path.GetFileName(target)` in user-facing messages; keep full paths only in the (already-bounded) crash log.
   **Test:** Headless — an error message contains the file name but not the full path.

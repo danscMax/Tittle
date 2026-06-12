@@ -406,6 +406,23 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task ErrorMessages_SurfaceFileName_NotFullPath()
+    {
+        // S5: user-facing error messages (status + the copyable InfoBar) must not leak the full
+        // absolute path — which embeds the user name — only the file name.
+        const string full = "/home/alice/secret-project/notes.md";
+        var vm = CreateVm(dialogPath: full,
+            fileReader: new FakeFileReader(new FileNotFoundException()));
+
+        await vm.OpenFileCommand.ExecuteAsync(null);
+
+        Assert.Contains("notes.md", vm.ErrorBarMessage);
+        Assert.DoesNotContain("alice", vm.ErrorBarMessage);
+        Assert.DoesNotContain("secret-project", vm.ErrorBarMessage);
+        Assert.DoesNotContain("alice", vm.StatusText);
+    }
+
+    [AvaloniaFact]
     public async Task ErrorBar_AutoDismisses_AfterDelay()
     {
         var vm = CreateVm(dialogPath: "/path/missing.txt",
