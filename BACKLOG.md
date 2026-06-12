@@ -385,7 +385,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   fraction actually moved (diff against the last band), or throttle to ~30 fps via a coalescing timer like the
   preview reflow. (The `ShowMinimap` guard already skips when hidden — keep it.) **Test:** unit on the
   band-changed predicate, or Headless asserting no redraw when the band is unchanged.
-- [ ] **P4 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `FixupEmbeddedCodeEditors` (L628) /
+- [x] **P4 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `FixupEmbeddedCodeEditors` (L628) /
   `EnsureCodeCopyButton` (L663). Both run on every reflow tick, walking up 3 parents per embedded editor and
   re-pinning height. **Fix:** early-out when the editor height already equals target within the 1px guard;
   mark a "copy-button-done" flag on the editor so `EnsureCodeCopyButton` is O(1) on repeats. **Test:**

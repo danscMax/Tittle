@@ -1003,6 +1003,30 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void ReflowReruns_DoNotReWalkWiredCopyButtons()
+    {
+        // P4: EnsureCodeCopyButton runs every reflow tick. Once an editor is wired, later passes must
+        // skip the 3-parent walk + class check entirely.
+        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md"); // has a ```cs fence
+        var view = new DocumentView { DataContext = vm };
+        var window = new Window { Content = view };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var firstWalks = view.CopyButtonWalkCount;
+        Assert.True(firstWalks >= 1); // wired on the first reflow pass
+
+        view.RunPreviewReflowPassesForTest();
+        view.RunPreviewReflowPassesForTest();
+        Assert.Equal(firstWalks, view.CopyButtonWalkCount); // no re-walk on repeat reflows
+
+        var preview = view.FindControl<Markdown.Avalonia.MarkdownScrollViewer>("Preview")!;
+        Assert.Single(preview.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.Classes.Contains("code-copy"))); // still exactly one button
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task PerformCodeCopy_ClipboardFailure_DoesNotThrow()
     {
         // R6/Q16: a clipboard failure inside the copy-button handler must not escape as an

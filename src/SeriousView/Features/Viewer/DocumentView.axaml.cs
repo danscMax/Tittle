@@ -40,6 +40,9 @@ public partial class DocumentView : UserControl
     private readonly DispatcherTimer _previewReflowTimer;
     private bool _previewReflowPrimed;
     private int _previewReflowPassCount;
+    // P4: embedded editors that already carry a copy button. EnsureCodeCopyButton runs every reflow
+    // tick; once an editor is wired, skip the 3-parent walk + class check. Reset per content.
+    private readonly HashSet<AvaloniaEdit.TextEditor> _copyHostEditors = new();
 
     // Resize coalescing for the preview. Markdown.Avalonia does NOT virtualise: the whole document is
     // realised, so Avalonia re-measures every block on EVERY width change — a resize drag re-lays-out
@@ -491,6 +494,8 @@ public partial class DocumentView : UserControl
 
     internal void SimulatePreviewExtentChangeForTest() => MaybeScheduleReflowOnExtentChange();
 
+    internal void RunPreviewReflowPassesForTest() => RunPreviewReflowPasses();
+
     // --- Resize freeze: pin the preview width while a resize is in flight, release on settle. The
     //     root cost on resize is Markdown.Avalonia re-measuring the whole non-virtualised document on
     //     every width change. An explicit Width caches the measure, so during the drag the document
@@ -682,8 +687,15 @@ public partial class DocumentView : UserControl
     /// <summary>Floats a ghost «copy» button over an embedded fenced-code editor (ported).
     /// SyntaxHigh nests the editor in a CodePad inside the code-block Border; we slip a Grid
     /// between the Border and its child once (the "code-copy-host" class marks a done block).</summary>
+    // P4 seam: counts how often EnsureCodeCopyButton does the parent walk (past the wired early-out).
+    internal int CopyButtonWalkCount { get; private set; }
+
     private void EnsureCodeCopyButton(AvaloniaEdit.TextEditor editor)
     {
+        if (_copyHostEditors.Contains(editor))
+            return; // P4: already wired — skip the 3-parent walk on every later reflow tick
+        CopyButtonWalkCount++;
+
         // Nearest Border up the logical chain, capped — a miss means an unexpected structure.
         Border? border = null;
         var node = editor.Parent;
@@ -730,6 +742,7 @@ public partial class DocumentView : UserControl
         grid.Children.Add(content);
         grid.Children.Add(button);
         border.Child = grid;
+        _copyHostEditors.Add(editor); // mark only on a successful wrap (a not-yet-laid-out block retries)
     }
 
     // Copy the code to the clipboard and flash a ✓ confirmation. The clipboard write is passed as a
@@ -1081,6 +1094,7 @@ public partial class DocumentView : UserControl
         CancelPendingSync();
         _previewReflowTimer.Stop();
         _previewReflowPrimed = false; // new content re-primes its first reflow immediately
+        _copyHostEditors.Clear(); // new content rebuilds the preview tree — re-wire copy buttons
         _resizeSettleTimer.Stop();
         UnfreezePreviewWidth(); // new content must start from auto width, not a stale pin
         if (_vm is not null)
