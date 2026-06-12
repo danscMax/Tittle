@@ -405,10 +405,37 @@ public partial class DocumentView : UserControl
     private void RunPreviewReflowPasses()
     {
         _previewReflowPassCount++;
-        InvalidatePreviewHeadingTops();
-        FixupEmbeddedCodeEditors();
-        PreviewTableSorter.AttachAll(Preview); // ported click-to-sort, idempotent
-        PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections, idempotent
+
+        // One traversal of the (whole, non-virtualised) preview tree, bucketed — instead of three
+        // separate GetVisualDescendants walks (code editors, tables, headings). This runs on the
+        // first layout and on every resize-settle, so collapsing it to a single pass trims the
+        // per-reflow overhead at exactly the expensive moments. Snapshot before mutating:
+        // FixupEmbeddedCodeEditors re-parents editors, which a lazy walk couldn't survive.
+        var editors = new List<AvaloniaEdit.TextEditor>();
+        var tables = new List<Grid>();
+        var headings = new List<Control>();
+        foreach (var visual in Preview.GetVisualDescendants())
+        {
+            switch (visual)
+            {
+                case AvaloniaEdit.TextEditor editor:
+                    editors.Add(editor);
+                    break;
+                case Grid grid when grid.Classes.Contains("Table"):
+                    tables.Add(grid);
+                    break;
+                case Control control when IsTopLevelHeading(control):
+                    headings.Add(control);
+                    break;
+            }
+        }
+
+        FixupEmbeddedCodeEditors(editors);
+        PreviewTableSorter.AttachAll(tables); // ported click-to-sort, idempotent
+        PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections (top-level, idempotent)
+        // Warm the heading-Y cache from the SAME pass, AFTER the code-editor heights are pinned
+        // (pinning shifts heading positions) — same ordering the lazy path had.
+        _previewHeadingTops = ComputePreviewHeadingTops(headings);
         RecomputeActiveHeading(); // marker/breadcrumbs correct against the fresh cache (guards internally)
     }
 
@@ -586,10 +613,9 @@ public partial class DocumentView : UserControl
     /// so the block shows everything and the page scroll flows straight through it. Runs on
     /// every preview reflow (extent change); the equality guard keeps it convergent, and a
     /// re-run picks up late font/line-height changes.</summary>
-    private void FixupEmbeddedCodeEditors()
+    private void FixupEmbeddedCodeEditors(IReadOnlyList<AvaloniaEdit.TextEditor> editors)
     {
-        // Materialised: EnsureCodeCopyButton re-parents editors, which a lazy walk can't survive.
-        foreach (var editor in Preview.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().ToList())
+        foreach (var editor in editors)
         {
             EnsureCodeCopyButton(editor);
             if (editor.Document is not { LineCount: > 0 } doc)
@@ -1086,8 +1112,6 @@ public partial class DocumentView : UserControl
     // which per-scroll work is a binary search (no debounce needed).
     private List<double>? _previewHeadingTops;
 
-    private void InvalidatePreviewHeadingTops() => _previewHeadingTops = null;
-
     private IReadOnlyList<double>? EnsurePreviewHeadingTops()
         => _previewHeadingTops ??= ComputePreviewHeadingTops();
 
@@ -1097,10 +1121,17 @@ public partial class DocumentView : UserControl
     /// order matches <see cref="DocumentTabViewModel.Outline"/> — the same contract the M4
     /// navigation has relied on (both walks skip admonition-nested headings).</summary>
     private List<double>? ComputePreviewHeadingTops()
+        => ComputePreviewHeadingTops(
+            Preview.GetVisualDescendants().OfType<Control>().Where(IsTopLevelHeading).ToList());
+
+    // Heading Ys from a pre-collected, document-ordered heading list (the reflow pass shares its
+    // single traversal; the lazy cache-miss path collects its own). Viewport-relative TranslatePoint
+    // + current Offset = scroll-invariant. Index order matches the Core outline.
+    private List<double>? ComputePreviewHeadingTops(IReadOnlyList<Control> headings)
     {
         var offsetY = PreviewScroll.Offset.Y;
-        var tops = new List<double>();
-        foreach (var heading in Preview.GetVisualDescendants().OfType<Control>().Where(IsTopLevelHeading))
+        var tops = new List<double>(headings.Count);
+        foreach (var heading in headings)
         {
             if (heading.TranslatePoint(default, PreviewScroll) is not { } p)
                 return null;

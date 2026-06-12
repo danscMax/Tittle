@@ -21,8 +21,13 @@ public static class PreviewTableSorter
     /// <summary>Wires every not-yet-wired table under <paramref name="root"/> (idempotent;
     /// called from the preview's reflow pass, like the code-block fixups).</summary>
     public static void AttachAll(Visual root)
+        => AttachAll(root.GetVisualDescendants().OfType<Grid>().Where(g => g.Classes.Contains("Table")));
+
+    /// <summary>Same, from a pre-collected set of table grids — lets the reflow pass share one tree
+    /// traversal across the code-editor / table / heading walks instead of three.</summary>
+    public static void AttachAll(IEnumerable<Grid> tables)
     {
-        foreach (var table in root.GetVisualDescendants().OfType<Grid>()
+        foreach (var table in tables
                      .Where(g => g.Classes.Contains("Table") && !g.Classes.Contains(AttachedClass))
                      .ToList())
         {
