@@ -354,7 +354,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   `OnClosing`, losing the last zoom/layout/visited change. **Fix:** also flush+dispose the VM from a
   `ShutdownRequested` handler (idempotent — `Dispose` already guards `_disposed`). **Test:** Headless — mutate
   Editor, raise the shutdown path, assert settings were persisted.
-- [ ] **R6 / Q16 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `EnsureCodeCopyButton` (~L663). The
+- [x] **R6 / Q16 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `EnsureCodeCopyButton` (~L663). The
   injected copy button's handler is `async (_, _) => { … await clipboard.SetTextAsync(…) … }` with no
   try/catch — a clipboard failure becomes an unobserved UI-thread exception (the project's documented
   async-void foot-gun). **Fix:** wrap the await in try/catch (no-op/status on failure); guard the

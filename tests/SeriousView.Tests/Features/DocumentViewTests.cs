@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -995,6 +996,41 @@ public class DocumentViewTests
         Assert.Contains("code-copy-host", host.Classes);
         Assert.Single(preview.GetVisualDescendants().OfType<Grid>(),
             g => g.Classes.Contains("code-copy-host"));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task PerformCodeCopy_ClipboardFailure_DoesNotThrow()
+    {
+        // R6/Q16: a clipboard failure inside the copy-button handler must not escape as an
+        // unobserved UI-thread exception. Both a synchronous throw and a faulted task are swallowed.
+        var button = new Button { Content = "⧉" };
+
+        await DocumentView.PerformCodeCopy(button, _ => throw new InvalidOperationException("busy"), "x");
+        Assert.Equal("⧉", button.Content); // no confirmation, no throw
+
+        await DocumentView.PerformCodeCopy(
+            button, _ => Task.FromException(new InvalidOperationException("denied")), "x");
+        Assert.Equal("⧉", button.Content);
+    }
+
+    [AvaloniaFact]
+    public async Task PerformCodeCopy_Success_FlashesConfirmation_OnlyWhileAttached()
+    {
+        var attached = new Button { Content = "⧉" };
+        var window = new Window { Content = attached };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        string? copied = null;
+        await DocumentView.PerformCodeCopy(attached, t => { copied = t; return Task.CompletedTask; }, "code");
+        Assert.Equal("code", copied);
+        Assert.Equal("✓", attached.Content); // attached → confirmation shown
+
+        // A detached button (tab closed) must skip the confirmation swap without throwing.
+        var detached = new Button { Content = "⧉" };
+        await DocumentView.PerformCodeCopy(detached, _ => Task.CompletedTask, "code");
+        Assert.Equal("⧉", detached.Content);
         window.Close();
     }
 

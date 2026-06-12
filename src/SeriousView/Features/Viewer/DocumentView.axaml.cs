@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -694,15 +695,11 @@ public partial class DocumentView : UserControl
         button.Classes.Add("code-copy");
         ToolTip.SetTip(button, "Скопировать код");
         AutomationProperties.SetName(button, "Скопировать код");
-        button.Click += async (_, _) =>
+        button.Click += (_, _) =>
         {
             var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-            if (clipboard is null)
-                return;
-            await clipboard.SetTextAsync(editor.Text ?? string.Empty);
-            // Quick inline confirmation, then back to the glyph.
-            button.Content = "✓";
-            DispatcherTimer.RunOnce(() => button.Content = "⧉", TimeSpan.FromSeconds(1.2));
+            _ = PerformCodeCopy(button, clipboard is null ? null : clipboard.SetTextAsync,
+                editor.Text ?? string.Empty);
         };
 
         // Detach first: a child still parented to the Border can't join the Grid.
@@ -712,6 +709,34 @@ public partial class DocumentView : UserControl
         grid.Children.Add(content);
         grid.Children.Add(button);
         border.Child = grid;
+    }
+
+    // Copy the code to the clipboard and flash a ✓ confirmation. The clipboard write is passed as a
+    // delegate (decouples the test from the version-fragile IClipboard surface). R6/Q16: the await is
+    // guarded — a clipboard failure must not escape this fire-and-forget call as an unobserved
+    // UI-thread exception — and the confirmation swap only runs while the button is still attached
+    // (the tab can close in the 1.2 s window).
+    internal static async Task PerformCodeCopy(Button button, Func<string, Task>? copy, string text)
+    {
+        if (copy is null)
+            return;
+        try
+        {
+            await copy(text);
+        }
+        catch
+        {
+            return; // clipboard busy / denied — swallow, no confirmation
+        }
+
+        if (button.GetVisualRoot() is null)
+            return; // detached between click and now
+        button.Content = "✓";
+        DispatcherTimer.RunOnce(() =>
+        {
+            if (button.GetVisualRoot() is not null)
+                button.Content = "⧉";
+        }, TimeSpan.FromSeconds(1.2));
     }
 
     private void OnSourceScrollChanged(object? sender, EventArgs e)
