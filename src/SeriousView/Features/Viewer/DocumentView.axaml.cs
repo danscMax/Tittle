@@ -489,7 +489,9 @@ public partial class DocumentView : UserControl
     // Test seams (headless): the rendered preview column's left offset within its (viewport-filling)
     // wrapper and its laid-out width — used to prove the reading-column presets actually CENTER
     // (offset > 0), not just that the converter returns Center (a ScrollViewer would swallow it).
-    internal double PreviewColumnLeftOffsetForTest => Preview.Bounds.X;
+    // The centering lives on the zoom wrapper (LayoutTransformControl), so measure its offset; the
+    // logical column width is the MarkdownScrollViewer's Bounds (pre-scale, capped by reading width).
+    internal double PreviewColumnLeftOffsetForTest => PreviewZoom.Bounds.X;
 
     internal double PreviewColumnWidthForTest => Preview.Bounds.Width;
 

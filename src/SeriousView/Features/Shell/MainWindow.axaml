@@ -345,9 +345,10 @@
                    IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
-        <!-- Zoom — always in the status bar in source mode (etalon: zoom lives only here). -->
+        <!-- Zoom — in the status bar for the source editor AND the markdown preview (the preview is
+             scaled via a layout transform by the same font-size value). Hidden for table/notice tabs. -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
-                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}">
+                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ZoomApplies, FallbackValue=False}">
           <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
                   AutomationProperties.Name="Уменьшить шрифт" Content="A−" Classes="statusbtn"/>
           <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"

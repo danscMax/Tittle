@@ -58,6 +58,45 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void ZoomApplies_ForMarkdownPreviewAndSource_AndAnyCode()
+    {
+        var md = DocumentTabViewModel.FromFile("# Title", "/docs/readme.md");
+        Assert.True(md.ShowPreview);
+        Assert.True(md.ZoomApplies); // preview is zoomed via a layout scale
+
+        md.ToggleViewModeCommand.Execute(null);
+        Assert.True(md.ShowSource);
+        Assert.True(md.ZoomApplies);
+
+        var code = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");
+        Assert.True(code.ZoomApplies);
+    }
+
+    [Fact]
+    public void ZoomApplies_False_ForNoticeTab()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Binary(2048), "/img/pic.png");
+
+        Assert.True(vm.ShowNotice);
+        Assert.False(vm.ZoomApplies);
+    }
+
+    [Fact]
+    public void ZoomApplies_False_InCsvTableView_AndNotifiesOnToggle()
+    {
+        var vm = DocumentTabViewModel.FromFile("a,b\n1,2\n3,4", "/data/rows.csv");
+        vm.CsvAsTableEnabled = true;
+        Assert.True(vm.ShowCsvTable);
+        Assert.False(vm.ZoomApplies); // the table view isn't font-zoomed
+
+        var raised = false;
+        vm.PropertyChanged += (_, e) => raised |= e.PropertyName == nameof(DocumentTabViewModel.ZoomApplies);
+        vm.CsvAsTableEnabled = false; // flip to source → zoom applies again
+        Assert.True(raised);
+        Assert.True(vm.ZoomApplies);
+    }
+
+    [Fact]
     public void AssetPathRoot_IsDocumentDirectory()
     {
         const string path = "/docs/sub/readme.md";

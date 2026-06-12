@@ -17,7 +17,12 @@ public partial class EditorOptions : ObservableObject
     private const double Step = 1;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewScale))]
     private double _fontSize = DefaultFontSize;
+
+    /// <summary>Zoom factor for the markdown preview, derived from the shared font size (14 → 1.0).
+    /// The preview has no per-element font size, so the same zoom is applied as a layout scale.</summary>
+    public double PreviewScale => FontSize / DefaultFontSize;
 
     [ObservableProperty]
     private bool _wordWrap;

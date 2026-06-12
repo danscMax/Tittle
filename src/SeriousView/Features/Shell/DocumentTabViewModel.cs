@@ -300,6 +300,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowCsvTable))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
+    [NotifyPropertyChangedFor(nameof(ZoomApplies))]
     private bool _csvAsTableEnabled;
 
     /// <summary>Show the table view (delimited file that parsed, table mode on).</summary>
@@ -366,6 +367,7 @@ public partial class DocumentTabViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
+    [NotifyPropertyChangedFor(nameof(ZoomApplies))]
     [NotifyPropertyChangedFor(nameof(ViewModeToggleTip))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
 
@@ -376,6 +378,10 @@ public partial class DocumentTabViewModel : ViewModelBase
     /// unless the tab is showing its table view.</summary>
     public bool ShowSource =>
         !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
+
+    /// <summary>Whether the font-size zoom controls apply to this tab — the source editor or the
+    /// markdown preview (zoomed via a layout scale). False for the table view and notice overlays.</summary>
+    public bool ZoomApplies => ShowSource || ShowPreview;
 
     /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
     /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>

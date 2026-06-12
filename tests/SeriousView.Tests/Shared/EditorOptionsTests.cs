@@ -54,6 +54,28 @@ public class EditorOptionsTests
         Assert.False(o.ShowLineNumbers);
     }
 
+    [Theory]
+    [InlineData(14, 1.0)]   // default → 1:1
+    [InlineData(28, 2.0)]   // double the default font → 2× preview scale
+    [InlineData(7, 0.5)]    // half
+    public void PreviewScale_TracksFontSizeRelativeToDefault(double fontSize, double expected)
+    {
+        var o = new EditorOptions { FontSize = fontSize };
+        Assert.Equal(expected, o.PreviewScale, 3);
+    }
+
+    [Fact]
+    public void PreviewScale_RaisesPropertyChanged_WhenFontSizeChanges()
+    {
+        var o = new EditorOptions { FontSize = 14 };
+        var raised = false;
+        o.PropertyChanged += (_, e) => raised |= e.PropertyName == nameof(EditorOptions.PreviewScale);
+
+        o.ZoomIn();
+
+        Assert.True(raised);
+    }
+
     [Fact]
     public void FromSettings_Null_GivesDefaults()
     {
