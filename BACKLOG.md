@@ -379,7 +379,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   every scroll-changed event even while the preview width is pinned (no reflow is happening). **Fix:**
   `if (e.ExtentDelta.Y != 0 && !_previewFrozen) SchedulePreviewReflow();`. **Test:** Headless — assert no
   reflow scheduled while `PreviewWidthFrozen` (internal seam exists, L522).
-- [ ] **H7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceScrollChanged` (L717) /
+- [x] **H7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceScrollChanged` (L717) /
   `RefreshMinimap` (L731) + `Features/Viewer/MinimapStrip.cs` · `Update`/`InvalidateVisual`. Every source-scroll
   frame calls `Minimap.Update`→`InvalidateVisual`. **Fix:** only `InvalidateVisual` when the visible band
   fraction actually moved (diff against the last band), or throttle to ~30 fps via a coalescing timer like the

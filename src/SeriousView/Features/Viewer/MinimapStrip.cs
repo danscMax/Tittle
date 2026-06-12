@@ -28,13 +28,26 @@ public sealed class MinimapStrip : Control
     /// <summary>Raised with the 1-based document line for a click on the strip.</summary>
     public event Action<int>? LineRequested;
 
+    // H7 seam: counts repaints actually requested (a no-op Update doesn't bump it).
+    internal int InvalidateCount { get; private set; }
+
     public void Update(IReadOnlyList<HeadingOutline> outline, int lineCount,
         double viewTopFraction, double viewBottomFraction)
     {
+        // H7: this runs on every source-scroll frame. Skip the repaint when nothing Render reads has
+        // moved — same outline, line count, and viewport band (within a sub-pixel epsilon) — so a
+        // stationary or sub-pixel scroll costs nothing.
+        const double eps = 0.0005;
+        if (ReferenceEquals(_outline, outline) && _lineCount == lineCount
+            && Math.Abs(_viewTopFraction - viewTopFraction) < eps
+            && Math.Abs(_viewBottomFraction - viewBottomFraction) < eps)
+            return;
+
         _outline = outline;
         _lineCount = lineCount;
         _viewTopFraction = viewTopFraction;
         _viewBottomFraction = viewBottomFraction;
+        InvalidateCount++;
         InvalidateVisual();
     }
 
