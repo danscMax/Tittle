@@ -155,8 +155,9 @@ public partial class DocumentView
 
     private void HandlePreviewResize()
     {
-        if (_vm is not { ShowPreview: true })
-            return; // source/notice tabs hide the preview; nothing to freeze
+        if (_vm is null || (!_vm.ShowPreview && !_vm.ShowSplit))
+            return; // source/notice tabs hide the preview; nothing to freeze (split DOES show it →
+                    // a splitter drag changes the preview width and must coalesce the re-wrap too)
 
         if (!_previewFrozen)
         {

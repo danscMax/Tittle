@@ -25,10 +25,29 @@ public partial class DocumentView
     private int _syncGeneration;
     private EventHandler? _previewRetryHandler;
 
+    // Echo suppression for the live mutual split sync. Applying scroll to pane B raises B's
+    // ScrollChanged — which arrives DEFERRED (during a later layout pass), so a synchronous re-entrancy
+    // flag wouldn't still be set. Instead we remember the exact offset we programmatically set on each
+    // pane: when a ScrollChanged reports that pane sitting at its just-applied offset, it's our own echo
+    // → don't bounce it back, breaking the feedback loop regardless of event timing. A genuine user
+    // scroll lands at a different offset and drives the other pane. ORTHOGONAL to _syncGeneration (which
+    // cancels DEFERRED closures across navigation/toggle).
+    private double? _echoSourceY;
+    private double? _echoPreviewY;
+
+    private const double SplitEchoEpsilon = 1.0;
+
+    // Test seam: counts how many split-sync applies ran (asserts the loop converges, not runs away).
+    internal int SplitSyncApplyCount { get; private set; }
+
+    private static bool IsEcho(double current, double? applied)
+        => applied is double y && Math.Abs(current - y) < SplitEchoEpsilon;
+
     private void CancelPendingSync()
     {
         _syncGeneration++;
         UnhookPreviewRetry();
+        _echoSourceY = _echoPreviewY = null; // a jump/teardown clears any pending split echo
     }
 
     private void UnhookPreviewRetry()
@@ -125,6 +144,24 @@ public partial class DocumentView
         // binary search during the drag; the trailing run refreshes it.
         if (e.ExtentDelta.Y != 0)
             MaybeScheduleReflowOnExtentChange();
+
+        // Live mutual split sync: the preview pane drives the source. Apply ONLY — the master writes
+        // below stay on ShowPreview so the SOURCE stays master in split. Echo-suppressed by offset.
+        if (_vm is { IsActive: true, ShowSplit: true })
+        {
+            if (IsEcho(PreviewScroll.Offset.Y, _echoPreviewY))
+            {
+                _echoPreviewY = null;
+            }
+            else if (CaptureFromPreview() is { } split)
+            {
+                ApplyToSource(split);
+                _echoSourceY = SourceScroller?.Offset.Y; // remember what we drove the source to
+                SplitSyncApplyCount++;
+            }
+        }
+
+        // Preview is master ONLY in Preview mode — in split the source pane owns the marker/anchor/%.
         if (_vm is { IsActive: true, ShowPreview: true })
         {
             RecomputeActiveHeading();
@@ -140,7 +177,29 @@ public partial class DocumentView
 
     private void OnSourceScrollChanged(object? sender, EventArgs e)
     {
-        if (_vm is { IsActive: true, ShowSource: true })
+        if (_vm is not { IsActive: true })
+            return;
+
+        // Live mutual split sync: the source pane drives the preview. A scroll that lands at the offset
+        // we just applied here is our own echo (from a preview→source sync) — consume it without
+        // bouncing back. Caret never moves (ApplyToPreview only writes Offset).
+        if (_vm.ShowSplit)
+        {
+            var y = SourceScroller?.Offset.Y ?? 0;
+            if (IsEcho(y, _echoSourceY))
+            {
+                _echoSourceY = null;
+            }
+            else
+            {
+                ApplyToPreview(CaptureFromSource(), retryAfterLayout: false);
+                _echoPreviewY = PreviewScroll.Offset.Y; // remember what we drove the preview to
+                SplitSyncApplyCount++;
+            }
+        }
+
+        // Source is master for the marker / reading anchor / scroll-% in Source mode AND in Split.
+        if (_vm.ShowSource || _vm.ShowSplit)
         {
             RecomputeActiveHeading();
             _vm.ReadingAnchor = CaptureFromSource();
