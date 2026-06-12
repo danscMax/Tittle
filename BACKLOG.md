@@ -305,9 +305,9 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 **Status (2026-06-12):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
 (Waves A–D, 22 findings, `8af0fd0`…`32f385b`; 802 tests). **Genuinely open for the next session** (pick by
 priority, all below the tech-debt checklist): new capability — **split-view live sync** (`HeadingAnchors` seam
-ready) or **M12 diagrams** (hard, WebView-less); maintainability — **DocumentView code-behind split** (xUnit v3
-is NOT freely open — it's **Av12-gated**, see «Deferred by decision»); cleanup — the carried-over Lows were
-re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
+ready) or **M12 diagrams** (hard, WebView-less). Maintainability is now clear — **DocumentView code-behind
+split is DONE** (`84f8f77`, 6 partial files); xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the
+carried-over Lows were re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
 FluentAvalonia not ported — re-verified 2026-06-12; it also gates xUnit v3 via `Avalonia.Headless.XUnit`). The
 historical log of completed work follows.
 
@@ -469,11 +469,16 @@ still open for a future session is **«Deferred by decision»**, the carried-ove
   file is rejected with a friendly message.
 
 ### Deferred by decision (audit 2026-06-12) — not "todo", revisit triggers below
-- **DocumentView code-behind split (Medium).** `DocumentView.axaml.cs` (~1190 LOC) coordinates scroll-spy,
-  reflow, freeze, folding, minimap, lightbox, cv-decorations, find-bar keys. DA: no bug traces to size; extract
-  focused attached behaviours **when next touching the viewer** (Wave B above already reopens this file —
-  opportunistic extraction welcome). `MainWindowViewModel` was already split (`DocumentExportService` +
-  `SettingsTransfer`).
+- **DocumentView code-behind split (Medium) — DONE 2026-06-12 (`84f8f77`).** The ~1298 LOC
+  `DocumentView.axaml.cs` was split into 6 `partial class DocumentView` files by concern — same compiled class,
+  so behaviour, all fields and the ~25 internal test-seams + x:Name controls stayed untouched (zero test
+  changes, 807 tests green): `DocumentView.axaml.cs` (ctor/lifecycle/VM-bind/caret/`TryBrush`/`Unsubscribe`),
+  `.Reflow.cs` (reflow-debounce + resize-freeze + embedded-editor fixup + copy buttons + task-glyph cache),
+  `.ScrollSync.cs` (scroll-spy + position-sync + heading-tops + navigation + go-to-line), `.Search.cs` (find
+  bar), `.Decorations.cs` (cv-* + palette + hover + minimap + folding), `.Interaction.cs` (pointer/lightbox/
+  checkbox + context menu). True helper-class extraction was rejected: with the test-seams bound to the class
+  itself it would need a forwarder per seam (more indirection, no real gain). `MainWindowViewModel` was already
+  split earlier (`DocumentExportService` + `SettingsTransfer`).
 - **xUnit v3 migration (Low) — BLOCKED on Av11, Av12-gated (re-investigated 2026-06-12).** v2 (2.9.3) is
   maintenance-only; v3 (3.2.x) is active — the motive stands, but the migration is **not doable on the Av11
   line**: `Avalonia.Headless.XUnit` 11.3.17 depends on `xunit.core >= 2.4.0` (xUnit **v2**), and the
