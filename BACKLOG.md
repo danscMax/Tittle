@@ -329,23 +329,166 @@ and inline math `\(…\)` (no inline-extension seam in Markdown.Avalonia — def
 
 ---
 
-## Tech-debt deferred (audit 2026-06-12)
+## Tech-debt backlog — remaining (audit 2026-06-12)
 
-A full 6-axis audit (5 analysts → Devil's Advocate → personal verification) ran at HEAD `9a1ba52`.
-18 verified findings were fixed across 5 tested waves (save-safety, security/correctness, reliability/perf,
-collaborator extraction, dependency bump). Full record: `plans/tech-debt-full/2026-06-12/`. Deferred:
+A full 6-axis audit (5 analysts → Devil's Advocate → personal verification) ran; **18 findings fixed** across
+5 waves (now on `main`, commits `d54c7af`…`656c956`). Full evidence per finding (file:line, code quote,
+refute notes): `plans/tech-debt-full/2026-06-12/{security,reliability,performance,quality}-findings.md`,
+`advocate-validation.md`, `verified-findings.md`, `report.md`.
 
+**What remains below is self-contained and actionable.** Line numbers are as of HEAD `656c956` and drift on
+edit — anchor on the named symbol (grep it). Each item: problem → **Fix** → **Test**. Convention holds: one
+finding = one commit, comments in English, every fix ships a test (Core unit or Headless UI), build +
+`dotnet test` green before the next. `IsChangedOnDisk`, atomic writes, `IDisposable` on the tab, transform
+read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build on them, don't redo them.
+
+### Wave A — Reliability (do first; small, low-risk, real leaks/loss)
+- [ ] **R4 (Medium)** `Features/Shell/MainWindowViewModel.cs` · `Dispose` (~L718) + `ShowError` (~L444) /
+  `_errorBarCts` (L434) / `AutoDismissErrorBarAsync` (L454). The last live `_errorBarCts` is never cancelled
+  in `Dispose()`, so a window closed with an error bar showing leaks a 7 s `Task.Delay` that then pokes
+  `IsErrorBarOpen` on a disposed VM. **Fix:** in `Dispose()` add `_errorBarCts?.Cancel(); _errorBarCts?.Dispose();`.
+  **Test:** Headless — show an error, `Dispose()`, assert no throw and the dismissal task is cancelled/completed.
+- [ ] **R5 (Medium)** `App.axaml.cs` · `ShutdownRequested` (L36/L73) + `Features/Shell/MainWindow.axaml.cs` ·
+  `SaveOnClose`. VM flush (`FlushEditorSettings`/`FlushViewState`/`Dispose`) runs only from the window's
+  `OnClosing`; a programmatic `desktop.Shutdown()` / OS session-end fires `ShutdownRequested` WITHOUT
+  `OnClosing`, losing the last zoom/layout/visited change. **Fix:** also flush+dispose the VM from a
+  `ShutdownRequested` handler (idempotent — `Dispose` already guards `_disposed`). **Test:** Headless — mutate
+  Editor, raise the shutdown path, assert settings were persisted.
+- [ ] **R6 / Q16 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `EnsureCodeCopyButton` (~L663). The
+  injected copy button's handler is `async (_, _) => { … await clipboard.SetTextAsync(…) … }` with no
+  try/catch — a clipboard failure becomes an unobserved UI-thread exception (the project's documented
+  async-void foot-gun). **Fix:** wrap the await in try/catch (no-op/status on failure); guard the
+  `DispatcherTimer.RunOnce` content swap with an is-still-attached check. **Test:** Headless — a failing
+  clipboard fake doesn't throw out of the click.
+- [ ] **R8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnVmPropertyChanged` ViewMode branch (~L254).
+  The `ViewMode`-change branch runs `SyncPositionAcrossModes()` (full `GetVisualDescendants` reflow walk)
+  with no `IsActive` guard, unlike the IsActive/IsSearchOpen branches — a kept-alive background tab whose
+  ViewMode is mutated (palette path) does a whole-tree walk while hidden. **Fix:** gate on
+  `_vm?.IsActive == true` (a hidden tab syncs when it next activates). **Test:** Headless — flip ViewMode on a
+  non-active tab, assert no reflow side effect (e.g. width-freeze untouched).
+- [ ] **R13 / Q14 (Low)** `Features/Viewer/DocumentView.axaml.cs` · `OnGoToLineRequested` (L822) &
+  `OnSearchUpdated` (L830) posted lambdas. The inner `Dispatcher.UIThread.Post` reads
+  `Source.TextArea.Caret` with no `_vm`/generation re-check; closing the tab in that micro-window derefs a
+  detached editor. **Fix:** capture `_vm` + bump `_syncGeneration`, re-check both inside the posted lambda
+  (mirror the RestoreAnchor pattern already in `OnDataContextChanged`). **Test:** Headless — null `_vm`
+  between raise and pump, assert no throw.
+
+### Wave B — Performance (hot paths; measure intent, keep it cheap)
+- [ ] **H6 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnPreviewScrollChanged` (L368) /
+  `SchedulePreviewReflow` (L394) / `_previewFrozen` (L50). During a resize the debounce timer is restarted on
+  every scroll-changed event even while the preview width is pinned (no reflow is happening). **Fix:**
+  `if (e.ExtentDelta.Y != 0 && !_previewFrozen) SchedulePreviewReflow();`. **Test:** Headless — assert no
+  reflow scheduled while `PreviewWidthFrozen` (internal seam exists, L522).
+- [ ] **H7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceScrollChanged` (L717) /
+  `RefreshMinimap` (L731) + `Features/Viewer/MinimapStrip.cs` · `Update`/`InvalidateVisual`. Every source-scroll
+  frame calls `Minimap.Update`→`InvalidateVisual`. **Fix:** only `InvalidateVisual` when the visible band
+  fraction actually moved (diff against the last band), or throttle to ~30 fps via a coalescing timer like the
+  preview reflow. (The `ShowMinimap` guard already skips when hidden — keep it.) **Test:** unit on the
+  band-changed predicate, or Headless asserting no redraw when the band is unchanged.
+- [ ] **P4 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `FixupEmbeddedCodeEditors` (L628) /
+  `EnsureCodeCopyButton` (L663). Both run on every reflow tick, walking up 3 parents per embedded editor and
+  re-pinning height. **Fix:** early-out when the editor height already equals target within the 1px guard;
+  mark a "copy-button-done" flag on the editor so `EnsureCodeCopyButton` is O(1) on repeats. **Test:**
+  Headless — second reflow pass does no parent walk / re-add.
+- [ ] **P5 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `TaskGlyphIndexOf` (~L580 region). Walks the
+  ENTIRE preview tree (`GetVisualDescendants().OfType<CTextBlock>()`) per checkbox click, with an ancestor
+  scan per candidate. **Fix:** cache the document-ordered toggleable-glyph list during the reflow pass (which
+  already walks the tree once) and index into it. **Test:** Headless — toggle returns the right index without
+  a full re-walk (assert via a counter seam, or just correctness on a many-task doc).
+- [ ] **P8 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `CvTooltipAt` (L944) +
+  `Features/Viewer/CodeDecorationColorizer.cs` · `ScanCached`. The hover tooltip calls
+  `CodeDecorations.ScanLine` fresh, bypassing the colorizer's version-memoized cache for the same line.
+  **Fix:** expose `ScanCached(version, lineNumber, text)` on the colorizer and route the hover through it.
+  **Test:** unit — a warm line hit doesn't re-scan (assert via a scan counter).
+- [ ] **P9 (Medium)** `Features/Viewer/IndentGuideRenderer.cs` · `_effectiveCache` (L26, cleared L54). Unbounded
+  per-line cache for a static (never-edited) document keeps growing while the tab lives. **Fix:** LRU-cap it
+  (e.g. last N visible lines) or clear on detach. **Test:** unit — cache size stays bounded after scanning
+  many lines at a fixed document version.
+- [ ] **P10 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `OnActiveHeadingOrdinalChanged` (L545) /
+  `Breadcrumbs` (L542, calls `MarkdownOutline.AncestorChain` → allocates a list). Raises `Breadcrumbs`
+  PropertyChanged on every scroll tick that moves the ordinal by 1. **Fix:** only raise `Breadcrumbs` when the
+  ancestor chain root actually changes (compare to the previous ordinal's chain). **Test:** unit — a +1 ordinal
+  step within the same parent raises no `Breadcrumbs` notify.
+- [ ] **P12 (Low)** `Core/Text/TextStatistics.cs` · `Compute` (L23/L27). Four+ full-document passes incl.
+  `text.ToLowerInvariant()` (whole-doc alloc) for the syllable count. **Fix:** single char loop computing
+  chars/no-spaces/syllables together, lower-casing each char inline. One-shot on panel open, so Low. **Test:**
+  existing `TextStatisticsTests` must still pass + a perf-shape note.
+
+### Wave C — Quality / correctness
+- [ ] **Q7 (Medium)** `Features/Viewer/DocumentView.axaml.cs` · `OnSourceTextChanged` (L139). Toggling a
+  display transform pushes new `SourceText` into the editor, which can momentarily diverge from the captured
+  baseline and false-flag `IsEdited`. (Mitigated but not closed by the V3 read-only editor.) **Fix:** suppress
+  `IsEdited` while a programmatic `SourceText` push is in flight (a guard flag set around the transform toggle),
+  or recompute the baseline atomically on toggle. **Test:** Headless — toggling pretty-JSON on/off leaves
+  `IsEdited == false`.
+- [ ] **Q8 (Medium)** `Features/Shell/MainWindowViewModel.cs` · the two `OnSelectedTabChanged` partials
+  (L1036 two-arg, L1044 one-arg). The one-arg overload hand-writes `OnPropertyChanged(nameof(IsOutlinePaneVisible))`
+  that is load-bearing-by-accident (the property depends on `SelectedTab.HasOutline`). **Fix:** collapse into the
+  single 2-arg overload and document the `SelectedTab`-derived dependency (or make `IsOutlinePaneVisible` a
+  computed-from helper). **Test:** existing outline-pane-visible tests still green after the collapse.
+- [ ] **Q12 (Medium)** `Core/Text/MarkdownPreprocessor.cs` · wiki-resolver memo (`var known = new Dictionary<…>`
+  region). The memo uses an ordinal (case-sensitive) dictionary while the resolver does a case-insensitive
+  `File.Exists`, so `[[Note]]` and `[[note]]` each hit the filesystem and can disagree. **Fix:**
+  `new Dictionary<string,bool>(StringComparer.OrdinalIgnoreCase)`. **Test:** unit — two casings resolve once
+  (one resolver call) and agree.
+- [ ] **Q17 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `CsvTable` getter (L295). A property getter
+  with side effects parses up to 10k rows synchronously on first bind (blocks the UI thread). **Fix:** move the
+  parse into the `FromLoad` warm-up (like `Outline`/`PreviewMarkdown`, now off-thread via `BuildTabAsync`), so
+  the getter is O(1). **Test:** unit — `DerivedCachesWarm`-style assert that `CsvTable` is built after `FromLoad`.
+- [ ] **Q19 (Low)** `Core/Text/TableSorting.cs` · `NumericKey` (L23). Returns `double.MaxValue` for unparseable
+  cells, colliding legit `1.79e308` values with the "sort last" sentinel. **Fix:** sort with a
+  `(bool parsed, double value)` tuple key so junk always sinks regardless of magnitude. **Test:** unit — a real
+  `double.MaxValue` cell sorts before garbage.
+- [ ] **Q20 (Low)** `Core/Text/MarkdownPreprocessor.cs` · `AppendMathContainer` / front-matter / admonition
+  passes. Each emits blank-line-padded `:::` blocks without coalescing adjacent blanks; many `$$` blocks shift
+  downstream heading line numbers unpredictably (source-scroll still correct, but fragile cross-pass coupling).
+  **Fix:** add a regression test asserting outline line numbers survive a multi-`$$` document; optionally
+  coalesce adjacent blanks. **Test:** the regression test itself.
+
+### Wave D — Security (Low)
+- [ ] **S5 (Low)** `Features/Shell/MainWindowViewModel.cs` · `DescribeError` (L848) and its call sites. Full
+  absolute paths (with the user name) are surfaced into the copyable on-screen error InfoBar. **Fix:** use
+  `Path.GetFileName(target)` in user-facing messages; keep full paths only in the (already-bounded) crash log.
+  **Test:** Headless — an error message contains the file name but not the full path.
+- [ ] **S6 (Low)** `Core/Export/ClipboardHtml.cs` · `InsertFragmentMarkers` (~L30) / `BuildCfHtml` (~L47). CF_HTML
+  StartFragment/EndFragment offsets are computed by substring on the whole HTML; a document containing the
+  literal marker tokens could shift them (malformed, not executable — `DisableHtml` holds). **Fix:** insert
+  markers around a wrapper whose body boundaries we control, or assert the body contains no literal marker
+  strings before computing offsets. **Test:** unit — a doc containing `<!--StartFragment-->` text still yields a
+  well-formed envelope.
+- [ ] **S7 (Low)** `Features/Shell/MainWindowViewModel.cs` · `ImportSettingsAsync` (read of `paths[0]`). The
+  validation guard (`SettingsTransfer.Parse`) is in place, but there is no size cap before `File.ReadAllTextAsync`
+  — a multi-GB / deeply-nested JSON could OOM/spin. **Fix:** reject files over ~1 MB before reading (settings are
+  < a few KB); the typed-record whitelist already blocks gadget attacks. **Test:** unit/Headless — an oversized
+  file is rejected with a friendly message.
+
+### Deferred by decision (audit 2026-06-12) — not "todo", revisit triggers below
 - **DocumentView code-behind split (Medium).** `DocumentView.axaml.cs` (~1190 LOC) coordinates scroll-spy,
-  reflow, freeze, folding, minimap, lightbox, cv-decorations and find-bar keys. The DA confirmed no bug
-  traces to the size; extract focused attached behaviours when next touching the viewer. (`MainWindowViewModel`
-  was already split — `DocumentExportService` + `SettingsTransfer` extracted.)
-- **xUnit v3 migration (Low).** v2 (2.9.3) is maintenance-only; v3 (3.x) is the active line. Test-only, no
-  production impact — schedule a focused migration.
-- **CSharpMath fork monitoring (Low).** `Sylinko.CSharpMath.Avalonia` is a single-maintainer fork (MIT,
-  ~3.6k downloads, "no deep optimization" disclaimer). Watch the GitHub repo for archival; no current
-  alternative for Av11 block math.
-- **FluentAvaloniaUI 2.4.x is an EOL line (Low).** 2.5+ is net10-only, so 2.4.1 gets no further patches while
-  we stay on .NET 9 / Avalonia 11. Revisit together with the deliberate Av12 migration.
-- **`ClipboardService` CS0618 deprecations (Low, pre-existing).** Av11's `DataObject`/`DataFormats.Text`/
-  `SetDataObjectAsync` are obsolete; the replacement `DataTransfer` API lands cleanly on Av12. 3 build
-  warnings, no functional impact.
+  reflow, freeze, folding, minimap, lightbox, cv-decorations, find-bar keys. DA: no bug traces to size; extract
+  focused attached behaviours **when next touching the viewer** (Wave B above already reopens this file —
+  opportunistic extraction welcome). `MainWindowViewModel` was already split (`DocumentExportService` +
+  `SettingsTransfer`).
+- **xUnit v3 migration (Low).** v2 (2.9.3) is maintenance-only; v3 (3.2.x) is active. Test-only — schedule a
+  focused migration pass (it changes the test SDK + a few APIs).
+- **CSharpMath fork monitoring (Low).** `Sylinko.CSharpMath.Avalonia` 11.3.1 — single-maintainer MIT fork
+  (~3.6k downloads, "no deep optimization" disclaimer); upstream dormant. Watch the GitHub repo for archival;
+  no alternative for Av11 block math.
+- **FluentAvaloniaUI 2.4.x EOL line (Low).** 2.5+ is net10-only → 2.4.1 gets no patches on .NET 9 / Av11.
+  Revisit with the Av12 migration.
+- **`ClipboardService` CS0618 deprecations (Low, pre-existing).** Av11 `DataObject`/`DataFormats.Text`/
+  `SetDataObjectAsync` obsolete; the replacement `DataTransfer` API lands on Av12. 3 build warnings, no impact.
+  Fix as part of the Av12 migration, not before.
+
+### Carried from the prior audit (2026-06-09) — still open Lows
+Re-verify each still applies before acting (the code moved a lot since). From
+`plans/tech-debt-full/verified-findings.md`: crash.log may embed file paths (bounded same-user, capped 256 KB —
+disclosure note); `FileReader` byte-cap TOCTOU; `JsonSettingsStore` first-write uses `File.Move` (non-atomic on
+the very first save only); caret-handler unsubscribe (owned editor); session-restore active-tab-not-file-backed
+edge; obsolete drag-drop API under `#pragma CS0618`.
+
+### Roadmap features — deferred WITH REASON (not debt; see CLAUDE.md "Known gaps")
+M12 diagrams (Mermaid is JS-only; PlantUML leaks source to an external service — must stay gated opt-in),
+inline math `\(…\)` (no inline-extension seam in Markdown.Avalonia), HTML preview (no WebView), drag-drop
+overlay (overlay-over-AvaloniaEdit repaint), paste-image (Av11 clipboard has no portable image read — revisit
+on Av12 `DataTransfer`), spellcheck (nothing built into AvaloniaEdit), native rasterized PDF (browser output is
+better — deliberately rejected), preview text-highlight (Markdown.Avalonia has no API — research item).
