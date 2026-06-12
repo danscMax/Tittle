@@ -1067,6 +1067,24 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task GetSession_SampleActive_ClampsToInRangeIndex()
+    {
+        // Carried Low #5 (re-verified 2026-06-12, accepted as benign): when the ACTIVE tab is the
+        // non-file-backed sample, it isn't session-restored — GetSession drops it and stores a
+        // clamped, in-range ActiveIndex (0), so a round-trip restore selects a valid tab and never
+        // throws. This characterization locks that behavior as intentional.
+        var vm = CreateVm(dialogPath: "/path/doc.md", content: "x");
+        await vm.OpenFileCommand.ExecuteAsync(null); // /path/doc.md (file-backed)
+        vm.OpenSampleCommand.Execute(null);          // sample (no FilePath) — now the active tab
+        Assert.Null(vm.SelectedTab!.FilePath);
+
+        var session = vm.GetSession();
+
+        Assert.Equal(new[] { "/path/doc.md" }, session.OpenFiles);            // sample excluded
+        Assert.InRange(session.ActiveIndex, 0, session.OpenFiles.Count - 1); // clamped, valid
+    }
+
+    [AvaloniaFact]
     public void ZoomIn_ChangesEditorFont_AndPersists()
     {
         var holder = Holder();

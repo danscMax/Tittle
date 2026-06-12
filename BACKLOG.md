@@ -483,12 +483,24 @@ still open for a future session is **«Deferred by decision»**, the carried-ove
   `SetDataObjectAsync` obsolete; the replacement `DataTransfer` API lands on Av12. 3 build warnings, no impact.
   Fix as part of the Av12 migration, not before.
 
-### Carried from the prior audit (2026-06-09) — still open Lows
-Re-verify each still applies before acting (the code moved a lot since). From
-`plans/tech-debt-full/verified-findings.md`: crash.log may embed file paths (bounded same-user, capped 256 KB —
-disclosure note); `FileReader` byte-cap TOCTOU; `JsonSettingsStore` first-write uses `File.Move` (non-atomic on
-the very first save only); caret-handler unsubscribe (owned editor); session-restore active-tab-not-file-backed
-edge; obsolete drag-drop API under `#pragma CS0618`.
+### Carried from the prior audit (2026-06-09) — RESOLVED (re-verified 2026-06-12)
+A 3-way re-verification confirmed none of these are real code bugs; closed as accepted-with-reason (the prior
+audit had already filed them under "Defer / document"). Verdicts:
+- **crash.log paths → accept.** `CrashLog.Format` includes the stack trace (which embeds file paths) *by design* —
+  it's the debugging value; disclosure is same-user / local / capped (`CrashLogger.MaxBytes` = 256 KB drops the
+  whole log past the cap). Locked by `CrashLogTests.Format_IncludesTimestampSourceTypeMessageAndStack`.
+- **FileReader byte-cap TOCTOU → not a bug.** `FileReader.LoadAsync` allocates on the checked size and
+  `ReadExactlyAsync` reads exactly that — the cap can't be bypassed (a file grown after the check is read
+  truncated, never over-cap).
+- **JsonSettingsStore File.Move first-write → accept.** A rename to a non-existent target on NTFS is atomic and
+  the temp is fully written first; subsequent saves already use `File.Replace`. Revisit only for a non-NTFS edge.
+- **caret-handler unsubscribe → already fixed.** `Caret.PositionChanged -= OnCaretPositionChanged` runs in
+  `DocumentView.DetachChildHandlers` (mirror of the ctor `+=`); covered by `DocumentViewLifecycleTests`.
+- **session active-tab-not-file-backed edge → accept (benign).** `GetSession` drops a non-file-backed active tab
+  (the sample isn't restored anyway) and stores a clamped in-range `ActiveIndex`; restore clamps again. Locked by
+  `GetSession_SampleActive_ClampsToInRangeIndex` (`8af0fd0`-era convention).
+- **obsolete drag-drop API `#pragma CS0618` → Av12-gated.** The `DataTransfer` replacement is Av12-only — keep the
+  pragma until the Av12 migration (same gate as `ClipboardService` CS0618; see the Av11-not-12 note in CLAUDE.md).
 
 ### Roadmap features — deferred WITH REASON (not debt; see CLAUDE.md "Known gaps")
 M12 diagrams (Mermaid is JS-only; PlantUML leaks source to an external service — must stay gated opt-in),
