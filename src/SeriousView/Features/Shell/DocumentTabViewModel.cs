@@ -317,6 +317,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowCsvTable))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
+    [NotifyPropertyChangedFor(nameof(ShowSourcePane))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     [NotifyPropertyChangedFor(nameof(ZoomApplies))]
     private bool _csvAsTableEnabled;
@@ -406,6 +407,8 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     [NotifyPropertyChangedFor(nameof(ShowPreview))]
     [NotifyPropertyChangedFor(nameof(ShowSource))]
     [NotifyPropertyChangedFor(nameof(ShowSplit))]
+    [NotifyPropertyChangedFor(nameof(ShowSourcePane))]
+    [NotifyPropertyChangedFor(nameof(ShowPreviewPane))]
     [NotifyPropertyChangedFor(nameof(ShowMinimap))]
     [NotifyPropertyChangedFor(nameof(ZoomApplies))]
     private DocumentViewMode _viewMode = DocumentViewMode.Preview;
@@ -422,6 +425,13 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// realized but <see cref="ShowSource"/>/<see cref="ShowPreview"/> are false — the panes are
     /// revealed by the split grid's track lengths, not by IsVisible (see DocumentView.SplitLayout).</summary>
     public bool ShowSplit => !ShowNotice && IsMarkdown && ViewMode == DocumentViewMode.Split;
+
+    /// <summary>Source-pane host visibility: shown in Source mode and in Split. (The split grid sets
+    /// the track length; this just keeps the host out of layout when it's not on screen.)</summary>
+    public bool ShowSourcePane => ShowSource || ShowSplit;
+
+    /// <summary>Preview-pane host visibility: shown in Preview mode and in Split.</summary>
+    public bool ShowPreviewPane => ShowPreview || ShowSplit;
 
     /// <summary>Whether the font-size zoom controls apply to this tab — the source editor or the
     /// markdown preview (zoomed via a layout scale). False for the table view and notice overlays.</summary>

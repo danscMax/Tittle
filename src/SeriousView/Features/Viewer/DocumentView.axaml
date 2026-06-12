@@ -128,10 +128,17 @@
     </Border>
 
     <Panel>
-    <!-- Source view: any non-markdown file, or a markdown file toggled to Source.
+    <!-- Source + preview live in a split grid. DocumentView.SplitLayout.cs owns the geometry — the
+         track sizes, the Horizontal/Vertical orientation and the splitter visibility — so the SAME
+         single Source/Preview subtrees serve Source-only, Preview-only AND side-by-side split (they
+         are never duplicated or reparented). Host IsVisible keeps a hidden pane out of layout;
+         the split grid's track length reveals it. The CSV table and notice are full-area overlays. -->
+    <Grid x:Name="SplitGrid">
+    <!-- Source host: any non-markdown file, or a markdown file in Source/Split.
          The code minimap (ported) sits in a SIBLING column — floated over the editor
          it would never repaint (AvaloniaEdit GPU surface, see project memory). -->
-    <Grid IsVisible="{Binding ShowSource}" ColumnDefinitions="*,Auto">
+    <Border x:Name="SourceHost" IsVisible="{Binding ShowSourcePane}">
+    <Grid ColumnDefinitions="*,Auto">
     <ae:TextEditor x:Name="Source"
                    viewer:EditorBehavior.Text="{Binding SourceText}"
                    viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
@@ -162,6 +169,13 @@
       <viewer:MinimapStrip x:Name="Minimap" Width="15" AutomationProperties.Name="Мини-карта"/>
     </Border>
     </Grid>
+    </Border>
+
+    <!-- Splitter between the two panes — shown only in split mode; its track + ResizeDirection are
+         set in DocumentView.SplitLayout.cs (Columns for horizontal, Rows for vertical). -->
+    <GridSplitter x:Name="SplitSplitter" IsVisible="False"
+                  Background="{DynamicResource ChromeBorderBrush}"
+                  AutomationProperties.AutomationId="SplitSplitter"/>
 
     <!-- Rendered markdown preview: one full-width field with a soft, barely-there accent glow behind
          the text (toggled by «Декоративный фон»). Markdown.Avalonia's own scrollbar can't be themed
@@ -173,7 +187,8 @@
     <!-- Transparent so the shell's single continuous reading glow (and the editor-surface base under it)
          show through — the glow is painted ONCE at BodyGrid level, not per-panel, so it stays continuous
          across the sidebar/content seam. Don't put an opaque background or a per-panel glow back here. -->
-    <Panel IsVisible="{Binding ShowPreview}" Background="Transparent">
+    <Border x:Name="PreviewHost" IsVisible="{Binding ShowPreviewPane}">
+    <Panel Background="Transparent">
       <!-- BringIntoViewOnFocusChange off: clicking an embedded code editor focuses it, and the
            default focus-scroll would yank the page around (the reader's position is sacred). -->
       <ScrollViewer x:Name="PreviewScroll" Background="Transparent" Padding="40,24,40,8"
@@ -221,6 +236,8 @@
               BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
               ToolTip.Tip="Наверх" AutomationProperties.Name="Наверх"/>
     </Panel>
+    </Border>
+    </Grid>
 
     <!-- CSV/TSV table view (ported): sticky header row outside the vertical scroller, both
          sharing one horizontal scroller so they pan together; rows are virtualized. -->

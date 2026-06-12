@@ -158,6 +158,7 @@ public partial class DocumentView : UserControl
             _vm.SearchUpdated += OnSearchUpdated;
             _vm.FoldAllRequested += OnFoldAllRequested;
             _vm.PropertyChanged += OnVmPropertyChanged;
+            WireSplitLayout(); // split geometry: subscribe shared Layout + lay out the panes now
             // After the new document/layout settles, in ONE dispatcher turn (no ordering between
             // them, so three separate Posts only added interleaved paints — part of the empty-frame
             // cascade): refresh the caret readout and focus a source tab's editor (#29), then fill
@@ -202,6 +203,7 @@ public partial class DocumentView : UserControl
         else if (e.PropertyName == nameof(DocumentTabViewModel.ViewMode))
         {
             UnfreezePreviewWidth(); // a mode switch must not carry a stale width pin into the next show
+            ApplySplitLayout();     // re-geometry: collapse/expand the panes for Source/Preview/Split
             // R8: only a visible tab needs to re-anchor its scroll now (a full GetVisualDescendants
             // reflow walk). A kept-alive background tab whose ViewMode is mutated (palette path) syncs
             // when it next activates, not while hidden.
@@ -252,6 +254,7 @@ public partial class DocumentView : UserControl
 
     private void Unsubscribe()
     {
+        UnwireSplitLayout(); // drop the shared-Layout subscription + the ratio read-back (uses _vm.Layout)
         CancelPendingSync();
         _previewReflowTimer.Stop();
         _previewReflowPrimed = false; // new content re-primes its first reflow immediately
