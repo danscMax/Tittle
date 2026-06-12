@@ -57,6 +57,19 @@ public class ClipboardHtmlTests
     }
 
     [Fact]
+    public void BodyContainingMarkerTokens_OffsetsStillPointAtTheInsertedMarkers()
+    {
+        // S6: the body literally contains the EndFragment token. Offsets must come from the markers
+        // WE inserted (around the whole body), not the user's earlier occurrence — else the fragment
+        // would be truncated.
+        const string html = "<html><body><p>text <!--EndFragment--> more</p></body></html>";
+        var (_, _, startFrag, endFrag, payload) = Parse(html);
+
+        var fragment = Encoding.UTF8.GetString(payload, startFrag, endFrag - startFrag);
+        Assert.Equal("<p>text <!--EndFragment--> more</p>", fragment);
+    }
+
+    [Fact]
     public void Header_IsAsciiWithCrLf()
     {
         var payload = ClipboardHtml.BuildCfHtml("<html><body>x</body></html>");

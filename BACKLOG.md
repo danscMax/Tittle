@@ -450,7 +450,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   absolute paths (with the user name) are surfaced into the copyable on-screen error InfoBar. **Fix:** use
   `Path.GetFileName(target)` in user-facing messages; keep full paths only in the (already-bounded) crash log.
   **Test:** Headless — an error message contains the file name but not the full path.
-- [ ] **S6 (Low)** `Core/Export/ClipboardHtml.cs` · `InsertFragmentMarkers` (~L30) / `BuildCfHtml` (~L47). CF_HTML
+- [x] **S6 (Low)** `Core/Export/ClipboardHtml.cs` · `InsertFragmentMarkers` (~L30) / `BuildCfHtml` (~L47). CF_HTML
   StartFragment/EndFragment offsets are computed by substring on the whole HTML; a document containing the
   literal marker tokens could shift them (malformed, not executable — `DisableHtml` holds). **Fix:** insert
   markers around a wrapper whose body boundaries we control, or assert the body contains no literal marker
