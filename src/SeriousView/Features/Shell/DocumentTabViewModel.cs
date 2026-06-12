@@ -508,6 +508,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// materialised, so a test can assert <see cref="FromLoad"/> warmed them off the render path.</summary>
     internal bool DerivedCachesWarm => _outline is not null && _previewMarkdown is not null;
 
+    /// <summary>Test seam (Q17): true once the CSV/TSV table parse has run, so a test can assert
+    /// <see cref="FromLoad"/> built it off the render path instead of synchronously on first bind.</summary>
+    internal bool CsvTableWarm => _csvTableBuilt;
+
     /// <summary>True when the file changed (or vanished) on disk since this tab loaded it —
     /// shown as the tab's dirty dot (M14). Reloading clears it by replacing the tab.</summary>
     [ObservableProperty]
@@ -653,6 +657,8 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         // here is correctness-free and makes HasOutline an O(1) read by first paint.
         _ = tab.Outline;
         _ = tab.PreviewMarkdown;
+        _ = tab.CsvTable; // Q17: parse up to 10k rows here (off-thread for big files via BuildTabAsync),
+                          // not synchronously in the getter on first UI bind. O(1) for non-delimited tabs.
         return tab;
     }
 

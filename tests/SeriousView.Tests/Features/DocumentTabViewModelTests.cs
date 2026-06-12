@@ -202,6 +202,17 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void FromLoad_WarmsCsvTable_OffTheRenderPath()
+    {
+        // Q17: the CSV/TSV parse (up to 10k rows) must run in FromLoad (off-thread for big files via
+        // BuildTabAsync), not synchronously in the getter on first UI bind.
+        var vm = DocumentTabViewModel.FromFile("a,b\n1,2\n3,4", "/data/t.csv");
+
+        Assert.True(vm.CsvTableWarm);
+        Assert.NotNull(vm.CsvTable);
+    }
+
+    [Fact]
     public void Outline_ForCodeFile_IsEmpty()
     {
         // A '#'-prefixed line in a non-markdown file must not produce an outline.

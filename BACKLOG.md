@@ -431,7 +431,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   `File.Exists`, so `[[Note]]` and `[[note]]` each hit the filesystem and can disagree. **Fix:**
   `new Dictionary<string,bool>(StringComparer.OrdinalIgnoreCase)`. **Test:** unit — two casings resolve once
   (one resolver call) and agree.
-- [ ] **Q17 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `CsvTable` getter (L295). A property getter
+- [x] **Q17 (Medium)** `Features/Shell/DocumentTabViewModel.cs` · `CsvTable` getter (L295). A property getter
   with side effects parses up to 10k rows synchronously on first bind (blocks the UI thread). **Fix:** move the
   parse into the `FromLoad` warm-up (like `Outline`/`PreviewMarkdown`, now off-thread via `BuildTabAsync`), so
   the getter is O(1). **Test:** unit — `DerivedCachesWarm`-style assert that `CsvTable` is built after `FromLoad`.
