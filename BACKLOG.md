@@ -366,7 +366,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   ViewMode is mutated (palette path) does a whole-tree walk while hidden. **Fix:** gate on
   `_vm?.IsActive == true` (a hidden tab syncs when it next activates). **Test:** Headless — flip ViewMode on a
   non-active tab, assert no reflow side effect (e.g. width-freeze untouched).
-- [ ] **R13 / Q14 (Low)** `Features/Viewer/DocumentView.axaml.cs` · `OnGoToLineRequested` (L822) &
+- [x] **R13 / Q14 (Low)** `Features/Viewer/DocumentView.axaml.cs` · `OnGoToLineRequested` (L822) &
   `OnSearchUpdated` (L830) posted lambdas. The inner `Dispatcher.UIThread.Post` reads
   `Source.TextArea.Caret` with no `_vm`/generation re-check; closing the tab in that micro-window derefs a
   detached editor. **Fix:** capture `_vm` + bump `_syncGeneration`, re-check both inside the posted lambda

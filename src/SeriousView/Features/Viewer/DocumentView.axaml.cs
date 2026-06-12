@@ -852,11 +852,20 @@ public partial class DocumentView : UserControl
     }
 
     // The go-to-line request is raised by the status-bar input (wired in MainWindow); scroll there.
-    private void OnGoToLineRequested(int line) => Dispatcher.UIThread.Post(() =>
+    // R13/Q14: capture the VM + generation and re-check in the posted lambda (mirrors RestoreAnchor),
+    // so closing/swapping the tab in the micro-window doesn't scroll a now-foreign editor.
+    private void OnGoToLineRequested(int line)
     {
-        ScrollSourceToLine(line);
-        Source.TextArea.Focus();
-    });
+        var vm = _vm;
+        var gen = ++_syncGeneration;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (gen != _syncGeneration || !ReferenceEquals(vm, _vm))
+                return;
+            ScrollSourceToLine(line);
+            Source.TextArea.Focus();
+        });
+    }
 
     // The tab VM recomputed matches (or navigated): repaint the highlight layer with the themed brushes,
     // then bring the current match into view. Deferred so a markdown preview→source switch is laid out.
@@ -875,8 +884,14 @@ public partial class DocumentView : UserControl
         if (i >= 0 && i < _vm.SearchMatches.Count)
         {
             var offset = _vm.SearchMatches[i].Offset;
+            var vm = _vm;
+            var gen = ++_syncGeneration;
             Dispatcher.UIThread.Post(() =>
             {
+                // R13/Q14: re-check the VM + generation — a tab close/swap in between would otherwise
+                // move a foreign editor's caret to this (now stale) match offset.
+                if (gen != _syncGeneration || !ReferenceEquals(vm, _vm))
+                    return;
                 Source.TextArea.Caret.Offset = offset;
                 Source.TextArea.Caret.BringCaretToView();
             });

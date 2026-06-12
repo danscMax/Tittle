@@ -1063,6 +1063,32 @@ public class DocumentViewTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void StaleGoToLine_AfterVmSwap_DoesNotScrollNewTab()
+    {
+        // R13/Q14: OnGoToLineRequested posts a scroll. If the tab is swapped before the post runs,
+        // the VM+generation re-check must abandon it instead of scrolling the now-foreign editor.
+        var vm1 = DocumentTabViewModel.FromFile(LongMarkdown(), "/a.md");
+        vm1.ViewMode = DocumentViewMode.Source;
+        var view = new DocumentView { DataContext = vm1 };
+        var window = CreateScrollTestWindow(view);
+        window.Show();
+        vm1.IsActive = true;
+        Dispatcher.UIThread.RunJobs();
+
+        vm1.GoToLineText = "150";
+        vm1.SubmitGoToLineCommand.Execute(null); // posts a scroll to line 150
+
+        var vm2 = DocumentTabViewModel.FromFile(LongMarkdown(), "/b.md");
+        vm2.ViewMode = DocumentViewMode.Source;
+        view.DataContext = vm2; // swap before the posted scroll runs → _vm becomes vm2
+        vm2.IsActive = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.InRange(FirstVisibleLine(view.Source), 1, 12); // not scrolled to the stale ~150
+        window.Close();
+    }
+
     // ---- cv-* code decorations (ported) ----
 
     [AvaloniaFact]
