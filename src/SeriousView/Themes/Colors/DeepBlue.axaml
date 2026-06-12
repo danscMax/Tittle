@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============ Deep Blue (ported dark set) ============
+         A deep navy/indigo variant (VS-Code "Tokyo Night" feel). Inherits the Dark variant: only the
+         surface + chrome + accent tokens are overridden here; admonitions, cv-* decorations etc. fall
+         back to Dark.axaml. The reading area is WindowBackgroundBrush (preview is transparent over it),
+         the source/CSV/notice surface is EditorSurfaceBrush — so the whole app reads deep blue. -->
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#121A30" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#172139" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#1D294A" />
+
+    <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#26335A" Offset="0" />
+        <GradientStop Color="#1A2440" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="ChromeOverlayBrush" Color="#1D294A" Opacity="0.72" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#33446E" />
+    <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#C8D3F5" />
+    <Color x:Key="ChromeForegroundColor">#C8D3F5</Color>
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#7E8CBE" />
+
+    <SolidColorBrush x:Key="AccentBrush" Color="#7AA2F7" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#9AB8FF" />
+
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#121728" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#98A4D2" />
+
+</ResourceDictionary>

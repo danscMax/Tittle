@@ -160,6 +160,9 @@
                 <MenuItem Header="Океан" ToggleType="Radio" GroupName="Theme"
                           Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Ocean}"
                           IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Ocean}"/>
+                <MenuItem Header="Глубокий синий" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.DeepBlue}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=DeepBlue}"/>
                 <MenuItem Header="Светлая" ToggleType="Radio" GroupName="Theme"
                           Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Light}"
                           IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Light}"/>

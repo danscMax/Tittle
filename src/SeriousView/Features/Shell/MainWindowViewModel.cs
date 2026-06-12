@@ -716,6 +716,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             new("Тема: тёмная", SetThemeCommand, parameter: ThemeMode.Dark),
             new("Тема: полночь", SetThemeCommand, parameter: ThemeMode.Midnight),
             new("Тема: океан", SetThemeCommand, parameter: ThemeMode.Ocean),
+            new("Тема: глубокий синий", SetThemeCommand, parameter: ThemeMode.DeepBlue),
             new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
             new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
             new("Настройки: раскладка…", OpenLayoutSettingsCommand),

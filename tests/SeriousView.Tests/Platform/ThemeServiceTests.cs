@@ -41,6 +41,8 @@ public class ThemeServiceTests
         service.Cycle();
         Assert.Equal(ThemeMode.Ocean, service.Mode);
         service.Cycle();
+        Assert.Equal(ThemeMode.DeepBlue, service.Mode);
+        service.Cycle();
         Assert.Equal(ThemeMode.Light, service.Mode);
         service.Cycle();
         Assert.Equal(ThemeMode.Auto, service.Mode);
@@ -74,7 +76,8 @@ public class ThemeServiceTests
         // The shared cycle helper reused by ThemeService and FakeThemeService.
         Assert.Equal(ThemeMode.Midnight, ThemeMode.Dark.Next());
         Assert.Equal(ThemeMode.Ocean, ThemeMode.Midnight.Next());
-        Assert.Equal(ThemeMode.Light, ThemeMode.Ocean.Next());
+        Assert.Equal(ThemeMode.DeepBlue, ThemeMode.Ocean.Next());
+        Assert.Equal(ThemeMode.Light, ThemeMode.DeepBlue.Next());
         Assert.Equal(ThemeMode.Auto, ThemeMode.Light.Next());
         Assert.Equal(ThemeMode.Dark, ThemeMode.Auto.Next());
     }
@@ -85,6 +88,7 @@ public class ThemeServiceTests
         Assert.True(ThemeMode.Dark.IsDark());
         Assert.True(ThemeMode.Midnight.IsDark());
         Assert.True(ThemeMode.Ocean.IsDark());
+        Assert.True(ThemeMode.DeepBlue.IsDark());
         Assert.False(ThemeMode.Light.IsDark());
         Assert.False(ThemeMode.Auto.IsDark());
     }

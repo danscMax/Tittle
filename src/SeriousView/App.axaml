@@ -20,6 +20,8 @@
                                  Source="avares://SeriousView/Themes/Colors/Midnight.axaml" />
                 <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Ocean}"
                                  Source="avares://SeriousView/Themes/Colors/Ocean.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.DeepBlue}"
+                                 Source="avares://SeriousView/Themes/Colors/DeepBlue.axaml" />
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>

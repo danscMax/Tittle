@@ -13,6 +13,8 @@ public static class AppThemeVariants
     public static ThemeVariant Midnight { get; } = new("Midnight", ThemeVariant.Dark);
 
     public static ThemeVariant Ocean { get; } = new("Ocean", ThemeVariant.Dark);
+
+    public static ThemeVariant DeepBlue { get; } = new("DeepBlue", ThemeVariant.Dark);
 }
 
 /// <summary>
@@ -60,6 +62,7 @@ public sealed class ThemeService : IThemeService
             ThemeMode.Light => ThemeVariant.Light,
             ThemeMode.Midnight => AppThemeVariants.Midnight,
             ThemeMode.Ocean => AppThemeVariants.Ocean,
+            ThemeMode.DeepBlue => AppThemeVariants.DeepBlue,
             _ => ThemeVariant.Default, // follow OS
         };
     }

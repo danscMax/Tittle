@@ -10,6 +10,7 @@ public enum ThemeMode
     Auto,
     Midnight,
     Ocean,
+    DeepBlue,
 }
 
 /// <summary>Helpers for <see cref="ThemeMode"/>.</summary>
@@ -20,7 +21,8 @@ public static class ThemeModeExtensions
     {
         ThemeMode.Dark => ThemeMode.Midnight,
         ThemeMode.Midnight => ThemeMode.Ocean,
-        ThemeMode.Ocean => ThemeMode.Light,
+        ThemeMode.Ocean => ThemeMode.DeepBlue,
+        ThemeMode.DeepBlue => ThemeMode.Light,
         ThemeMode.Light => ThemeMode.Auto,
         _ => ThemeMode.Dark,
     };
@@ -28,7 +30,7 @@ public static class ThemeModeExtensions
     /// <summary>True for every member of the dark family (drives "is dark" decisions
     /// like the HTML-export stylesheet).</summary>
     public static bool IsDark(this ThemeMode mode)
-        => mode is ThemeMode.Dark or ThemeMode.Midnight or ThemeMode.Ocean;
+        => mode is ThemeMode.Dark or ThemeMode.Midnight or ThemeMode.Ocean or ThemeMode.DeepBlue;
 }
 
 /// <summary>Controls the application theme variant.</summary>
