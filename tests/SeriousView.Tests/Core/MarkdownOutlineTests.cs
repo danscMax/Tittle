@@ -65,6 +65,35 @@ public class MarkdownOutlineTests
     }
 
     [Fact]
+    public void Parse_HeadingLineNumbers_SurviveMultipleMathBlocks()
+    {
+        // Q20: $$ blocks expand into blank-padded ::: containers in the PREVIEW preprocessor, but the
+        // outline (and the source-scroll it drives) is built from the RAW text — so several math blocks
+        // must not shift downstream heading line numbers. Headings stay at their authored 1-based lines.
+        const string md = """
+            # H1
+
+            $$
+            a = b
+            $$
+
+            ## H2
+
+            $$
+            c = d
+            $$
+
+            ### H3
+            """;
+        var result = MarkdownOutline.Parse(md);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal(("H1", 1), (result[0].Text, result[0].Line));
+        Assert.Equal(("H2", 7), (result[1].Text, result[1].Line));
+        Assert.Equal(("H3", 13), (result[2].Text, result[2].Line));
+    }
+
+    [Fact]
     public void Parse_SkipsHeadingsInsideFencedBlocks()
     {
         const string md = """

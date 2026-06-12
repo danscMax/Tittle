@@ -439,7 +439,7 @@ read-only, `BuildTabAsync` offload, link-scheme sanitize already exist — build
   cells, colliding legit `1.79e308` values with the "sort last" sentinel. **Fix:** sort with a
   `(bool parsed, double value)` tuple key so junk always sinks regardless of magnitude. **Test:** unit — a real
   `double.MaxValue` cell sorts before garbage.
-- [ ] **Q20 (Low)** `Core/Text/MarkdownPreprocessor.cs` · `AppendMathContainer` / front-matter / admonition
+- [x] **Q20 (Low)** `Core/Text/MarkdownPreprocessor.cs` · `AppendMathContainer` / front-matter / admonition
   passes. Each emits blank-line-padded `:::` blocks without coalescing adjacent blanks; many `$$` blocks shift
   downstream heading line numbers unpredictably (source-scroll still correct, but fragile cross-pass coupling).
   **Fix:** add a regression test asserting outline line numbers survive a multi-`$$` document; optionally
