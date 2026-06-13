@@ -12,11 +12,14 @@ dotnet run --project src/SeriousView           # run (or: SeriousView <file>)
 dotnet format SeriousView.sln                  # apply formatting (CI verifies)
 ```
 
-For **live visual QA** (drive the real window — launch, send shortcuts, click, DPI-aware screenshot,
-review against the `desktop-visual-audit` checklist), use the **`gui-qa` skill**
-(`.claude/skills/gui-qa/`). It exists because Avalonia chrome can't render headless (the Symbols-font
-crash), so visuals need the real window via Win32 — the in-process `Avalonia.Headless` path covers the
-logic/seam tests instead.
+For **visual GUI QA**, use the **`max.avalonia-smoke`** skill (the Avalonia sibling of `max.qt-smoke`).
+Its testing pyramid: **Layer 1** — headless render of LEAF controls to PNG in both themes via
+`Avalonia.Headless` + Skia (`tools/HeadlessRender`, run `dotnet run --project tools/HeadlessRender`
+with an output dir; cheap, the default); **Layer 2** — the `Avalonia.Headless` `[AvaloniaFact]` suite
+(logic/wiring); **Layer 3** — driving the real window via the skill's `gui-drive.ps1` (last resort,
+only for the **chrome/`MainWindow`**, which can't render headless — the FluentAvalonia Symbols-font
+crash). `tools/HeadlessRender` is OUT of the `.sln` (never affects the app build/test); its PNG output
+goes to gitignored `plans/`.
 
 Requires the **.NET 9 SDK**. Built and tested on Windows/Linux/macOS (see CI).
 
