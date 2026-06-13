@@ -57,7 +57,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             else
                 File.Move(temp, file);
         }
-        catch
+        catch (Exception ex)
         {
             // Best-effort persistence; drop a stray temp file and ignore I/O errors.
             try
@@ -69,6 +69,11 @@ public sealed class JsonSettingsStore : ISettingsStore
             {
                 // ignore
             }
+
+            // Policy stays "never throw / never bother the user" — but unlike a document write
+            // (AtomicFile rethrows), a settings-save failure was previously invisible. Leave a
+            // best-effort breadcrumb so a read-only dir / full disk is diagnosable from crash.log.
+            CrashLogger.Write(ex, "SettingsSave");
         }
     }
 }
