@@ -215,9 +215,17 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
 
     private static Control BuildImageControl(DiagramImage image)
     {
-        IImage source = image.IsSvg
-            ? new SvgImage { Source = SvgSource.LoadFromSvg(System.Text.Encoding.UTF8.GetString(image.Bytes)) }
-            : new Bitmap(new MemoryStream(image.Bytes));
+        IImage source;
+        if (image.IsSvg)
+        {
+            source = new SvgImage { Source = SvgSource.LoadFromSvg(System.Text.Encoding.UTF8.GetString(image.Bytes)) };
+        }
+        else
+        {
+            // Bitmap reads the whole stream in its ctor, so the MemoryStream can be disposed after.
+            using var ms = new MemoryStream(image.Bytes);
+            source = new Bitmap(ms);
+        }
 
         // Natural size, but never upscale past the diagram's own width; the preview's horizontal
         // scroll handles anything wider than the reading column.

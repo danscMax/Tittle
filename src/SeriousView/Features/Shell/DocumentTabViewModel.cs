@@ -309,9 +309,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
 
     private void OnDiagramsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // Enabled flips fences ↔ ::: diagram containers (a different markdown string); a URL change
-        // re-renders via the handler. Either way, drop the cache and re-emit so the preview rebuilds.
-        if (e.PropertyName is nameof(DiagramOptions.Enabled) or nameof(DiagramOptions.KrokiUrl))
+        // Only Enabled changes the markdown string (fences ↔ ::: diagram containers) → drop the
+        // cache and re-emit so the preview rebuilds live. A URL change leaves the string identical
+        // (the handler reads the URL at render time), so it applies on the next reload/reopen.
+        if (e.PropertyName == nameof(DiagramOptions.Enabled))
         {
             _previewMarkdown = null;
             OnPropertyChanged(nameof(PreviewMarkdown));

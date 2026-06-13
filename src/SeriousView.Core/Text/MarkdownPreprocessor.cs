@@ -184,13 +184,16 @@ public static partial class MarkdownPreprocessor
         var result = new List<string>(lines.Count);
         for (var i = 0; i < lines.Count; i++)
         {
-            var open = DiagramFenceOpen().Match(lines[i]);
-            if (!open.Success || !DiagramTypes.IsDiagramLang(open.Groups["lang"].Value))
+            var open = FenceOpen().Match(lines[i]);
+            if (!open.Success)
             {
                 result.Add(lines[i]);
                 continue;
             }
 
+            // Consume the WHOLE fenced block to its closer — diagram fences are converted, every
+            // other fence (a bare ```, ```python, or a ```mermaid shown inside an outer fence) is
+            // copied verbatim, so we never peek inside a non-diagram fence.
             var fence = open.Groups["fence"].Value;
             var body = new List<string>();
             var j = i + 1;
@@ -207,16 +210,25 @@ public static partial class MarkdownPreprocessor
 
             if (!closed)
             {
-                result.Add(lines[i]); // unclosed → leave as authored
+                result.Add(lines[i]); // unclosed opener → leave it, keep scanning the rest as normal
                 continue;
             }
 
-            var krokiType = DiagramTypes.ToKrokiType(open.Groups["lang"].Value)!;
-            result.Add(string.Empty);
-            result.Add("::: diagram");
-            result.Add(Uri.EscapeDataString(krokiType) + "|" + Uri.EscapeDataString(string.Join("\n", body)));
-            result.Add(":::");
-            result.Add(string.Empty);
+            if (DiagramTypes.ToKrokiType(open.Groups["lang"].Value) is { } krokiType)
+            {
+                result.Add(string.Empty);
+                result.Add("::: diagram");
+                result.Add(Uri.EscapeDataString(krokiType) + "|" + Uri.EscapeDataString(string.Join("\n", body)));
+                result.Add(":::");
+                result.Add(string.Empty);
+            }
+            else
+            {
+                result.Add(lines[i]);   // opener
+                result.AddRange(body);
+                result.Add(lines[j]);   // closer
+            }
+
             i = j; // resume after the closing fence
         }
 
@@ -570,9 +582,10 @@ public static partial class MarkdownPreprocessor
     [GeneratedRegex(@"^\s*(\$\$|\\\[)\s*$")]
     private static partial Regex MathBlockOpen();
 
-    // A fenced-code opener: ≤3 spaces, 3+ backticks/tildes, then a single info word (the language).
-    [GeneratedRegex(@"^\s{0,3}(?<fence>`{3,}|~{3,})\s*(?<lang>[A-Za-z0-9+#_-]+)\s*$")]
-    private static partial Regex DiagramFenceOpen();
+    // A fenced-code line: ≤3 spaces, 3+ backticks/tildes, then an OPTIONAL single info word (the
+    // language; empty for a bare ``` opener/closer). Used to walk and skip whole fenced blocks.
+    [GeneratedRegex(@"^\s{0,3}(?<fence>`{3,}|~{3,})\s*(?<lang>[A-Za-z0-9+#_-]*)\s*$")]
+    private static partial Regex FenceOpen();
 
     [GeneratedRegex(@"^\s*\$\$\s*$")]
     private static partial Regex DollarMathClose();

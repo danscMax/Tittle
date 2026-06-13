@@ -57,6 +57,17 @@ public class MarkdownPreprocessorTests
         Assert.DoesNotContain("::: diagram", result);
     }
 
+    [Fact]
+    public void Transform_DiagramFenceInsideOuterFence_NotConverted()
+    {
+        // A ```mermaid example shown inside an outer ```` fence is literal text, not a diagram —
+        // the whole outer block passes through verbatim (we never peek inside a non-diagram fence).
+        const string md = "````\n```mermaid\ngraph TD;A-->B\n```\n````";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+        Assert.DoesNotContain("::: diagram", result);
+        Assert.Equal(md, result);
+    }
+
     // --- Admonitions ---
 
     [Fact]
