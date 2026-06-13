@@ -17,7 +17,7 @@
     <SolidColorBrush x:Key="ChromeBorderBrush" Color="#504945" />
     <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#EBDBB2" />
     <Color x:Key="ChromeForegroundColor">#EBDBB2</Color>
-    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#A89984" />
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#AFA18E" />
 
     <SolidColorBrush x:Key="AccentBrush" Color="#FABD2F" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFD05A" />

@@ -17,12 +17,12 @@
     <SolidColorBrush x:Key="ChromeBorderBrush" Color="#DBCCAA" />
     <SolidColorBrush x:Key="ChromeForegroundBrush" Color="#5B4636" />
     <Color x:Key="ChromeForegroundColor">#5B4636</Color>
-    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#7A6553" />
+    <SolidColorBrush x:Key="ChromeForegroundMutedBrush" Color="#756150" />
 
     <SolidColorBrush x:Key="AccentBrush" Color="#8B4513" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#A0522D" />
 
     <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#EAE0C8" />
-    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#7A6553" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#735F4E" />
 
 </ResourceDictionary>

@@ -29,9 +29,9 @@ public static class ThemeCatalog
         // Dark family
         new(ThemeMode.Dark, "Тёмная", true, "#15151A", "#1B1B22", "#5A8DFF", "#E7E7EF"),
         new(ThemeMode.Midnight, "Полночь", true, "#0A0A0E", "#0F0F14", "#7AA2F7", "#DEDEE9"),
-        new(ThemeMode.Ocean, "Океан", true, "#0C141D", "#101B26", "#2EC8BE", "#DCE7EF"),
-        new(ThemeMode.DeepBlue, "Глубокий синий", true, "#121A30", "#172139", "#7AA2F7", "#C8D3F5"),
-        new(ThemeMode.Nord, "Nord", true, "#2E3440", "#3B4252", "#88C0D0", "#ECEFF4"),
+        new(ThemeMode.Ocean, "Океан", true, "#0A0D12", "#0D1116", "#2EC8BE", "#DCE7EF"),
+        new(ThemeMode.DeepBlue, "Глубокий синий", true, "#10131C", "#14161C", "#7AA2F7", "#C8D3F5"),
+        new(ThemeMode.Nord, "Nord", true, "#272B34", "#2E3440", "#88C0D0", "#ECEFF4"),
         new(ThemeMode.Dracula, "Dracula", true, "#282A36", "#21222C", "#BD93F9", "#F8F8F2"),
         new(ThemeMode.SolarizedDark, "Solarized Dark", true, "#002B36", "#073642", "#B58900", "#93A1A1"),
         new(ThemeMode.SolarizedDim, "Solarized Dim", true, "#1C2A2F", "#16242A", "#268BD2", "#93A1A1"),

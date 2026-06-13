@@ -187,4 +187,84 @@ public class ThemeServiceTests
         Assert.Equal(Color.Parse("#15151A"), darkColor);
         Assert.Equal(Color.Parse("#F7F7FB"), lightColor);
     }
+
+    // The dark family's swatch convention is exact: ThemeInfo.Background/.Surface mirror the
+    // resolved WindowBackgroundBrush/EditorSurfaceBrush. Guards against catalog↔AXAML drift like the
+    // one a surface-contrast tweak introduced. (The light family's surface swatch mirrors the sidebar
+    // mid-tone by an older convention, so it is intentionally not asserted here.)
+    [AvaloniaFact]
+    public void DarkFamilySwatches_MatchTheirAxamlSurfaces()
+    {
+        var app = Application.Current!;
+        var service = NewService();
+        ThemeMode[] darkFamily =
+        {
+            ThemeMode.Dark, ThemeMode.Midnight, ThemeMode.Ocean, ThemeMode.DeepBlue, ThemeMode.Nord,
+            ThemeMode.Dracula, ThemeMode.SolarizedDark, ThemeMode.SolarizedDim, ThemeMode.GruvboxDark,
+            ThemeMode.HighContrast,
+        };
+
+        foreach (var mode in darkFamily)
+        {
+            service.SetMode(mode);
+            var variant = app.RequestedThemeVariant!;
+            var info = ThemeCatalog.For(mode);
+
+            Assert.True(app.TryGetResource("WindowBackgroundBrush", variant, out var bg));
+            Assert.Equal(Color.Parse(info.Background), ((ISolidColorBrush)bg!).Color);
+            Assert.True(app.TryGetResource("EditorSurfaceBrush", variant, out var sf));
+            Assert.Equal(Color.Parse(info.Surface), ((ISolidColorBrush)sf!).Color);
+        }
+    }
+
+    // Accessibility floor: muted chrome text (on the sidebar) and status-bar text (on its own bar)
+    // must clear WCAG AA 4.5:1 in every concrete theme — secondary text still conveys information.
+    [AvaloniaFact]
+    public void EveryTheme_MutedAndStatusText_ClearWcagAa()
+    {
+        var app = Application.Current!;
+        var service = NewService();
+
+        foreach (var theme in ThemeCatalog.All)
+        {
+            if (theme.Mode == ThemeMode.Auto)
+                continue;
+
+            service.SetMode(theme.Mode);
+            var v = app.RequestedThemeVariant!;
+
+            var muted = Resolve(app, "ChromeForegroundMutedBrush", v);
+            var side = Resolve(app, "SidebarSurfaceBrush", v);
+            var statusFg = Resolve(app, "StatusBarForegroundBrush", v);
+            var statusBg = Resolve(app, "StatusBarBackgroundBrush", v);
+
+            Assert.True(Contrast(muted, side) >= 4.5,
+                $"{theme.Mode}: muted text contrast {Contrast(muted, side):F2} < 4.5");
+            Assert.True(Contrast(statusFg, statusBg) >= 4.5,
+                $"{theme.Mode}: status text contrast {Contrast(statusFg, statusBg):F2} < 4.5");
+        }
+    }
+
+    private static Color Resolve(Application app, string key, ThemeVariant variant)
+    {
+        Assert.True(app.TryGetResource(key, variant, out var res), $"{key} unresolved for {variant}");
+        return ((ISolidColorBrush)res!).Color;
+    }
+
+    private static double Contrast(Color a, Color b)
+    {
+        static double Channel(byte c)
+        {
+            var s = c / 255.0;
+            return s <= 0.03928 ? s / 12.92 : System.Math.Pow((s + 0.055) / 1.055, 2.4);
+        }
+        static double Luminance(Color c)
+            => 0.2126 * Channel(c.R) + 0.7152 * Channel(c.G) + 0.0722 * Channel(c.B);
+
+        var l1 = Luminance(a);
+        var l2 = Luminance(b);
+        if (l2 > l1)
+            (l1, l2) = (l2, l1);
+        return (l1 + 0.05) / (l2 + 0.05);
+    }
 }
