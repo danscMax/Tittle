@@ -26,6 +26,17 @@
 идёт через Skia, а не через браузерный движок — поэтому запуск мгновенный, расход памяти низкий,
 а вид одинаков на Windows, Linux и macOS.
 
+<div align="center">
+
+| | |
+|:-:|:-:|
+| ![Тема Dark](docs/screenshots/Dark.png) | ![Тема Deep Blue](docs/screenshots/DeepBlue.png) |
+| ![Тема Dracula](docs/screenshots/Dracula.png) | ![Тема Solarized Light](docs/screenshots/SolarizedLight.png) |
+
+<sub><b>Dark</b> · <b>Deep Blue</b> · <b>Dracula</b> · <b>Solarized Light</b> — 4 из 14 встроенных тем</sub>
+
+</div>
+
 ## Содержание
 
 - [Возможности](#возможности)

@@ -26,6 +26,17 @@ A deliberate rewrite of an HTML/WebView markdown viewer as a **native** app: it 
 Skia, not a browser engine — so it starts instantly, stays light, and reads the same on Windows,
 Linux and macOS.
 
+<div align="center">
+
+| | |
+|:-:|:-:|
+| ![Dark theme](docs/screenshots/Dark.png) | ![Deep Blue theme](docs/screenshots/DeepBlue.png) |
+| ![Dracula theme](docs/screenshots/Dracula.png) | ![Solarized Light theme](docs/screenshots/SolarizedLight.png) |
+
+<sub><b>Dark</b> · <b>Deep Blue</b> · <b>Dracula</b> · <b>Solarized Light</b> — 4 of 14 built-in themes</sub>
+
+</div>
+
 ## Contents
 
 - [Features](#features)
