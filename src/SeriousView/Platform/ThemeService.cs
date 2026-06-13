@@ -27,7 +27,13 @@ public static class AppThemeVariants
 
     public static ThemeVariant GruvboxDark { get; } = new("GruvboxDark", ThemeVariant.Dark);
 
-    public static ThemeVariant HighContrast { get; } = new("HighContrast", ThemeVariant.Dark);
+    // NB: the variant Key must NOT be "HighContrast" — that string collides with the platform/
+    // FluentAvalonia high-contrast handling (Markdown.Avalonia's auto FluentAvalonia style then
+    // resolves a LIGHT high-contrast base instead of this variant's inherited Dark, so the preview
+    // body renders light under a black-chrome accessibility theme). "ContrastDark" sidesteps it.
+    // The Key is internal only — persistence uses ThemeMode.HighContrast, the label comes from
+    // ThemeCatalog, and resource wiring is by x:Static object reference — so the string is free.
+    public static ThemeVariant HighContrast { get; } = new("ContrastDark", ThemeVariant.Dark);
 
     // Light family (inherit Light)
     public static ThemeVariant Sepia { get; } = new("Sepia", ThemeVariant.Light);
