@@ -1,39 +1,68 @@
+<div align="center">
+
+<img src="src/SeriousView/Assets/seriousview.png" width="104" alt="SeriousView logo" />
+
 # SeriousView
 
-A native, cross-platform desktop **markdown & code viewer** (with light editing) built with
-[Avalonia](https://avaloniaui.net/) — rendered through Skia, no WebView.
+**A native, cross-platform desktop markdown &amp; code viewer — [Avalonia](https://avaloniaui.net/) + Skia, no WebView.**
 
-> Status: **feature-complete v0.x.** Milestones M1–M15 shipped: rendering, TOC, search,
-> live-reload, math, export, themes, in-place editing. The full feature port from the
-> original HTML/WebView viewer is closed (diagrams excepted — see `BACKLOG.md`).
+[![CI](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml/badge.svg)](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)
+![Avalonia 11.3](https://img.shields.io/badge/Avalonia-11.3-883AE3)
+![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-informational)
+
+**English** · [Русский](README.ru.md)
+
+</div>
+
+---
+
+> **Status: feature-complete v0.x.** Milestones M1–M15 shipped — rendering, TOC, search,
+> live-reload, math, export, 14 themes, in-place editing. The full feature port from the
+> original HTML/WebView viewer is closed (diagrams excepted — see [`BACKLOG.md`](BACKLOG.md)).
+
+A deliberate rewrite of an HTML/WebView markdown viewer as a **native** app: it renders through
+Skia, not a browser engine — so it starts instantly, stays light, and reads the same on Windows,
+Linux and macOS.
+
+## Contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Project layout](#project-layout)
+- [Build &amp; run](#build--run)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
-**Markdown**: GFM preview (tables · task lists · footnotes · admonitions/alerts · emoji),
+**Markdown** — GFM preview (tables · task lists · footnotes · admonitions/alerts · emoji),
 block math (native CSharpMath, `$$…$$` / `\[…\]`), YAML front-matter panel, wiki-links
 (`[[name]]` opens the sibling note), collapsible sections, click-to-sort tables, copy
 buttons on code blocks, image lightbox, checkbox click-to-toggle (writes back to the file).
 
-**Navigation**: TOC sidebar with active-heading scroll-spy, unread marks and ☆ bookmarks;
+**Navigation** — TOC sidebar with active-heading scroll-spy, unread marks and ☆ bookmarks;
 heading breadcrumbs (markdown *and* code symbols); position-preserving preview↔source
-toggle; in-document find (Ctrl+F, regex/case); go-to-line; Ctrl+K command palette;
+toggle; in-document find (Ctrl+F, regex/case); go-to-line; **Ctrl+K** command palette;
 back-to-top; reading-width presets.
 
-**Code & text files**: TextMate syntax highlighting, cv-* token decorations (timestamps,
+**Code &amp; text files** — TextMate syntax highlighting, cv-* token decorations (timestamps,
 UUIDs, IPs, hashes, TODOs, log levels, units, dates — with resolved-value hover tooltips),
 indent guides, code minimap, symbol/text outlines, section folding, CSV/TSV as a sortable
 table, JSON pretty-print, smart typography for plain text, document statistics (RU-adapted
 Flesch).
 
-**Shell**: tabs (drag-reorder, context menu, kept-alive content), single-instance file
+**Shell** — tabs (drag-reorder, context menu, kept-alive content), single-instance file
 forwarding, live-reload with a "changed on disk" dot and position-preserving refresh,
-session restore, Dark / Light / Midnight / Ocean / Auto themes, settings import/export,
-F1 help.
+session restore, split view with live mutual scroll, **14 themes** (Dark/Light + Midnight,
+Ocean, Deep Blue, Nord, Dracula, Solarized ×3, Gruvbox ×2, Sepia, High-Contrast), settings
+import/export, F1 help.
 
-**Editing (M15)**: edit in the source view, **Ctrl+S** saves (UTF-8); unsaved-changes
-marker on the tab.
+**Editing** — edit in the source view, **Ctrl+S** saves (UTF-8); an unsaved-changes ● marker
+on the tab.
 
-**Export**: self-contained themed HTML (Markdig), copy-as-rich-text (CF_HTML),
+**Export** — self-contained themed HTML (Markdig), copy-as-rich-text (CF_HTML),
 print / save-as-PDF via the browser.
 
 ## Tech stack
@@ -46,22 +75,25 @@ print / save-as-PDF via the browser.
 | Math | Sylinko.CSharpMath.Avalonia (native, no JS) |
 | MVVM | CommunityToolkit.Mvvm |
 | DI | Microsoft.Extensions.DependencyInjection |
-| Tests | xUnit + Avalonia.Headless (680+) |
+| Tests | xUnit + Avalonia.Headless (840+) |
 | Packages | Central Package Management (`Directory.Packages.props`) |
 
 > **Why Avalonia 11, not 12?** The viewer ecosystem we depend on is not yet stable on 12
-> (re-verified 2026-06-11: Markdown.Avalonia 12 is alpha, FluentAvaloniaUI 3 is preview).
-> Migration is planned once both ship stable 12 builds.
+> (Markdown.Avalonia 12 is alpha, FluentAvaloniaUI 3 is preview). Migration is planned once
+> both ship stable 12 builds.
 
 ## Project layout
 
 ```
-src/SeriousView        UI (Avalonia, feature slices, services, themes)
-src/SeriousView.Core   pure .NET 9 library (abstractions + logic, no Avalonia)
+src/SeriousView         UI (Avalonia, feature slices, services, themes)
+src/SeriousView.Core    pure .NET 9 library (abstractions + logic, no Avalonia)
 tests/SeriousView.Tests xUnit + Avalonia.Headless
 ```
 
-## Build & run
+Core has **no** Avalonia dependency: UI concerns (dialogs, theming, clipboard) live behind
+interfaces in `Core` with implementations in `SeriousView`. See [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Build &amp; run
 
 Requires the **.NET 9 SDK**.
 
@@ -79,8 +111,9 @@ combined build: `build_all.ps1` / `build_all.bat` → test gate + `dist/win-x64/
 ## Contributing
 
 Issues and PRs welcome. The codebase keeps a strict boundary: `SeriousView.Core`
-must not reference Avalonia; UI concerns (dialogs, theming, clipboard) live behind
-interfaces in `Core` with implementations in `SeriousView`. See `ARCHITECTURE.md`.
+must not reference Avalonia; UI concerns live behind interfaces in `Core` with
+implementations in `SeriousView`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) and
+[`BACKLOG.md`](BACKLOG.md).
 
 ## License
 
