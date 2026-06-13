@@ -200,7 +200,7 @@ public partial class MainWindow : AppWindow
             return;
         }
 
-        _layoutSettings = new LayoutSettingsWindow { DataContext = vm.Layout };
+        _layoutSettings = new LayoutSettingsWindow { DataContext = vm.Layout, Diagrams = vm.Diagrams };
         _layoutSettings.Closed += (_, _) => _layoutSettings = null;
         _layoutSettings.Show(this);
     }

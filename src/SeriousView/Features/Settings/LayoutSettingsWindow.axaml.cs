@@ -8,10 +8,18 @@ namespace SeriousView.Features.Settings;
 /// on Esc (from <see cref="ModalWindow"/>) or the Готово button.</summary>
 public partial class LayoutSettingsWindow : ModalWindow
 {
+    /// <summary>The shared diagram (Kroki) options — bound to the «Диаграммы» section, set when the
+    /// window is opened (the window's main DataContext is the LayoutOptions).</summary>
+    public DiagramOptions? Diagrams { get; init; }
+
     public LayoutSettingsWindow()
     {
         InitializeComponent();
-        Opened += (_, _) => Activate();
+        Opened += (_, _) =>
+        {
+            Activate();
+            DiagramSection.DataContext = Diagrams;
+        };
     }
 
     private void OnDone(object? sender, RoutedEventArgs e) => Close();

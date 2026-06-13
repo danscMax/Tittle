@@ -1,5 +1,18 @@
+using System;
+using System.Collections.Concurrent;
+using System.IO;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Svg.Skia;
+using Avalonia.Threading;
 using Markdown.Avalonia.Utils;
+using SeriousView.Core.Services;
+using SeriousView.Core.Text;
 using MdEngine = Markdown.Avalonia.Markdown;
 
 namespace SeriousView.Features.Viewer;
@@ -15,8 +28,18 @@ namespace SeriousView.Features.Viewer;
 public sealed class AdmonitionBlockHandler : IContainerBlockHandler
 {
     private readonly MdEngine _engine;
+    private readonly Func<string?>? _krokiUrlProvider;
 
-    public AdmonitionBlockHandler(MdEngine engine) => _engine = engine;
+    // One shared client + an in-memory cache (keyed by url\ntype\nbody) so identical diagrams
+    // aren't re-fetched on every preview rebuild. Static: shared across tabs/handlers.
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+    private static readonly ConcurrentDictionary<string, DiagramImage> DiagramCache = new();
+
+    public AdmonitionBlockHandler(MdEngine engine, Func<string?>? krokiUrlProvider = null)
+    {
+        _engine = engine;
+        _krokiUrlProvider = krokiUrlProvider;
+    }
 
     public Border ProvideControl(string assetPathRoot, string blockName, string lines)
     {
@@ -42,6 +65,11 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         // anything else (nested YAML, lists) shows as a raw continuation line.
         if (string.Equals(blockName.Trim(), "frontmatter", StringComparison.OrdinalIgnoreCase))
             return BuildFrontMatterPanel(System.Uri.UnescapeDataString(lines.Trim()));
+
+        // ::: diagram (M12, opt-in): "type|body", both percent-encoded. Rendered via Kroki — a
+        // placeholder shows immediately, the image lands when the async request returns.
+        if (string.Equals(blockName.Trim(), "diagram", StringComparison.OrdinalIgnoreCase))
+            return BuildDiagram(lines.Trim());
 
         var type = NormalizeType(blockName);
 
@@ -128,4 +156,102 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         border.Classes.Add("frontmatter-block");
         return border;
     }
+
+    // "type|body" — both percent-encoded (the opaque ::: transport). Returns a Border that first
+    // shows a placeholder, then swaps in the rendered diagram (or a source-code fallback on error).
+    private Border BuildDiagram(string encoded)
+    {
+        var border = new Border();
+        border.Classes.Add("diagram-block");
+
+        var sep = encoded.IndexOf('|');
+        if (sep < 0)
+        {
+            border.Child = DiagramError("Некорректный блок диаграммы", "");
+            return border;
+        }
+
+        var type = Uri.UnescapeDataString(encoded[..sep]);
+        var body = Uri.UnescapeDataString(encoded[(sep + 1)..]);
+        var url = _krokiUrlProvider?.Invoke();
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            border.Child = DiagramError("Не задан адрес сервера Kroki", body);
+            return border;
+        }
+
+        border.Child = new TextBlock
+        {
+            Text = $"Рендеринг диаграммы ({type})…",
+            Foreground = ThemedMuted(),
+            Margin = new Avalonia.Thickness(4),
+        };
+
+        _ = RenderDiagramAsync(border, url!, type, body);
+        return border;
+    }
+
+    private static async Task RenderDiagramAsync(Border border, string url, string type, string body)
+    {
+        var key = $"{url}\n{type}\n{body}";
+        try
+        {
+            if (!DiagramCache.TryGetValue(key, out var image))
+            {
+                image = await KrokiClient.RenderAsync(Http, url, type, body, CancellationToken.None);
+                DiagramCache[key] = image;
+            }
+
+            var control = BuildImageControl(image);
+            await Dispatcher.UIThread.InvokeAsync(() => border.Child = control);
+        }
+        catch (Exception ex)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+                border.Child = DiagramError($"Не удалось отрендерить диаграмму: {ex.Message}", body));
+        }
+    }
+
+    private static Control BuildImageControl(DiagramImage image)
+    {
+        IImage source = image.IsSvg
+            ? new SvgImage { Source = SvgSource.LoadFromSvg(System.Text.Encoding.UTF8.GetString(image.Bytes)) }
+            : new Bitmap(new MemoryStream(image.Bytes));
+
+        // Natural size, but never upscale past the diagram's own width; the preview's horizontal
+        // scroll handles anything wider than the reading column.
+        return new Image
+        {
+            Source = source,
+            Stretch = Stretch.Uniform,
+            MaxWidth = source.Size.Width > 0 ? source.Size.Width : double.PositiveInfinity,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+        };
+    }
+
+    // On any failure, show the diagram source so its content is never lost, plus the reason.
+    private static StackPanel DiagramError(string message, string source)
+    {
+        var panel = new StackPanel { Spacing = 6 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = message,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = ThemedMuted(),
+        });
+        if (source.Length > 0)
+            panel.Children.Add(new TextBlock
+            {
+                Text = source,
+                FontFamily = new FontFamily("Cascadia Code,Consolas,monospace"),
+                TextWrapping = TextWrapping.Wrap,
+            });
+        return panel;
+    }
+
+    private static IBrush ThemedMuted()
+        => Application.Current is { } app
+            && app.TryFindResource("ChromeForegroundMutedBrush", out var v) && v is IBrush b
+            ? b : Brushes.Gray;
 }

@@ -18,6 +18,45 @@ public class MarkdownPreprocessorTests
         Assert.Equal(md, MarkdownPreprocessor.Transform(md));
     }
 
+    // --- Diagram fences (M12, opt-in) ---
+
+    [Fact]
+    public void Transform_DiagramFence_Enabled_BecomesDiagramContainer()
+    {
+        const string md = "text\n\n```mermaid\ngraph TD;A-->B\n```\n\nmore";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+
+        Assert.Contains("::: diagram", result);
+        Assert.DoesNotContain("```mermaid", result);
+        // payload is "type|body", both percent-encoded — mermaid has no special chars
+        Assert.Contains("mermaid|" + System.Uri.EscapeDataString("graph TD;A-->B"), result);
+    }
+
+    [Fact]
+    public void Transform_DiagramFence_Disabled_StaysAsCode()
+    {
+        const string md = "```mermaid\ngraph TD;A-->B\n```";
+        Assert.Equal(md, MarkdownPreprocessor.Transform(md, null, diagramsEnabled: false));
+        Assert.DoesNotContain("::: diagram", MarkdownPreprocessor.Transform(md, null, false));
+    }
+
+    [Fact]
+    public void Transform_NonDiagramFence_StaysAsCode_EvenWhenEnabled()
+    {
+        const string md = "```python\nprint(1)\n```";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+        Assert.DoesNotContain("::: diagram", result);
+        Assert.Contains("```python", result);
+    }
+
+    [Fact]
+    public void Transform_UnclosedDiagramFence_LeftAsAuthored()
+    {
+        const string md = "```dot\ndigraph{}";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+        Assert.DoesNotContain("::: diagram", result);
+    }
+
     // --- Admonitions ---
 
     [Fact]

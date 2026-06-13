@@ -30,8 +30,10 @@ public static partial class MarkdownPreprocessor
     /// <summary>Full pipeline. <paramref name="wikiLinkResolver"/> receives a trimmed wiki name
     /// (no <c>.md</c>) and answers whether a sibling note with that name exists; it must not
     /// throw and is consulted once per distinct name (memoized). Null = nothing resolves, so
-    /// every <c>[[name]]</c> degrades to plain text.</summary>
-    public static string Transform(string? markdown, Func<string, bool>? wikiLinkResolver)
+    /// every <c>[[name]]</c> degrades to plain text. <paramref name="diagramsEnabled"/> (M12,
+    /// opt-in) turns ```mermaid/```plantuml/… fences into <c>::: diagram</c> containers the viewer
+    /// renders via Kroki; when off, those fences stay as ordinary code blocks.</summary>
+    public static string Transform(string? markdown, Func<string, bool>? wikiLinkResolver, bool diagramsEnabled = false)
     {
         if (string.IsNullOrEmpty(markdown))
             return markdown ?? string.Empty;
@@ -41,6 +43,12 @@ public static partial class MarkdownPreprocessor
         // YAML front-matter first (ported): only valid at the very top, before any other pass
         // can mistake its --- fences for thematic breaks or transform inside the block.
         lines = ExtractFrontMatter(lines);
+
+        // Diagram fences (M12, opt-in) → ::: diagram containers. Runs before the code-region scan
+        // so the consumed fences don't leave their language as stray code; the bodies travel
+        // percent-encoded (the ::: math/frontmatter transport).
+        if (diagramsEnabled)
+            lines = ConvertDiagramFences(lines);
 
         // Inline passes run first, in place (line count preserved → the fence bitmap stays
         // valid) and before admonition re-wrapping so callout bodies get them too. Wiki before
@@ -165,6 +173,64 @@ public static partial class MarkdownPreprocessor
         }
 
         return result;
+    }
+
+    // Diagram fences: a ```<lang> … ``` block whose language Kroki can render → a ::: diagram
+    // container. The body + Kroki type travel as ONE percent-encoded line ("type|body"), the same
+    // opaque-transport contract as ::: math. Detects fences itself (own state walk) since it runs
+    // before the shared code-region scan. Unknown languages and unclosed fences pass through.
+    private static List<string> ConvertDiagramFences(List<string> lines)
+    {
+        var result = new List<string>(lines.Count);
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var open = DiagramFenceOpen().Match(lines[i]);
+            if (!open.Success || !DiagramTypes.IsDiagramLang(open.Groups["lang"].Value))
+            {
+                result.Add(lines[i]);
+                continue;
+            }
+
+            var fence = open.Groups["fence"].Value;
+            var body = new List<string>();
+            var j = i + 1;
+            var closed = false;
+            for (; j < lines.Count; j++)
+            {
+                if (IsFenceClose(lines[j], fence[0], fence.Length))
+                {
+                    closed = true;
+                    break;
+                }
+                body.Add(lines[j]);
+            }
+
+            if (!closed)
+            {
+                result.Add(lines[i]); // unclosed → leave as authored
+                continue;
+            }
+
+            var krokiType = DiagramTypes.ToKrokiType(open.Groups["lang"].Value)!;
+            result.Add(string.Empty);
+            result.Add("::: diagram");
+            result.Add(Uri.EscapeDataString(krokiType) + "|" + Uri.EscapeDataString(string.Join("\n", body)));
+            result.Add(":::");
+            result.Add(string.Empty);
+            i = j; // resume after the closing fence
+        }
+
+        return result;
+    }
+
+    // A closing fence: the same char as the opener, run length >= the opener's, nothing but space.
+    private static bool IsFenceClose(string line, char fenceChar, int minLength)
+    {
+        var t = line.TrimStart();
+        var n = 0;
+        while (n < t.Length && t[n] == fenceChar)
+            n++;
+        return n >= minLength && t[n..].Trim().Length == 0;
     }
 
     private static void AppendMathContainer(List<string> result, IReadOnlyList<string> body)
@@ -503,6 +569,10 @@ public static partial class MarkdownPreprocessor
     // A multi-line math opener: a line that is exactly $$ or \[. Capture (1) = the delimiter.
     [GeneratedRegex(@"^\s*(\$\$|\\\[)\s*$")]
     private static partial Regex MathBlockOpen();
+
+    // A fenced-code opener: ≤3 spaces, 3+ backticks/tildes, then a single info word (the language).
+    [GeneratedRegex(@"^\s{0,3}(?<fence>`{3,}|~{3,})\s*(?<lang>[A-Za-z0-9+#_-]+)\s*$")]
+    private static partial Regex DiagramFenceOpen();
 
     [GeneratedRegex(@"^\s*\$\$\s*$")]
     private static partial Regex DollarMathClose();

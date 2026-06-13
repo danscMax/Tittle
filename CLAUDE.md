@@ -232,12 +232,19 @@ the editor was already editable — added the `EditorTextProvider` pull seam + `
 (length-first compare) ● marker, **Ctrl+S** UTF-8 write-back that refreshes through the M14
 watcher reload (position survives), and **checkbox click-to-toggle** (☐/☑ glyph-zone click →
 pure `TaskListToggle` flips the N-th raw task line — same regex + fence guard as the glyph
-pass; refuses over unsaved edits). **THE FULL-PORT GOAL IS COMPLETE except**: M12 diagrams
-(Mermaid JS-only; PlantUML external service, must stay gated opt-in) and the
-deferred-with-reason list — inline math (no Markdown.Avalonia inline seam), HTML preview
+pass; refuses over unsaved edits). **THE FULL-PORT GOAL IS COMPLETE**; the
+deferred-with-reason list (Av12-gated) — inline math (no Markdown.Avalonia inline seam), HTML preview
 (no WebView), drop overlay (overlay repaint), paste-image (Av11 clipboard has no portable
 image read; revisit on Av12 DataTransfer), spellcheck (nothing built into AvaloniaEdit).
 Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+**M12 diagrams DONE (Kroki, opt-in)**: Mermaid can't render natively (browser-only `<foreignObject>`),
+so ```mermaid/```plantuml/```dot/… fences in the preview POST to a **Kroki** server → image. Core
+`DiagramTypes` (fence→kroki type + format) + `KrokiClient` (POST `{url}/{type}/{format}`); preprocessor
+`ConvertDiagramFences` (gated by `Transform(..., diagramsEnabled)`) → `::: diagram` container (percent-
+encoded `type|body`); `AdmonitionBlockHandler` renders it async (Mermaid→PNG `Bitmap`, else SVG via
+`SvgImage`; in-memory cache; source+error fallback). **Strictly opt-in** (`DiagramOptions`/`DiagramSettings`,
+default OFF, configurable URL incl. self-host — diagram text leaves the machine) via Настройки ▸ Раскладка.
+HTML-export of diagrams deliberately deferred (fence stays code in export).
 **Beyond the port — additional native formats**: XML/NDJSON pretty-print (the JSON pretty
 toggle was generalized to one `IsPrettyPrintable` «формат» action dispatching by type in
 `SourceText`; persist-field `EditorOptions.JsonPretty` kept for settings compat); TOML/INI/.env/

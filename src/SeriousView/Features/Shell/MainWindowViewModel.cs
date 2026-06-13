@@ -330,6 +330,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Layout.ReadingWidth = layout.ReadingWidth;
         Layout.SplitOrientation = layout.SplitOrientation;
         Layout.SplitRatio = layout.SplitRatio;
+
+        var diagrams = DiagramOptions.FromSettings(parsed.Diagram);
+        Diagrams.Enabled = diagrams.Enabled;
+        Diagrams.KrokiUrl = diagrams.KrokiUrl;
     }
 
     /// <summary>Reload a tab from disk (tab context menu / the dirty dot / the palette).</summary>
@@ -505,6 +509,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// the chrome (M7.5); persisted whenever it changes. Default is the etalon (menu hidden behind ☰).</summary>
     public LayoutOptions Layout { get; }
 
+    /// <summary>Diagram (Kroki) options (M12), shared by every tab's preview. Off by default;
+    /// persisted whenever it changes.</summary>
+    public DiagramOptions Diagrams { get; }
+
     [RelayCommand]
     private void ZoomIn() => Editor.ZoomIn();
 
@@ -609,6 +617,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Layout = LayoutOptions.FromSettings(_settings.Current.Layout);
         Layout.PropertyChanged += OnLayoutPropertyChanged;
 
+        // Diagram (Kroki) options, same restore-and-persist pattern (M12).
+        Diagrams = DiagramOptions.FromSettings(_settings.Current.Diagram);
+        Diagrams.PropertyChanged += OnDiagramsPropertyChanged;
+
         Tabs.CollectionChanged += OnTabsCollectionChanged;
         _theme.Changed += OnThemeChanged;
         _recent.Changed += OnRecentChanged;
@@ -651,6 +663,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void OnLayoutPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
         _settings.Update(_settings.Current with { Layout = Layout.ToSettings() });
 
+    private void OnDiagramsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) =>
+        _settings.Update(_settings.Current with { Diagram = Diagrams.ToSettings() });
+
     private void OnTabsCollectionChanged(object? sender,
         System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
@@ -684,6 +699,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         Editor.PropertyChanged -= OnEditorPropertyChanged;
         Layout.PropertyChanged -= OnLayoutPropertyChanged;
+        Diagrams.PropertyChanged -= OnDiagramsPropertyChanged;
         Tabs.CollectionChanged -= OnTabsCollectionChanged;
         _theme.Changed -= OnThemeChanged;
         _recent.Changed -= OnRecentChanged;
@@ -1067,6 +1083,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         tab.Editor = Editor;   // share one editor-options instance across all tabs
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
+        tab.Diagrams = Diagrams; // share the diagram (Kroki) options (M12)
         tab.Shell = this;      // back-reference for the tab's context-menu commands
         tab.ViewState = _viewState; // per-file visited/bookmark store (ported)
         tab.PrettyPrintEnabled = tab.IsPrettyPrintable && Editor.JsonPretty; // persisted default (ported)

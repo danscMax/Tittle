@@ -57,7 +57,10 @@ public partial class DocumentView : UserControl
                         _ = shell.OpenPathAsync(path);
                 },
                 SafeHyperlinkCommand.Instance);
-            engine.ContainerBlockHandler = new AdmonitionBlockHandler(engine);
+            // The diagram URL provider reads _vm live (DataContext-tracked), like the hyperlink
+            // providers — the handler is created once but the Kroki endpoint follows the settings.
+            engine.ContainerBlockHandler = new AdmonitionBlockHandler(
+                engine, () => _vm?.Diagrams?.KrokiUrl);
         }
 
         // Child-control / self subscriptions are wired once here and torn down on final detach

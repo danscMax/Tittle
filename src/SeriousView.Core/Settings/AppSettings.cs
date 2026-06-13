@@ -29,6 +29,9 @@ public sealed record AppSettings
 
     /// <summary>Shell layout / chrome customization, or null for the default (etalon) layout.</summary>
     public LayoutSettings? Layout { get; init; }
+
+    /// <summary>Diagram (Kroki) rendering preferences, or null for the default (disabled).</summary>
+    public DiagramSettings? Diagram { get; init; }
 }
 
 /// <summary>Window geometry in screen pixels plus whether it was maximized. When maximized, the

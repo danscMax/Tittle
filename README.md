@@ -72,6 +72,10 @@ unavailable.
 **Images** — raster (PNG/JPEG/WebP/BMP/GIF/ICO) and SVG files viewed in-app: fit-to-window,
 Ctrl+± zoom; raster decoded natively via Skia, SVG rendered vectorially.
 
+**Diagrams** — ` ```mermaid `/` ```plantuml `/` ```dot ` (and every other Kroki type) rendered in
+the preview via a **Kroki** server (Mermaid → PNG, the rest → SVG). Opt-in and off by default — the
+diagram text is sent to the configured server (public or self-hosted); enable it in Настройки ▸ Раскладка.
+
 **Shell** — tabs (drag-reorder, context menu, kept-alive content), single-instance file
 forwarding, live-reload with a "changed on disk" dot and position-preserving refresh,
 session restore, split view with live mutual scroll, **14 themes** (Dark/Light + Midnight,

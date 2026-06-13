@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Media;
@@ -189,6 +190,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             timer.Tick -= OnSearchDebounceTick;
             _searchDebounceTimer = null;
         }
+
+        // Detach from the shared diagram options so a closed tab isn't rooted by the singleton.
+        if (_diagrams is not null)
+            _diagrams.PropertyChanged -= OnDiagramsChanged;
     }
 
     // Run a pending (debounced) scan now — so next/prev act on fresh matches after a fast type+Enter.
@@ -274,6 +279,44 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Shared shell-layout options (reading mode), assigned by the shell when the tab is
     /// added — same pattern as <see cref="Editor"/>. The preview binds to it; null in unit fixtures.</summary>
     public LayoutOptions? Layout { get; set; }
+
+    private DiagramOptions? _diagrams;
+
+    /// <summary>Shared diagram (Kroki) options (M12), assigned by the shell — same pattern as
+    /// <see cref="Editor"/>. Drives whether the preprocessor turns diagram fences into rendered
+    /// diagrams; toggling it live-invalidates this tab's preview markdown.</summary>
+    public DiagramOptions? Diagrams
+    {
+        get => _diagrams;
+        set
+        {
+            if (_diagrams is not null)
+                _diagrams.PropertyChanged -= OnDiagramsChanged;
+            _diagrams = value;
+            if (_diagrams is not null)
+            {
+                _diagrams.PropertyChanged += OnDiagramsChanged;
+                // FromLoad warms PreviewMarkdown with diagrams OFF (Diagrams isn't assigned yet);
+                // if they're actually on, that warm is stale — drop it so the next read recomputes.
+                if (_diagrams.Enabled && _previewMarkdown is not null)
+                {
+                    _previewMarkdown = null;
+                    OnPropertyChanged(nameof(PreviewMarkdown));
+                }
+            }
+        }
+    }
+
+    private void OnDiagramsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Enabled flips fences ↔ ::: diagram containers (a different markdown string); a URL change
+        // re-renders via the handler. Either way, drop the cache and re-emit so the preview rebuilds.
+        if (e.PropertyName is nameof(DiagramOptions.Enabled) or nameof(DiagramOptions.KrokiUrl))
+        {
+            _previewMarkdown = null;
+            OnPropertyChanged(nameof(PreviewMarkdown));
+        }
+    }
 
     /// <summary>Back-reference to the owning shell, assigned when the tab is added (same pattern as
     /// <see cref="Editor"/> / <see cref="Layout"/>). The tab's context menu binds the shell's tab
@@ -603,7 +646,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// re-checks; M14 live-reload will refresh naturally).</summary>
     public string PreviewMarkdown =>
         _previewMarkdown ??= IsMarkdown
-            ? MarkdownPreprocessor.Transform(DocumentText, BuildWikiResolver())
+            ? MarkdownPreprocessor.Transform(DocumentText, BuildWikiResolver(), Diagrams?.Enabled ?? false)
             : "";
 
     /// <summary>Wiki-name resolver for the preprocessor and the HTML exporter: a sibling

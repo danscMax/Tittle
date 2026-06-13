@@ -67,6 +67,20 @@
                      IsChecked="{Binding SplitOrientation, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Vertical}"/>
       </StackPanel>
 
+      <!-- Diagrams (M12). DataContext is the shared DiagramOptions, assigned in code-behind. -->
+      <StackPanel x:Name="DiagramSection" x:DataType="shared:DiagramOptions" Spacing="6">
+        <TextBlock Text="Диаграммы" FontSize="12.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
+                  Foreground="{DynamicResource ChromeForegroundBrush}"
+                  Content="Рендерить диаграммы через Kroki"/>
+        <TextBox Text="{Binding KrokiUrl, Mode=TwoWay}" IsEnabled="{Binding Enabled}"
+                 Watermark="https://kroki.io" AutomationProperties.Name="Адрес сервера Kroki"/>
+        <TextBlock TextWrapping="Wrap" FontSize="11.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"
+                   Text="Текст диаграммы (```mermaid, ```plantuml, ```dot …) отправляется на указанный сервер. По умолчанию выключено; можно указать свой self-hosted Kroki."/>
+      </StackPanel>
+
       <Button Content="Готово" HorizontalAlignment="Right" Classes="accent"
               AutomationProperties.Name="Закрыть настройки" Click="OnDone"/>
     </StackPanel>

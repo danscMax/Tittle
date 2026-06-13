@@ -2,6 +2,7 @@ using System.IO;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Text;
 using SeriousView.Features.Shell;
+using SeriousView.Shared;
 using Xunit;
 
 namespace SeriousView.Tests.Features;
@@ -639,5 +640,18 @@ public class DocumentTabViewModelTests
         Assert.Contains("Изображение", vm.StatusText);
         // (Actual decode → Bitmap/SvgImage is covered by ImageLoadingTests; whether a missing-file
         // load returns null vs a platform stub is environment-dependent, so it's not asserted here.)
+    }
+
+    [Fact]
+    public void PreviewMarkdown_RendersDiagramFences_OnlyWhenDiagramsEnabled()
+    {
+        var vm = DocumentTabViewModel.FromFile("```mermaid\ngraph TD;A-->B\n```", "/d/x.md");
+        Assert.DoesNotContain("::: diagram", vm.PreviewMarkdown); // Diagrams not assigned → off
+
+        vm.Diagrams = new DiagramOptions { Enabled = true };
+        Assert.Contains("::: diagram", vm.PreviewMarkdown); // the setter invalidated the off-warmed cache
+
+        vm.Diagrams.Enabled = false;
+        Assert.DoesNotContain("::: diagram", vm.PreviewMarkdown); // live re-invalidation on toggle
     }
 }
