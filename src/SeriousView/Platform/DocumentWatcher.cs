@@ -101,6 +101,7 @@ public sealed class DocumentWatcher : IDocumentWatcher
         private readonly object _gate = new();
         private readonly Dictionary<string, (int Refs, string FullPath)> _files = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, (Timer Timer, DocumentChangeKind Kind)> _pending = new(StringComparer.OrdinalIgnoreCase);
+        private bool _disposed;
 
         public DirectoryWatch(DocumentWatcher owner, string directory)
         {
@@ -159,7 +160,9 @@ public sealed class DocumentWatcher : IDocumentWatcher
 
             lock (_gate)
             {
-                if (!_files.TryGetValue(fileName, out var entry))
+                // A watcher callback can race teardown; once disposed, don't arm a fresh debounce
+                // timer that would outlive the FileSystemWatcher and fire onto a dead directory.
+                if (_disposed || !_files.TryGetValue(fileName, out var entry))
                     return;
 
                 if (_pending.TryGetValue(fileName, out var pending))
@@ -202,9 +205,12 @@ public sealed class DocumentWatcher : IDocumentWatcher
 
         public void Dispose()
         {
-            _fsw.Dispose();
+            // Dispose the watcher under the gate and flip _disposed first, so a callback already
+            // waiting on the lock sees the flag and bails instead of resurrecting a debounce timer.
             lock (_gate)
             {
+                _disposed = true;
+                _fsw.Dispose();
                 foreach (var pending in _pending.Values)
                     pending.Timer.Dispose();
                 _pending.Clear();
