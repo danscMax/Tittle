@@ -528,11 +528,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void ToggleLineNumbers() => Editor.ToggleLineNumbers();
 
-    /// <summary>Open the go-to-line overlay on the active tab (Ctrl+G), only in source view.</summary>
+    /// <summary>Open the go-to-line overlay on the active tab (Ctrl+G) — in source view, or as
+    /// go-to-page on a PDF tab (the same status-bar input, page-numbered).</summary>
     [RelayCommand]
     private void OpenGoToLine()
     {
-        if (SelectedTab?.ShowSource == true)
+        if (SelectedTab?.ShowSource == true || SelectedTab?.IsPdf == true)
             SelectedTab.IsGoToLineOpen = true;
     }
 

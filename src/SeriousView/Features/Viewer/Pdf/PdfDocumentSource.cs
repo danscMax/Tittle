@@ -34,11 +34,16 @@ public sealed class PdfDocumentSource
     /// <summary>Per-page aspect ratio (height / width), for placeholder sizing.</summary>
     public IReadOnlyList<double> AspectRatios { get; }
 
-    private PdfDocumentSource(byte[] bytes, int pageCount, IReadOnlyList<double> aspectRatios)
+    /// <summary>Per-page natural width in CSS pixels (PDF points × 96/72), for the «100%» view.</summary>
+    public IReadOnlyList<double> NaturalWidths { get; }
+
+    private PdfDocumentSource(
+        byte[] bytes, int pageCount, IReadOnlyList<double> aspectRatios, IReadOnlyList<double> naturalWidths)
     {
         _bytes = bytes;
         PageCount = pageCount;
         AspectRatios = aspectRatios;
+        NaturalWidths = naturalWidths;
     }
 
     /// <summary>Open a PDF and read its page metadata. Returns null when PDFium can't load it
@@ -58,13 +63,15 @@ public sealed class PdfDocumentSource
 
                 var sizes = Conversion.GetPageSizes(bytes);
                 var aspect = new double[count];
+                var natural = new double[count];
                 for (var i = 0; i < count; i++)
                 {
                     var s = i < sizes.Count ? sizes[i] : default;
                     aspect[i] = s.Width > 0 ? (double)s.Height / s.Width : FallbackAspect;
+                    natural[i] = s.Width > 0 ? s.Width * 96.0 / 72.0 : 612 * 96.0 / 72.0; // pt → px (A4-ish fallback)
                 }
 
-                return new PdfDocumentSource(bytes, count, aspect);
+                return new PdfDocumentSource(bytes, count, aspect, natural);
             }
             finally { NativeGate.Release(); }
         }

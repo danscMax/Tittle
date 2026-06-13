@@ -628,6 +628,22 @@ public class DocumentTabViewModelTests
     }
 
     [Fact]
+    public void PdfTab_GoToLineSubmits_AsPageRequest_AndFitToggleFlips()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Pdf(1000), "/d/x.pdf");
+
+        int? page = null;
+        vm.PdfGoToPageRequested += p => page = p;
+        vm.GoToLineText = "5";
+        vm.SubmitGoToLineCommand.Execute(null);
+        Assert.Equal(1, page); // Pdf null (no file) → PageCount 1 → clamped
+
+        Assert.False(vm.PdfActualSize);
+        vm.TogglePdfFitCommand.Execute(null);
+        Assert.True(vm.PdfActualSize);
+    }
+
+    [Fact]
     public void ImageTab_RoutesToImageView_NotNoticeOrSource()
     {
         var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Image(2048), "/pics/photo.png");

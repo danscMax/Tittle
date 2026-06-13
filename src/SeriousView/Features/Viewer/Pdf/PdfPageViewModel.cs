@@ -37,7 +37,11 @@ public sealed partial class PdfPageViewModel : ObservableObject
         _source = source;
         Index = index;
         AspectRatio = index < source.AspectRatios.Count ? source.AspectRatios[index] : 1.4142;
+        NaturalWidth = index < source.NaturalWidths.Count ? source.NaturalWidths[index] : 816;
     }
+
+    /// <summary>Natural page width in CSS pixels — the target for the «100%» view.</summary>
+    public double NaturalWidth { get; }
 
     /// <summary>Render (or re-render at a new width) this page. Fire-and-forget from the view's
     /// container-realization / resize hooks; a superseding call cancels the in-flight render.</summary>

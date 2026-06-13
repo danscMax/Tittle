@@ -76,13 +76,19 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Raised with a clamped 1-based line when the user submits; the view scrolls there.</summary>
     public event Action<int>? GoToLineRequested;
 
+    /// <summary>Raised with a clamped 1-based page when the user submits on a PDF tab (Ctrl+G reuses
+    /// the go-to-line input); the PDF view scrolls to that page.</summary>
+    public event Action<int>? PdfGoToPageRequested;
+
     [RelayCommand]
     private void SubmitGoToLine()
     {
-        if (int.TryParse(GoToLineText, out var line))
+        if (int.TryParse(GoToLineText, out var target))
         {
-            var max = Math.Max(1, TextMetrics.LineCount(DocumentText));
-            GoToLineRequested?.Invoke(Math.Clamp(line, 1, max));
+            if (IsPdf)
+                PdfGoToPageRequested?.Invoke(Math.Clamp(target, 1, Math.Max(1, Pdf?.PageCount ?? 1)));
+            else
+                GoToLineRequested?.Invoke(Math.Clamp(target, 1, Math.Max(1, TextMetrics.LineCount(DocumentText))));
         }
 
         CloseGoToLine();
@@ -385,6 +391,18 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
 
     /// <summary>Show the PDF view (the source/preview/table hosts stay hidden for a PDF tab).</summary>
     public bool ShowPdf => Kind == FileLoadKind.Pdf;
+
+    /// <summary>«стр N / M» for the status bar, written by <c>PdfView</c> from the scroll position.</summary>
+    [ObservableProperty]
+    private string _pdfPageText = "";
+
+    /// <summary>PDF page sizing: false = fit-to-width (default), true = actual size (100%).</summary>
+    [ObservableProperty]
+    private bool _pdfActualSize;
+
+    /// <summary>Toggle PDF fit-to-width ⟷ actual size (100%).</summary>
+    [RelayCommand]
+    private void TogglePdfFit() => PdfActualSize = !PdfActualSize;
 
     /// <summary>Open this document in the OS default application (PDF / image fallback / convenience).</summary>
     [RelayCommand]

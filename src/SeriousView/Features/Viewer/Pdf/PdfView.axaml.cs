@@ -9,11 +9,13 @@ using SeriousView.Shared;
 namespace SeriousView.Features.Viewer.Pdf;
 
 /// <summary>Drives the PDF page list: lazily renders a page when virtualization realizes its
-/// container (and releases it on clearing), and re-fits the page width to the viewport × the shared
-/// reading zoom on resize / zoom change. Overlays over the AvaloniaEdit GPU surface never repaint,
-/// but this is a plain control tree, so a normal ScrollViewer + ItemsControl is fine here.</summary>
+/// container (releases it on clearing), re-fits the page width to the viewport (or natural «100%»
+/// width) × the shared reading zoom, reports the current page «N / M» from the scroll position, and
+/// scrolls to a requested page (Ctrl+G).</summary>
 public partial class PdfView : UserControl
 {
+    private const double PageGap = 16; // bottom margin per page (matches the XAML), also the top padding
+
     private DocumentTabViewModel? _vm;
     private EditorOptions? _editor;
     private IDisposable? _boundsSub;
@@ -23,6 +25,7 @@ public partial class PdfView : UserControl
         InitializeComponent();
         PagesList.ContainerPrepared += OnContainerPrepared;
         PagesList.ContainerClearing += OnContainerClearing;
+        PageScroll.ScrollChanged += (_, _) => UpdatePageText();
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -44,11 +47,21 @@ public partial class PdfView : UserControl
         base.OnDataContextChanged(e);
         if (_editor is not null)
             _editor.PropertyChanged -= OnEditorPropertyChanged;
+        if (_vm is not null)
+        {
+            _vm.PropertyChanged -= OnVmPropertyChanged;
+            _vm.PdfGoToPageRequested -= OnGoToPage;
+        }
 
         _vm = DataContext as DocumentTabViewModel;
         _editor = _vm?.Editor;
         if (_editor is not null)
             _editor.PropertyChanged += OnEditorPropertyChanged;
+        if (_vm is not null)
+        {
+            _vm.PropertyChanged += OnVmPropertyChanged;
+            _vm.PdfGoToPageRequested += OnGoToPage;
+        }
 
         UpdatePageWidths();
     }
@@ -56,6 +69,12 @@ public partial class PdfView : UserControl
     private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(EditorOptions.FontSize) or nameof(EditorOptions.PreviewScale))
+            UpdatePageWidths();
+    }
+
+    private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DocumentTabViewModel.PdfActualSize))
             UpdatePageWidths();
     }
 
@@ -71,8 +90,8 @@ public partial class PdfView : UserControl
             page.Release();
     }
 
-    // Fit-to-viewport width × the shared reading zoom (the same Editor.FontSize that scales the
-    // markdown preview). Re-renders the realized pages so a resize / zoom isn't blurry.
+    // Fit-to-viewport width (default) or the page's natural «100%» width, each × the shared reading
+    // zoom. Re-renders the realized pages so a resize / zoom / mode-flip isn't blurry.
     private void UpdatePageWidths()
     {
         if (_vm?.Pdf is not { } pdf)
@@ -83,14 +102,50 @@ public partial class PdfView : UserControl
             return;
 
         var scale = _vm.Editor?.PreviewScale ?? 1.0;
-        var width = Math.Clamp((available - 36) * scale, 80, 3000);
+        var actual = _vm.PdfActualSize;
 
         foreach (var page in pdf.Pages)
-            page.DisplayWidth = width;
+            page.DisplayWidth = Math.Clamp((actual ? page.NaturalWidth : available - 36) * scale, 80, 6000);
 
         foreach (var container in PagesList.GetRealizedContainers())
-            if (container.DataContext is PdfPageViewModel page)
-                page.EnsureRendered((int)Math.Ceiling(page.DisplayWidth));
+            if (container.DataContext is PdfPageViewModel p)
+                p.EnsureRendered((int)Math.Ceiling(p.DisplayWidth));
+
+        UpdatePageText();
+    }
+
+    // The page occupying the top of the viewport → "стр N / M" in the status bar.
+    private void UpdatePageText()
+    {
+        if (_vm?.Pdf is not { } pdf || pdf.PageCount == 0)
+            return;
+
+        var offset = PageScroll.Offset.Y;
+        var y = PageGap; // top padding
+        var current = 1;
+        for (var i = 0; i < pdf.Pages.Count; i++)
+        {
+            current = i + 1;
+            var blockBottom = y + pdf.Pages[i].DisplayHeight + PageGap;
+            if (offset + 1 < blockBottom)
+                break;
+            y = blockBottom;
+        }
+
+        _vm.PdfPageText = $"стр {current} / {pdf.PageCount}";
+    }
+
+    // Scroll a 1-based page to (near) the top of the viewport.
+    private void OnGoToPage(int page)
+    {
+        if (_vm?.Pdf is not { } pdf)
+            return;
+
+        var y = PageGap;
+        for (var i = 0; i < page - 1 && i < pdf.Pages.Count; i++)
+            y += pdf.Pages[i].DisplayHeight + PageGap;
+
+        PageScroll.Offset = PageScroll.Offset.WithY(Math.Max(0, y - 8));
     }
 
     // Minimal IObserver for the Bounds observable — fires the resize re-fit (no Rx dependency).

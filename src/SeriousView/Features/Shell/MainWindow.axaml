@@ -381,6 +381,11 @@
                    IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"
                    Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
                    Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- PDF page counter «стр N / M» — written by PdfView from the scroll position. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.PdfPageText}"
+                   IsVisible="{Binding SelectedTab.ShowPdf, FallbackValue=False}" Margin="0,0,12,0"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   Opacity="0.92" VerticalAlignment="Center"/>
         <!-- Zoom — in the status bar for the source editor AND the markdown preview (the preview is
              scaled via a layout transform by the same font-size value). Hidden for table/notice tabs. -->
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
@@ -419,6 +424,11 @@
                 ToolTip.Tip="Таблица / исходник" AutomationProperties.Name="Таблица или исходник"
                 Content="▦"
                 IsVisible="{Binding SelectedTab.CsvTable, FallbackValue=False, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <!-- PDF fit-to-width ⟷ actual size (100%) toggle. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.TogglePdfFitCommand}"
+                ToolTip.Tip="По ширине / 100%" AutomationProperties.Name="Масштаб PDF"
+                Content="⤢" IsVisible="{Binding SelectedTab.ShowPdf, FallbackValue=False}"/>
         <!-- Preview/source switch (markdown only) — a clearly-labelled segmented toggle replacing the
              ambiguous eye icon; the active mode fills with the accent. Each segment SETS its mode
              (ToggleViewModeCommand still backs the palette/keyboard). -->
@@ -456,6 +466,10 @@
           <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                       IsVisible="{Binding SelectedTab.IsGoToLineOpen, FallbackValue=False}">
             <TextBlock Text="Перейти к строке:" VerticalAlignment="Center"
+                       IsVisible="{Binding !SelectedTab.IsPdf, FallbackValue=True}"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
+            <TextBlock Text="Перейти к странице:" VerticalAlignment="Center"
+                       IsVisible="{Binding SelectedTab.IsPdf, FallbackValue=False}"
                        Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
             <TextBox x:Name="GoToLineBox" Width="72" Height="22" Padding="6,1" FontSize="11.5"
                      AutomationProperties.Name="Номер строки"
