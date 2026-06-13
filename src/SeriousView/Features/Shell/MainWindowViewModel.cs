@@ -327,6 +327,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         Layout.ShowRail = layout.ShowRail;
         Layout.ReadingMode = layout.ReadingMode;
         Layout.OutlineWidth = layout.OutlineWidth;
+        Layout.ReadingWidth = layout.ReadingWidth;
         Layout.SplitOrientation = layout.SplitOrientation;
         Layout.SplitRatio = layout.SplitRatio;
     }

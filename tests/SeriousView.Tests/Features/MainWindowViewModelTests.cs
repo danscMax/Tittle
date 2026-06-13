@@ -851,6 +851,42 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
+    public async Task ImportSettings_AppliesAllLayoutFields()
+    {
+        // Guards ApplyImportedSettings against dropped Layout fields — ReadingWidth was missing
+        // (pre-existing), and the split fields are new. All must survive an export→import round-trip.
+        var dir = Directory.CreateTempSubdirectory("sv-layout-").FullName;
+        try
+        {
+            var file = Path.Combine(dir, "s.json");
+            var sourceLayout = new LayoutSettings
+            {
+                ReadingWidth = ReadingWidth.Narrow,
+                SplitOrientation = SplitOrientation.Vertical,
+                SplitRatio = 0.7,
+            };
+            var source = new MainWindowViewModel(new FakeFileDialogService(null) { SavePath = file },
+                new FakeFileReader("x"), new FakeThemeService(), new FakeRecentFilesStore(),
+                Holder(new AppSettings { Layout = sourceLayout }), new FakeClipboardService(),
+                new FakeShellService(), Array.Empty<string>());
+            await source.ExportSettingsCommand.ExecuteAsync(null);
+
+            var target = new MainWindowViewModel(new FakeFileDialogService(file),
+                new FakeFileReader("x"), new FakeThemeService(), new FakeRecentFilesStore(), Holder(),
+                new FakeClipboardService(), new FakeShellService(), Array.Empty<string>());
+            await target.ImportSettingsCommand.ExecuteAsync(null);
+
+            Assert.Equal(ReadingWidth.Narrow, target.Layout.ReadingWidth);
+            Assert.Equal(SplitOrientation.Vertical, target.Layout.SplitOrientation);
+            Assert.Equal(0.7, target.Layout.SplitRatio);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [AvaloniaFact]
     public async Task ImportSettings_GarbageFile_ShowsAnError()
     {
         var dir = Directory.CreateTempSubdirectory("sv-settings-bad-").FullName;
