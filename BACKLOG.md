@@ -329,13 +329,22 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 (Waves A–D, 22 findings, `8af0fd0`…`32f385b`). **Split-view live sync is DONE** (`95341eb`…`816ee78`, 828 tests, +21)
 and **DocumentView code-behind split is DONE** (`84f8f77`). The **full 14-theme catalog** is in
 (`1582d60`/`3833f54`); a `max.avalonia-smoke` theme smoke (2026-06-13) rendered all 14 and fixed a
-HighContrast name collision (`e7129c2`). **Genuinely open for the next session** (pick by priority):
-**(a) theme-catalog chrome pass** — Layer-3 live shots of the 12 new palettes' CHROME (status bar / tabs /
-sidebar / editor), which Layer-1 can't show, to verify contrast/cohesion + WCAG on the HighContrast a11y
-theme (likely more lurking issues like the one just fixed); **(b) M12 diagrams** (hard, WebView-less; Mermaid
-is JS-only, PlantUML leaks source → must stay opt-in); **(c) deferred minor tech-debt** (merge the 3 preview
-reflow tree walks into one pass; cache per-line indent columns; `RevealInExplorer` → ArgumentList; ExpandUnit
-sign-parse — all Av11-safe). xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the carried-over Lows were
+HighContrast name collision (`e7129c2`). **Theme-catalog chrome pass is DONE** (2026-06-13, `ea85e50`):
+Layer-3 live-window shots of all 14 themes (`max.avalonia-smoke` + a local `gui-drive.ps1`) + a deterministic
+WCAG audit computed from the AXAML hex. HighContrast = AAA everywhere; cohesion clean (no phantom glyphs /
+clipping). Fixed: muted/status text below AA 4.5:1 in SolarizedDark/Dim, GruvboxDark, Sepia, SolarizedLight
+(hue-preserving nudge to ≥4.6) + the F-11 catalog-swatch drift for DeepBlue/Ocean/Nord; two guard tests added
+(swatch↔AXAML, AA floor for all 14). **Known pre-existing (reported, not fixed):** the light family's catalog
+`Surface` swatch (GruvboxLight/Sepia/SolarizedLight) mirrors the sidebar mid-tone, not `EditorSurfaceBrush` —
+an older/looser swatch convention, harmless (preview tile only). **Genuinely open** (pick by priority):
+**(a) M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source → must stay opt-in);
+**(b)** decide whether to unify the light-family swatch convention above. The four minor tech-debt items are now **CLOSED**
+(`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason
++ `BuildRevealStartInfo` seam · `bb18c0a` ExpandUnit sign-parse), and the **2026-06-13 global audit is DONE**
+(11 findings F-01…F-11, 0 critical/high, `7a26bad`…`beed747` — see `AUDIT_REPORT.md`: settings-save logging,
+donate-link allowlist, IP-octet validation, watcher dispose-under-gate, crash-log stderr fallback, named shell
+event handlers + guarded omnibar, error-bar CTS null, inline-rewrite dedup, DeepBlue/Ocean/Nord surface contrast).
+xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the carried-over Lows were
 re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
 FluentAvalonia not ported — re-verified 2026-06-12; it also gates xUnit v3 via `Avalonia.Headless.XUnit`). The
 historical log of completed work follows.
