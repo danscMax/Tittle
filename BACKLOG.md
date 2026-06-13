@@ -259,6 +259,19 @@ the line at the viewport top; non-markdown tabs with an outline) · **dark theme
 (`cd55cf7` — `ThemeMode.Midnight`/`Ocean` as custom `ThemeVariant`s INHERITING Dark, palettes
 override only surface tokens; ☰ Вид ▸ Тема radios + palette; cycle walks the dark set first).
 
+**Full theme catalog (2026-06-12/13)** — `1582d60` DeepBlue (Tokyo Night), then `3833f54`
+ported the rest of the original viewer's palettes into a **data-driven `Core/Abstractions/ThemeCatalog`**:
+14 variants total (Dark, Light + DeepBlue/Midnight/Ocean/Nord/Dracula/SolarizedDark/SolarizedDim/
+GruvboxDark/HighContrast on Dark; Sepia/SolarizedLight/GruvboxLight on Light). Each color file in
+`Themes/Colors/` overrides only chrome/surface/accent tokens; the markdown preview body deliberately
+follows the inherited Light/Dark base (the custom palettes differentiate the CHROME). **Theme smoke
+(`max.avalonia-smoke`, 2026-06-13)** rendered all 14 via `tools/HeadlessRender` and caught a
+**HighContrast name collision** (`e7129c2`): the variant Key `"HighContrast"` collided with the
+platform/FluentAvalonia high-contrast handling → light preview under black chrome; fixed by re-keying
+to `"ContrastDark"`. The harness now renders all 14 themes (`818e471`). **Still un-verified: the
+custom-palette CHROME** — Layer-1 renders leaf controls only, so the per-theme status bar / tabs /
+sidebar / editor surface need a Layer-3 (live-window) pass.
+
 **Markdown extras still open**: checkbox click-to-toggle (write-back guarded by
 `fencedCodeRanges` — ships with M15 save).
 
@@ -304,9 +317,15 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 
 **Status (2026-06-13):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
 (Waves A–D, 22 findings, `8af0fd0`…`32f385b`). **Split-view live sync is DONE** (`95341eb`…`816ee78`, 828 tests, +21)
-and **DocumentView code-behind split is DONE** (`84f8f77`). **Genuinely open for the next session** (pick by
-priority): new capability — **M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source →
-must stay opt-in). xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the carried-over Lows were
+and **DocumentView code-behind split is DONE** (`84f8f77`). The **full 14-theme catalog** is in
+(`1582d60`/`3833f54`); a `max.avalonia-smoke` theme smoke (2026-06-13) rendered all 14 and fixed a
+HighContrast name collision (`e7129c2`). **Genuinely open for the next session** (pick by priority):
+**(a) theme-catalog chrome pass** — Layer-3 live shots of the 12 new palettes' CHROME (status bar / tabs /
+sidebar / editor), which Layer-1 can't show, to verify contrast/cohesion + WCAG on the HighContrast a11y
+theme (likely more lurking issues like the one just fixed); **(b) M12 diagrams** (hard, WebView-less; Mermaid
+is JS-only, PlantUML leaks source → must stay opt-in); **(c) deferred minor tech-debt** (merge the 3 preview
+reflow tree walks into one pass; cache per-line indent columns; `RevealInExplorer` → ArgumentList; ExpandUnit
+sign-parse — all Av11-safe). xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the carried-over Lows were
 re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
 FluentAvalonia not ported — re-verified 2026-06-12; it also gates xUnit v3 via `Avalonia.Headless.XUnit`). The
 historical log of completed work follows.
@@ -326,7 +345,8 @@ settings import/export · back-to-top · help), and **ported batch 2** (cv-* dec
 guides · code-block copy buttons · code/text breadcrumbs · scroll-% · image lightbox ·
 front-matter panel · section folding — see the pool section), **ported batch 3** (sortable
 preview tables · collapsible sections · reading-width presets), and **ported batch 4**
-(heading bookmarks + TOC unread marks · code minimap · Midnight/Ocean dark themes),
+(heading bookmarks + TOC unread marks · code minimap · Midnight/Ocean dark themes; later
+extended to the **full 14-theme catalog** `1582d60`/`3833f54` — data-driven `ThemeCatalog`),
 **all of M13** (HTML · rich-text · print/PDF via browser), and **all of M15** (in-place
 editing + Ctrl+S + ● marker + checkbox click-to-toggle; paste-image/spellcheck deferred with
 reasons). **The full-port goal is now COMPLETE except M12 diagrams** (Mermaid is JS-only,

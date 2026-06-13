@@ -213,7 +213,16 @@ reading-width presets (Full/Comfort/Narrow in Настройки ▸ Раскл�
 LRU-capped `viewstate.json`; scroll-spy marks visited, ☆/★ per TOC row, palette
 «Закладка: …»), code minimap (`MinimapStrip` in a sibling column — overlays over
 AvaloniaEdit never repaint), Midnight/Ocean themes (custom `ThemeVariant`s inheriting
-Dark — palettes override only surface tokens). **M13 COMPLETE**: copy-as-rich-text (pure
+Dark — palettes override only surface tokens). **Full theme catalog** (`1582d60`, `3833f54`):
+all themes from the original viewer ported into a data-driven `Core/Abstractions/ThemeCatalog`
+(14 variants — Dark, Light + DeepBlue/Midnight/Ocean/Nord/Dracula/SolarizedDark/SolarizedDim/
+GruvboxDark/HighContrast inheriting Dark, Sepia/SolarizedLight/GruvboxLight inheriting Light;
+each color file overrides only chrome/surface/accent tokens, the preview body deliberately
+follows the inherited Light/Dark base). **NB (`e7129c2`):** a custom variant's Key string must
+NOT be `"HighContrast"` — it collides with the platform/FluentAvalonia high-contrast handling and
+forces a light base into the Markdown.Avalonia auto-style; the accessibility theme's variant is
+keyed `"ContrastDark"`. `tools/HeadlessRender` (`max.avalonia-smoke`) renders all 14 themes — that
+all-theme smoke is what caught the collision. **M13 COMPLETE**: copy-as-rich-text (pure
 `ClipboardHtml` CF_HTML envelope + `SetHtmlAsync` with a markdown fallback) and print/PDF
 via the browser (light HTML to temp + `IShellService.OpenWithDefaultApp`; native raster PDF
 deliberately rejected — browser output is selectable). **M15 COMPLETE** (user-approved):
