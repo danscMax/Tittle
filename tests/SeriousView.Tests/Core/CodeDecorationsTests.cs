@@ -46,6 +46,14 @@ public class CodeDecorationsTests
         Assert.Equal("192.168.1.10", TextOf(line, Single(line, CodeDecorationKind.Ip)));
     }
 
+    [Theory]
+    [InlineData("ping 256.1.1.1 fail")]        // first octet out of range
+    [InlineData("ip 192.168.1.256 bad")]       // last octet out of range
+    [InlineData("x 999.999.999.999 y")]        // every octet out of range
+    public void IpAddress_OutOfRangeOctets_AreNotDecorated(string line)
+        => Assert.DoesNotContain(
+            CodeDecorations.ScanLine(line, Today), d => d.Kind == CodeDecorationKind.Ip);
+
     [Fact]
     public void Email_IsDecorated()
     {
