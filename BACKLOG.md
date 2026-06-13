@@ -334,11 +334,16 @@ Layer-3 live-window shots of all 14 themes (`max.avalonia-smoke` + a local `gui-
 WCAG audit computed from the AXAML hex. HighContrast = AAA everywhere; cohesion clean (no phantom glyphs /
 clipping). Fixed: muted/status text below AA 4.5:1 in SolarizedDark/Dim, GruvboxDark, Sepia, SolarizedLight
 (hue-preserving nudge to ≥4.6) + the F-11 catalog-swatch drift for DeepBlue/Ocean/Nord; two guard tests added
-(swatch↔AXAML, AA floor for all 14). **Known pre-existing (reported, not fixed):** the light family's catalog
-`Surface` swatch (GruvboxLight/Sepia/SolarizedLight) mirrors the sidebar mid-tone, not `EditorSurfaceBrush` —
-an older/looser swatch convention, harmless (preview tile only). **Genuinely open** (pick by priority):
-**(a) M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source → must stay opt-in);
-**(b)** decide whether to unify the light-family swatch convention above. The four minor tech-debt items are now **CLOSED**
+(swatch↔AXAML, AA floor for all 14). The light-family swatch convention (GruvboxLight/Sepia/SolarizedLight
+mirror `SidebarSurfaceBrush`, not `EditorSurfaceBrush`, since their editor surface ≈ the background) was
+**codified + guarded** (`b3d7138`: per-field doc on `ThemeInfo` + `AllSwatches_MatchTheirAxamlSurfaces` over all 14).
+**Published 2026-06-13:** public GitHub repo **`danscMax/SeriousView`** (main-only workflow, no feature branches),
+bilingual EN/RU README with badges + 4 themed hero screenshots (`docs/screenshots/`), and a **redesigned app
+icon** (glossy emerald `</>` on transparent, `52dd193`, via `tools/IconForge`). **Genuinely open** (pick by priority):
+**(a) cut a tagged release** — v0.1.0 + prebuilt binaries (`build_all.ps1` → `dist/win-x64`+`win-arm64`); optionally a
+release CI workflow building all 3 OSes on tag;
+**(b) M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source → must stay opt-in).
+The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason
 + `BuildRevealStartInfo` seam · `bb18c0a` ExpandUnit sign-parse), and the **2026-06-13 global audit is DONE**
 (11 findings F-01…F-11, 0 critical/high, `7a26bad`…`beed747` — see `AUDIT_REPORT.md`: settings-save logging,
