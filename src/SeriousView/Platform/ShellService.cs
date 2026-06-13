@@ -19,10 +19,37 @@ public sealed class ShellService : IShellService
         if (string.IsNullOrWhiteSpace(filePath))
             return;
 
+        var platform = OperatingSystem.IsWindows() ? RevealPlatform.Windows
+            : OperatingSystem.IsMacOS() ? RevealPlatform.MacOS
+            : RevealPlatform.Linux;
+
         try
         {
-            if (OperatingSystem.IsWindows())
-            {
+            if (BuildRevealStartInfo(filePath, platform) is { } psi)
+                Process.Start(psi);
+        }
+        catch
+        {
+            // Best-effort: a missing file manager / unhandled path must not crash the viewer.
+        }
+    }
+
+    internal enum RevealPlatform
+    {
+        Windows,
+        MacOS,
+        Linux,
+    }
+
+    /// <summary>Builds the reveal-in-file-manager <see cref="ProcessStartInfo"/> for a platform, or
+    /// <c>null</c> for a no-op (a path with no containing folder where we'd fall back to one). Pure —
+    /// no <see cref="Process"/> launch and no OS probe — so a test can drive every platform branch on
+    /// any host. The <paramref name="platform"/> is resolved by the caller.</summary>
+    internal static ProcessStartInfo? BuildRevealStartInfo(string filePath, RevealPlatform platform)
+    {
+        switch (platform)
+        {
+            case RevealPlatform.Windows:
                 // A Windows path can't legitimately contain a double-quote or a control char; one that
                 // does is malformed/hostile and would break out of the quoted /select, token to inject
                 // further explorer switches. Fall back to opening the containing folder (ArgumentList,
@@ -30,28 +57,26 @@ public sealed class ShellService : IShellService
                 if (filePath.Contains('"') || filePath.Any(char.IsControl))
                 {
                     var folder = Path.GetDirectoryName(filePath);
-                    if (!string.IsNullOrEmpty(folder))
-                        Process.Start(new ProcessStartInfo("explorer.exe") { ArgumentList = { folder } });
-                    return;
+                    return string.IsNullOrEmpty(folder)
+                        ? null
+                        : new ProcessStartInfo("explorer.exe") { ArgumentList = { folder } };
                 }
 
-                // explorer's /select, is finicky about quoting — the raw argument string is the proven form.
-                Process.Start(new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"" });
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                Process.Start(new ProcessStartInfo("open") { ArgumentList = { "-R", filePath } });
-            }
-            else
-            {
-                var folder = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(folder))
-                    Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { folder } });
-            }
-        }
-        catch
-        {
-            // Best-effort: a missing file manager / unhandled path must not crash the viewer.
+                // explorer's /select, is finicky about quoting and must stay a single raw argument
+                // STRING: passing "/select,<path>" through ArgumentList would quote the whole token
+                // ("/select,C:\…") on a path with spaces and break the selection. The guard above
+                // already rules out the only injection vector (a quote / control char in the path),
+                // and the path is a real opened file, never content-derived — so the string is safe.
+                return new ProcessStartInfo("explorer.exe") { Arguments = $"/select,\"{filePath}\"" };
+
+            case RevealPlatform.MacOS:
+                return new ProcessStartInfo("open") { ArgumentList = { "-R", filePath } };
+
+            default: // Linux: no standard reveal — open the containing folder.
+                var dir = Path.GetDirectoryName(filePath);
+                return string.IsNullOrEmpty(dir)
+                    ? null
+                    : new ProcessStartInfo("xdg-open") { ArgumentList = { dir } };
         }
     }
 
