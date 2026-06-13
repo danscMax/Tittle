@@ -28,9 +28,19 @@ public static class CrashLogger
 
             File.AppendAllText(LogPath, CrashLog.Format(DateTimeOffset.Now, error, source));
         }
-        catch
+        catch (Exception ex)
         {
-            // Diagnostics must never throw from a crash handler.
+            // Diagnostics must never throw from a crash handler — but if the log is unwritable
+            // (full disk / no permissions) surface at least the first failure to stderr so the
+            // crash leaves some trace. The nested guard keeps even this fallback non-throwing.
+            try
+            {
+                Console.Error.WriteLine($"CrashLogger failed ({source}): {ex.Message}");
+            }
+            catch
+            {
+                // Nothing left to do.
+            }
         }
     }
 }
