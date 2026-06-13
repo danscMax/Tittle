@@ -12,6 +12,12 @@ dotnet run --project src/SeriousView           # run (or: SeriousView <file>)
 dotnet format SeriousView.sln                  # apply formatting (CI verifies)
 ```
 
+For **live visual QA** (drive the real window — launch, send shortcuts, click, DPI-aware screenshot,
+review against the `desktop-visual-audit` checklist), use the **`gui-qa` skill**
+(`.claude/skills/gui-qa/`). It exists because Avalonia chrome can't render headless (the Symbols-font
+crash), so visuals need the real window via Win32 — the in-process `Avalonia.Headless` path covers the
+logic/seam tests instead.
+
 Requires the **.NET 9 SDK**. Built and tested on Windows/Linux/macOS (see CI).
 
 ## Architecture (hold the line)
