@@ -104,4 +104,22 @@ public class FileReaderTests
         }
         finally { File.Delete(temp); }
     }
+
+    [Theory]
+    [InlineData(".png")]
+    [InlineData(".svg")]
+    public async Task LoadAsync_Image_RoutesToImageKind_NotBinary(string ext)
+    {
+        // Image files route to the image viewer kind before the binary classifier (a .png is binary
+        // by content; a .svg is text but must still show as an image, not as source).
+        var reader = new FileReader();
+        var temp = Path.Combine(Path.GetTempPath(), $"sv_{Guid.NewGuid():N}{ext}");
+        await File.WriteAllBytesAsync(temp, new byte[] { 0x89, 0x50, 0x00, 0x4E, 0x47 });
+        try
+        {
+            var result = await reader.LoadAsync(temp);
+            Assert.Equal(FileLoadKind.Image, result.Kind);
+        }
+        finally { File.Delete(temp); }
+    }
 }

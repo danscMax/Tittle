@@ -248,6 +248,13 @@ pages (virtualized, lazy, off-UI-thread; PDFium serialized via one global gate; 
 graceful fallback to «открыть внешне» on a missing native. Dep: **PDFtoImage 4.1.1** (pinned to
 the 4.x line — SkiaSharp 2.88.x unifies with Av11's 2.88.9; 5.x needs SkiaSharp 3.x → defer to
 Av12). Native pdfium ships per-RID via `bblanchon.PDFium` (win-x64/arm64, linux, osx all covered).
+Also **standalone image files** — `FileReader` routes raster (`.png/.jpg/.jpeg/.gif/.bmp/.webp/.ico`)
+and `.svg` to `FileLoadKind.Image`; `Features/Viewer/Images/ImageFileView` shows them as one `IImage`
+(raster `Bitmap` decoded natively by Skia, SVG via `SvgImage`/`SvgSource`), fit-to-window + Ctrl+±
+zoom (reuses the preview's `ScaleTransformConverter`), graceful «открыть внешне» fallback. Dep:
+**Avalonia.Svg.Skia 11.2.0.2** — pinned to the SkiaSharp 2.88.x line (11.2.7.1/11.3.0+ jumped to
+SkiaSharp 3.x → would clash with Av11's 2.88.9; same trap as PDFtoImage 5.x). NB: a sub-namespace
+under `Features/Viewer` must NOT be `Image` — it shadows the Avalonia `Image` type (use `Images`).
 
 ## Conventions
 

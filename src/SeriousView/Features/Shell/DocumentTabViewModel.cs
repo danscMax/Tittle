@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Svg.Skia;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -339,13 +342,59 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Show the PDF view (the source/preview/table hosts stay hidden for a PDF tab).</summary>
     public bool ShowPdf => Kind == FileLoadKind.Pdf;
 
-    /// <summary>Open this document in the OS default application (PDF fallback / convenience).</summary>
+    /// <summary>Open this document in the OS default application (PDF / image fallback / convenience).</summary>
     [RelayCommand]
     private void OpenExternally()
     {
         if (FilePath is { } path)
             Shell?.OpenExternally(path);
     }
+
+    // --- Image files (raster decoded by Avalonia/Skia; .svg via SvgImage — both are IImage) ---
+
+    /// <summary>True for an image file — shown by the dedicated ImageFileView, not as text.</summary>
+    public bool IsImage => Kind == FileLoadKind.Image;
+
+    /// <summary>True for a vector .svg image (a subset of <see cref="IsImage"/>).</summary>
+    public bool IsSvg => ImageFile.IsSvgExtension(GrammarExtension);
+
+    private IImage? _imageSource;
+    private bool _imageBuilt;
+
+    /// <summary>Lazily-loaded image (raster <see cref="Bitmap"/> or vector <see cref="SvgImage"/>),
+    /// null when the file can't be decoded (ImageFileView then shows the "open externally"
+    /// fallback). Built on first bind, NOT in FromLoad — it touches disk / the decoder.</summary>
+    public IImage? ImageSource
+    {
+        get
+        {
+            if (!_imageBuilt)
+            {
+                _imageBuilt = true;
+                if (IsImage && FilePath is { } path)
+                    _imageSource = LoadImage(path);
+            }
+
+            return _imageSource;
+        }
+    }
+
+    private static IImage? LoadImage(string path)
+    {
+        try
+        {
+            return ImageFile.IsSvgExtension(path)
+                ? new SvgImage { Source = SvgSource.Load(path, null, null) }
+                : new Bitmap(path);
+        }
+        catch
+        {
+            return null; // unreadable / unsupported encoding → graceful fallback
+        }
+    }
+
+    /// <summary>Show the image view (the source/preview/table hosts stay hidden for an image tab).</summary>
+    public bool ShowImage => Kind == FileLoadKind.Image;
 
     private CsvTableViewModel? _csvTable;
     private bool _csvTableBuilt;
@@ -485,7 +534,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode),
     /// unless the tab is showing its table view or is a PDF.</summary>
     public bool ShowSource =>
-        !ShowNotice && !ShowPdf && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
+        !ShowNotice && !ShowPdf && !ShowImage && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
 
     /// <summary>Show source + preview side by side (markdown only). In split, both hosts are
     /// realized but <see cref="ShowSource"/>/<see cref="ShowPreview"/> are false — the panes are
@@ -502,7 +551,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Whether the font-size zoom controls apply to this tab — the source editor, the
     /// markdown preview (zoomed via a layout scale) or the PDF view (zoom → render width). False
     /// for the table view and notice overlays.</summary>
-    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit || ShowPdf;
+    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit || ShowPdf || ShowImage;
 
     /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
     /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>
@@ -778,6 +827,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         FileLoadKind.Binary => $"Бинарный файл · {SizeText}",
         FileLoadKind.TooLarge => $"Слишком большой · {SizeText}",
         FileLoadKind.Pdf => $"PDF · {SizeText}",
+        FileLoadKind.Image => $"Изображение · {SizeText}",
         _ when DocumentText.Length == 0 => "Пустой файл",
         _ => $"Строк: {TextMetrics.LineCount(DocumentText)}   ·   Символов: {TextMetrics.CharCount(DocumentText)}"
            + $"   ·   {EncodingName}"

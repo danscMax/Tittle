@@ -22,6 +22,11 @@ public sealed class FileReader : IFileReader
         if (PdfFile.IsPdfExtension(path))
             return FileLimits.IsPdfTooLarge(size) ? FileLoadResult.TooLarge(size) : FileLoadResult.Pdf(size);
 
+        // Images (raster + SVG) likewise route to their viewer kind before binary classification;
+        // the view loads from the path (raster decodes fully into memory → a size guard applies).
+        if (ImageFile.IsImageExtension(path))
+            return FileLimits.IsImageTooLarge(size) ? FileLoadResult.TooLarge(size) : FileLoadResult.Image(size);
+
         if (FileLimits.IsTooLarge(size))
             return FileLoadResult.TooLarge(size);
 

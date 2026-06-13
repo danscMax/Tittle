@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SeriousView.Features.Shell"
+             xmlns:sh="using:SeriousView.Shared"
+             x:Class="SeriousView.Features.Viewer.Images.ImageFileView"
+             x:DataType="vm:DocumentTabViewModel">
+  <Panel Background="{DynamicResource EditorSurfaceBrush}">
+    <!-- Fit-to-window by default (Img.MaxWidth/MaxHeight tracked to the viewport in code-behind so
+         Stretch=Uniform shrinks to fit), zoomed by the shared reading scale via a LayoutTransform
+         (the same idiom as the markdown preview), panned by the outer ScrollViewer. -->
+    <ScrollViewer x:Name="ImageScroll" Padding="16"
+                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                  IsVisible="{Binding ImageSource, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <Panel HorizontalAlignment="Stretch">
+        <LayoutTransformControl HorizontalAlignment="Center" VerticalAlignment="Center"
+            LayoutTransform="{Binding Editor.PreviewScale, FallbackValue=1.0, Converter={x:Static sh:ScaleTransformConverter.Instance}}">
+          <Image x:Name="Img" Source="{Binding ImageSource}" Stretch="Uniform"/>
+        </LayoutTransformControl>
+      </Panel>
+    </ScrollViewer>
+
+    <!-- Fallback: the file couldn't be decoded (unsupported encoding, corrupt). Offer the OS viewer. -->
+    <Border IsVisible="{Binding ImageSource, Converter={x:Static ObjectConverters.IsNull}}">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="440">
+        <TextBlock Text="Не удалось открыть изображение"
+                   TextWrapping="Wrap" TextAlignment="Center" FontSize="15"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <Button Content="Открыть во внешнем приложении" HorizontalAlignment="Center"
+                Command="{Binding OpenExternallyCommand}"
+                AutomationProperties.Name="Открыть во внешнем приложении"/>
+      </StackPanel>
+    </Border>
+  </Panel>
+</UserControl>

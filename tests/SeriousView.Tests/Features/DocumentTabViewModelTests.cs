@@ -625,4 +625,19 @@ public class DocumentTabViewModelTests
         Assert.Null(vm.Pdf);         // the file doesn't exist → graceful fallback (no throw)
         Assert.Contains("PDF", vm.StatusText);
     }
+
+    [Fact]
+    public void ImageTab_RoutesToImageView_NotNoticeOrSource()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Image(2048), "/pics/photo.png");
+
+        Assert.True(vm.IsImage);
+        Assert.True(vm.ShowImage);
+        Assert.False(vm.ShowNotice);
+        Assert.False(vm.ShowSource);
+        Assert.True(vm.ZoomApplies);
+        Assert.Contains("Изображение", vm.StatusText);
+        // (Actual decode → Bitmap/SvgImage is covered by ImageLoadingTests; whether a missing-file
+        // load returns null vs a platform stub is environment-dependent, so it's not asserted here.)
+    }
 }

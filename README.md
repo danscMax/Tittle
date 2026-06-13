@@ -69,6 +69,9 @@ plain text, document statistics (RU-adapted Flesch).
 lazy/virtualized pages, Ctrl+± zoom; falls back to the OS viewer if the native engine is
 unavailable.
 
+**Images** — raster (PNG/JPEG/WebP/BMP/GIF/ICO) and SVG files viewed in-app: fit-to-window,
+Ctrl+± zoom; raster decoded natively via Skia, SVG rendered vectorially.
+
 **Shell** — tabs (drag-reorder, context menu, kept-alive content), single-instance file
 forwarding, live-reload with a "changed on disk" dot and position-preserving refresh,
 session restore, split view with live mutual scroll, **14 themes** (Dark/Light + Midnight,
@@ -90,6 +93,7 @@ print / save-as-PDF via the browser.
 | Editor | AvaloniaEdit + TextMate (TextMateSharp grammars) |
 | Math | Sylinko.CSharpMath.Avalonia (native, no JS) |
 | PDF | PDFtoImage 4.x (PDFium, native, no WebView) |
+| Images | Avalonia/Skia (raster) · Avalonia.Svg.Skia (SVG) |
 | MVVM | CommunityToolkit.Mvvm |
 | DI | Microsoft.Extensions.DependencyInjection |
 | Tests | xUnit + Avalonia.Headless (840+) |

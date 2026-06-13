@@ -9,6 +9,9 @@ public enum FileLoadKind
 
     /// <summary>A PDF document — rendered page-by-page by the dedicated PDF view, not as text.</summary>
     Pdf,
+
+    /// <summary>An image file (raster or SVG) — shown by the dedicated image view, not as text.</summary>
+    Image,
 }
 
 /// <summary>Outcome of loading a file for viewing. <see cref="Text"/> is normalized to LF and is
@@ -29,6 +32,9 @@ public sealed record FileLoadResult(
 
     public static FileLoadResult Pdf(long sizeBytes)
         => new(FileLoadKind.Pdf, "", "", "", sizeBytes, false);
+
+    public static FileLoadResult Image(long sizeBytes)
+        => new(FileLoadKind.Image, "", "", "", sizeBytes, false);
 
     public static FileLoadResult TooLarge(long sizeBytes)
         => new(FileLoadKind.TooLarge, "", "", "", sizeBytes, false);

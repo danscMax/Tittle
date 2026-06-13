@@ -13,9 +13,14 @@ public static class FileLimits
     /// the text <see cref="LoadMaxBytes"/> — just a guard against a pathologically large file.</summary>
     public const long PdfLoadMaxBytes = 200L * 1024 * 1024;   // 200 MB
 
+    /// <summary>Image cap: a raster image decodes fully into memory, so guard against a huge file.</summary>
+    public const long ImageLoadMaxBytes = 100L * 1024 * 1024; // 100 MB
+
     public static bool IsTooLarge(long sizeBytes) => sizeBytes > LoadMaxBytes;
 
     public static bool IsPdfTooLarge(long sizeBytes) => sizeBytes > PdfLoadMaxBytes;
+
+    public static bool IsImageTooLarge(long sizeBytes) => sizeBytes > ImageLoadMaxBytes;
 
     public static bool SuppressHighlight(long sizeBytes) => sizeBytes > HighlightMaxBytes;
 }

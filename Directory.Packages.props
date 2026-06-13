@@ -42,6 +42,15 @@
     <PackageVersion Include="Sylinko.CSharpMath.Avalonia" Version="11.3.1" />
   </ItemGroup>
 
+  <ItemGroup Label="SVG rendering (vector image files)">
+    <!-- 11.2.0.2 is on SkiaSharp 2.88.8 + Svg.Skia 2.0.0.4 (unifies with Avalonia 11.3's 2.88.9).
+         The 11.2.x line later jumped to SkiaSharp 3.116 (11.2.7.1 / 11.3.0+) → would clash with the
+         Av11 native (same trap as PDFtoImage 5.x). Avalonia floor 11.2.0 ≤ our 11.3.17. Raster
+         images need no package — Avalonia decodes PNG/JPEG/WebP/BMP/GIF via Skia natively;
+         SvgImage/SvgSource render .svg as an IImage. Do NOT bump past 2.88.x until the Av12 migration. -->
+    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+  </ItemGroup>
+
   <ItemGroup Label="PDF rendering (PDFium via SkiaSharp)">
     <!-- 4.1.1 is the LAST 4.x: it tracks SkiaSharp 2.88.x (unifies with Avalonia 11.3's 2.88.9).
          PDFtoImage 5.x requires SkiaSharp 3.119+ → clashes with the Av11 native (libSkiaSharp 88).
