@@ -194,17 +194,24 @@ public static partial class MarkdownPreprocessor
     // flanks only (no intraword a_b_c; .NET \w covers '_' itself, killing run adjacency too),
     // content underscore-free. Link destinations and autolinks are masked so URLs survive.
     private static void ConvertUnderscoreEmphasisInPlace(List<string> lines, MarkdownCodeRegions regions)
+        => RewriteInlineLines(lines, regions, '_', line => MarkdownCodeRegions.ReplaceOutsideCode(
+            line, UnderscoreEmphasis(), m => $"*{m.Groups[1].Value}*",
+            LinkDestination(), AutoLink()));
+
+    // Shared per-line frame for the inline rewrite passes (underscore italics, emoji): skip fenced,
+    // overlong and link-reference-definition lines and lines without the trigger char, then rewrite
+    // the rest in place. The trigger is a cheap pre-filter before the regex work.
+    private static void RewriteInlineLines(
+        List<string> lines, MarkdownCodeRegions regions, char trigger, Func<string, string> rewrite)
     {
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
             if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
-                || !line.Contains('_') || LinkRefDefLine().IsMatch(line))
+                || !line.Contains(trigger) || LinkRefDefLine().IsMatch(line))
                 continue;
 
-            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(
-                line, UnderscoreEmphasis(), m => $"*{m.Groups[1].Value}*",
-                LinkDestination(), AutoLink());
+            lines[i] = rewrite(line);
         }
     }
 
@@ -212,19 +219,10 @@ public static partial class MarkdownPreprocessor
     // allowlist — unknown names (and timestamps like 10:30:45, which never match the
     // letter-only token) stay as authored; fences and inline code are skipped.
     private static void ConvertEmojiInPlace(List<string> lines, MarkdownCodeRegions regions)
-    {
-        for (var i = 0; i < lines.Count; i++)
-        {
-            var line = lines[i];
-            if (regions.IsFencedLine(i) || line.Length > MaxInlineLineLength
-                || !line.Contains(':') || LinkRefDefLine().IsMatch(line))
-                continue;
-
-            lines[i] = MarkdownCodeRegions.ReplaceOutsideCode(line, EmojiToken(),
-                m => Emoji.TryGetValue(m.Groups[1].Value, out var glyph) ? glyph : m.Value,
-                LinkDestination(), AutoLink());
-        }
-    }
+        => RewriteInlineLines(lines, regions, ':', line => MarkdownCodeRegions.ReplaceOutsideCode(
+            line, EmojiToken(),
+            m => Emoji.TryGetValue(m.Groups[1].Value, out var glyph) ? glyph : m.Value,
+            LinkDestination(), AutoLink()));
 
     private static readonly Dictionary<string, string> Emoji = new()
     {
