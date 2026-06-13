@@ -8,6 +8,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Product version (drives Assembly/File/InformationalVersion + the build manifest). Bump per release. -->
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
 </Project>
