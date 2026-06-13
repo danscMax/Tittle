@@ -4,8 +4,11 @@ namespace SeriousView.Core.Abstractions;
 
 /// <summary>One entry in the theme gallery: a <see cref="ThemeMode"/> plus the metadata the picker
 /// needs — display name, dark/light family, and four representative swatch colours (hex) for the
-/// preview tile. The swatch colours mirror the theme's AXAML palette
-/// (background · surface · accent · foreground).</summary>
+/// preview tile (background · surface · accent · foreground). <see cref="Background"/> mirrors
+/// <c>WindowBackgroundBrush</c>; <see cref="Surface"/> mirrors <c>EditorSurfaceBrush</c>, except the
+/// warm light themes (Sepia/Solarized/Gruvbox Light) whose editor surface ≈ the background use the
+/// distinguishable <c>SidebarSurfaceBrush</c> mid-tone instead. <see cref="Accent"/> mirrors
+/// <c>AccentBrush</c>; <see cref="Foreground"/> is a representative text tone.</summary>
 public sealed record ThemeInfo(
     ThemeMode Mode,
     string DisplayName,
@@ -18,8 +21,9 @@ public sealed record ThemeInfo(
 /// <summary>The single source of truth for the theme set: defines the order of the
 /// <see cref="ThemeModeExtensions.Next"/> cycle, the gallery layout, and the per-mode
 /// <see cref="ThemeModeExtensions.IsDark"/> answer. Pure (no Avalonia) so both the Core and the
-/// platform/UI layers share one list — the swatch hexes here must match the corresponding
-/// <c>Themes/Colors/*.axaml</c> palette.</summary>
+/// platform/UI layers share one list — the swatch hexes here mirror the corresponding
+/// <c>Themes/Colors/*.axaml</c> palette per the per-field convention on <see cref="ThemeInfo"/>
+/// (guarded by ThemeServiceTests.AllSwatches_MatchTheirAxamlSurfaces).</summary>
 public static class ThemeCatalog
 {
     /// <summary>Dark family first, then the light family, then Auto — this order is the keyboard

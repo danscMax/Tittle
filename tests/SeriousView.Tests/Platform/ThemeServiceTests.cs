@@ -188,32 +188,34 @@ public class ThemeServiceTests
         Assert.Equal(Color.Parse("#F7F7FB"), lightColor);
     }
 
-    // The dark family's swatch convention is exact: ThemeInfo.Background/.Surface mirror the
-    // resolved WindowBackgroundBrush/EditorSurfaceBrush. Guards against catalog↔AXAML drift like the
-    // one a surface-contrast tweak introduced. (The light family's surface swatch mirrors the sidebar
-    // mid-tone by an older convention, so it is intentionally not asserted here.)
+    // Every catalog swatch mirrors its AXAML palette: Background == WindowBackgroundBrush exactly,
+    // and Surface is one of the theme's real surface tokens — EditorSurfaceBrush, or the
+    // SidebarSurfaceBrush mid-tone for the warm light themes whose editor surface ≈ the background
+    // (so the sidebar tone is the distinguishable preview chip). Asserting "one of the two real
+    // surfaces" catches a stale swatch (the F-11 surface tweak left a value matching neither) without
+    // over-constraining which representative surface each theme picked.
     [AvaloniaFact]
-    public void DarkFamilySwatches_MatchTheirAxamlSurfaces()
+    public void AllSwatches_MatchTheirAxamlSurfaces()
     {
         var app = Application.Current!;
         var service = NewService();
-        ThemeMode[] darkFamily =
-        {
-            ThemeMode.Dark, ThemeMode.Midnight, ThemeMode.Ocean, ThemeMode.DeepBlue, ThemeMode.Nord,
-            ThemeMode.Dracula, ThemeMode.SolarizedDark, ThemeMode.SolarizedDim, ThemeMode.GruvboxDark,
-            ThemeMode.HighContrast,
-        };
 
-        foreach (var mode in darkFamily)
+        foreach (var info in ThemeCatalog.All)
         {
-            service.SetMode(mode);
+            if (info.Mode == ThemeMode.Auto)
+                continue; // Auto → OS-follow; no concrete dictionary, swatch is a synthetic split.
+
+            service.SetMode(info.Mode);
             var variant = app.RequestedThemeVariant!;
-            var info = ThemeCatalog.For(mode);
 
             Assert.True(app.TryGetResource("WindowBackgroundBrush", variant, out var bg));
             Assert.Equal(Color.Parse(info.Background), ((ISolidColorBrush)bg!).Color);
-            Assert.True(app.TryGetResource("EditorSurfaceBrush", variant, out var sf));
-            Assert.Equal(Color.Parse(info.Surface), ((ISolidColorBrush)sf!).Color);
+
+            var editor = Resolve(app, "EditorSurfaceBrush", variant);
+            var sidebar = Resolve(app, "SidebarSurfaceBrush", variant);
+            var swatch = Color.Parse(info.Surface);
+            Assert.True(swatch == editor || swatch == sidebar,
+                $"{info.Mode}: surface swatch {info.Surface} matches neither EditorSurface ({editor}) nor SidebarSurface ({sidebar})");
         }
     }
 
