@@ -754,10 +754,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
 
-        if (SelectedTab is { IsJson: true } jsonTab)
-            items.Add(new PaletteItem("Форматировать JSON (вкл/выкл)", jsonTab.ToggleJsonPrettyCommand));
+        if (SelectedTab is { IsPrettyPrintable: true } prettyTab)
+            items.Add(new PaletteItem("Форматировать (вкл/выкл)", prettyTab.TogglePrettyPrintCommand));
 
-        if (SelectedTab is { Delimiter: not null } csvTab)
+        if (SelectedTab is { CsvTable: not null } csvTab)
             items.Add(new PaletteItem("Таблица / исходник", csvTab.ToggleCsvViewCommand));
 
         if (SelectedTab is { IsPlainText: true } textTab)
@@ -1065,8 +1065,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         tab.Layout = Layout;   // share the shell-layout options (reading mode)
         tab.Shell = this;      // back-reference for the tab's context-menu commands
         tab.ViewState = _viewState; // per-file visited/bookmark store (ported)
-        tab.JsonPrettyEnabled = tab.IsJson && Editor.JsonPretty;        // persisted default (ported)
-        tab.CsvAsTableEnabled = tab.Delimiter is not null && Editor.CsvAsTable; // ditto
+        tab.PrettyPrintEnabled = tab.IsPrettyPrintable && Editor.JsonPretty; // persisted default (ported)
+        tab.CsvAsTableEnabled = (tab.Delimiter is not null || tab.IsKeyValueConfig) && Editor.CsvAsTable; // ditto
         tab.SmartTypographyEnabled = tab.IsPlainText && Editor.SmartTypography; // ditto
     }
 

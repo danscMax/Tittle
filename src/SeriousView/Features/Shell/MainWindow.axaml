@@ -335,9 +335,9 @@
                 AutomationProperties.Name="Номера строк" Classes="statusbtn">
           <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
         </Button>
-        <Button Command="{Binding SelectedTab.ToggleJsonPrettyCommand}" ToolTip.Tip="Форматировать JSON"
-                AutomationProperties.Name="Форматировать JSON" Content="{}" Classes="statusbtn"
-                IsVisible="{Binding SelectedTab.IsJson, FallbackValue=False}"/>
+        <Button Command="{Binding SelectedTab.TogglePrettyPrintCommand}" ToolTip.Tip="Форматировать (JSON / XML / NDJSON)"
+                AutomationProperties.Name="Форматировать" Content="{}" Classes="statusbtn"
+                IsVisible="{Binding SelectedTab.IsPrettyPrintable, FallbackValue=False}"/>
       </StackPanel>
     </Border>
 

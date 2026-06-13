@@ -27,11 +27,11 @@ public class DocumentTabViewModelTests
         Assert.False(vm.IsSourceTransformActive);
         var baseStatus = vm.StatusText;
 
-        vm.JsonPrettyEnabled = true;
+        vm.PrettyPrintEnabled = true;
         Assert.True(vm.IsSourceTransformActive);          // pretty-JSON transform is live
         Assert.Contains("Только чтение", vm.StatusText);  // the read-only state is surfaced
 
-        vm.JsonPrettyEnabled = false;
+        vm.PrettyPrintEnabled = false;
         Assert.False(vm.IsSourceTransformActive);
         Assert.Equal(baseStatus, vm.StatusText);          // the plain encoding·EOL status returns
     }
@@ -47,7 +47,7 @@ public class DocumentTabViewModelTests
 
         // A markdown tab has no source transform regardless of the toggles.
         var md = DocumentTabViewModel.FromFile("# h", "/docs/r.md");
-        md.JsonPrettyEnabled = true;
+        md.PrettyPrintEnabled = true;
         md.SmartTypographyEnabled = true;
         Assert.False(md.IsSourceTransformActive);
     }
@@ -567,5 +567,48 @@ public class DocumentTabViewModelTests
         vm.ActiveHeadingOrdinal = 0;
         Assert.NotSame(first, vm.Breadcrumbs); // recomputed on a genuine ordinal change
         Assert.Equal(new[] { "A" }, System.Linq.Enumerable.Select(vm.Breadcrumbs, h => h.Text));
+    }
+
+    // --- Added formats: XML / NDJSON pretty-print + TOML/INI/.env metadata table ---
+
+    [Theory]
+    [InlineData("/a/x.xml", true)]
+    [InlineData("/a/x.csproj", true)]
+    [InlineData("/a/x.axaml", true)]
+    [InlineData("/a/x.svg", false)] // images deferred — .svg is NOT XML pretty-printed
+    [InlineData("/a/x.cs", false)]
+    public void IsXml_TracksXmlFamilyExtensions(string path, bool expected)
+        => Assert.Equal(expected, DocumentTabViewModel.FromFile("<r/>", path).IsXml);
+
+    [Fact]
+    public void IsPrettyPrintable_CoversJsonXmlNdjson_AndDispatchesSourceText()
+    {
+        var xml = DocumentTabViewModel.FromFile("<root><a>1</a></root>", "/a/x.xml");
+        Assert.True(xml.IsPrettyPrintable);
+        xml.PrettyPrintEnabled = true;
+        Assert.Contains("\n  <a>1</a>", xml.SourceText); // XML pretty-printer ran via SourceText
+        Assert.True(xml.IsSourceTransformActive);
+
+        var ndjson = DocumentTabViewModel.FromFile("{\"a\":1}\n{\"b\":2}", "/a/x.jsonl");
+        Assert.True(ndjson.IsPrettyPrintable);
+        ndjson.PrettyPrintEnabled = true;
+        Assert.Contains("\"a\": 1", ndjson.SourceText);
+        Assert.Contains("\"b\": 2", ndjson.SourceText);
+
+        Assert.False(DocumentTabViewModel.FromFile("x", "/a/x.cs").IsPrettyPrintable);
+    }
+
+    [Fact]
+    public void KeyValueConfig_RendersAsTable_ReusingTheCsvOverlay()
+    {
+        var vm = DocumentTabViewModel.FromFile("[server]\nhost = localhost\nport = 8080", "/a/app.toml");
+
+        Assert.True(vm.IsKeyValueConfig);
+        Assert.NotNull(vm.CsvTable); // parsed into the shared table model
+        Assert.Equal(["Ключ", "Значение"], System.Linq.Enumerable.Select(vm.CsvTable!.Columns, c => c.Header));
+
+        vm.CsvAsTableEnabled = true;
+        Assert.True(vm.ShowCsvTable);
+        Assert.False(vm.ShowSource); // table replaces the source view
     }
 }

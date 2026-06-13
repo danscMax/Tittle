@@ -1059,7 +1059,7 @@ public class MainWindowViewModelTests
 
         await vm.OpenPathAsync("/data/x.json");
 
-        Assert.True(vm.SelectedTab!.JsonPrettyEnabled);
+        Assert.True(vm.SelectedTab!.PrettyPrintEnabled);
         Assert.Contains("\"a\": 1", vm.SelectedTab.SourceText);
         Assert.Equal("{\"a\":1}", vm.SelectedTab.DocumentText); // raw text untouched
     }
@@ -1071,7 +1071,7 @@ public class MainWindowViewModelTests
         await vm.OpenPathAsync("/data/x.json");
         Assert.Equal("{\"a\":1}", vm.SelectedTab!.SourceText); // default off
 
-        vm.SelectedTab.ToggleJsonPrettyCommand.Execute(null);
+        vm.SelectedTab.TogglePrettyPrintCommand.Execute(null);
 
         Assert.Contains("\"a\": 1", vm.SelectedTab.SourceText);
         Assert.True(vm.Editor.JsonPretty); // becomes the new-tab default (persisted)
@@ -1641,7 +1641,7 @@ public class MainWindowViewModelTests
             var vm = CreateVm(fileReader: new FileReader());
             await vm.OpenPathAsync(path);
             var tab = vm.SelectedTab!;
-            tab.JsonPrettyEnabled = true;
+            tab.PrettyPrintEnabled = true;
             Assert.NotEqual(tab.DocumentText, tab.SourceText); // the transform is live
             tab.EditorTextProvider = () => tab.SourceText;     // editor buffer = the display text
             Assert.False(tab.IsEdited);

@@ -66,11 +66,11 @@ public class DocumentViewTests
 
         Assert.False(editor.IsReadOnly); // raw JSON is editable
 
-        vm.JsonPrettyEnabled = true;
+        vm.PrettyPrintEnabled = true;
         Dispatcher.UIThread.RunJobs();
         Assert.True(editor.IsReadOnly); // read-only while pretty-JSON is displayed
 
-        vm.JsonPrettyEnabled = false;
+        vm.PrettyPrintEnabled = false;
         Dispatcher.UIThread.RunJobs();
         Assert.False(editor.IsReadOnly); // editing restored once the raw text returns
 
@@ -1037,11 +1037,11 @@ public class DocumentViewTests
         Dispatcher.UIThread.RunJobs();
         Assert.False(vm.IsEdited);
 
-        vm.JsonPrettyEnabled = true; // transform on → pretty SourceText pushed into the editor
+        vm.PrettyPrintEnabled = true; // transform on → pretty SourceText pushed into the editor
         Dispatcher.UIThread.RunJobs();
         Assert.False(vm.IsEdited);
 
-        vm.JsonPrettyEnabled = false; // transform off → raw text restored
+        vm.PrettyPrintEnabled = false; // transform off → raw text restored
         Dispatcher.UIThread.RunJobs();
         Assert.False(vm.IsEdited);
         window.Close();

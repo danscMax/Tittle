@@ -284,6 +284,17 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>True for .json files — offers the display-only pretty-print toggle (ported).</summary>
     public bool IsJson => string.Equals(GrammarExtension, ".json", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>True for XML-family files — offers the display-only pretty-print toggle.</summary>
+    public bool IsXml => GrammarExtension?.ToLowerInvariant()
+        is ".xml" or ".csproj" or ".props" or ".targets" or ".config" or ".xaml" or ".axaml";
+
+    /// <summary>True for newline-delimited JSON (.ndjson/.jsonl) — pretty-printed per line.</summary>
+    public bool IsNdjson => GrammarExtension?.ToLowerInvariant() is ".ndjson" or ".jsonl";
+
+    /// <summary>True when the source view offers the display-only «формат» (pretty-print) toggle —
+    /// JSON, XML or NDJSON. One toggle, dispatched by type in <see cref="SourceText"/>.</summary>
+    public bool IsPrettyPrintable => IsJson || IsXml || IsNdjson;
+
     /// <summary>Delimiter for tabular files, or null (drives the csv-as-table view; ported).</summary>
     public char? Delimiter => GrammarExtension?.ToLowerInvariant() switch
     {
@@ -292,11 +303,18 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         _ => null,
     };
 
+    /// <summary>True for key/value config files (.toml/.ini/.env/.editorconfig) — rendered in the
+    /// shared table overlay as a Ключ/Значение «Метаданные» view (the standalone-file counterpart
+    /// of the markdown front-matter panel).</summary>
+    public bool IsKeyValueConfig =>
+        GrammarExtension?.ToLowerInvariant() is ".toml" or ".ini" or ".env" or ".editorconfig";
+
     private CsvTableViewModel? _csvTable;
     private bool _csvTableBuilt;
 
-    /// <summary>Sortable table model for .csv/.tsv tabs; null when the file doesn't parse
-    /// (the source view shows instead). Cached: the document text is immutable.</summary>
+    /// <summary>Sortable table model for .csv/.tsv tabs and key/value config files
+    /// (.toml/.ini/.env → Ключ/Значение); null when the file doesn't parse (the source view shows
+    /// instead). Cached: the document text is immutable.</summary>
     public CsvTableViewModel? CsvTable
     {
         get
@@ -304,8 +322,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             if (!_csvTableBuilt)
             {
                 _csvTableBuilt = true;
-                if (Delimiter is { } delimiter
-                    && DelimitedTable.Parse(DocumentText, delimiter) is { } table)
+                var table = Delimiter is { } delimiter
+                    ? DelimitedTable.Parse(DocumentText, delimiter)
+                    : IsKeyValueConfig ? KeyValueConfig.Parse(DocumentText) : null;
+                if (table is not null)
                     _csvTable = new CsvTableViewModel(table);
             }
 
@@ -334,14 +354,15 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             Editor.CsvAsTable = CsvAsTableEnabled;
     }
 
-    /// <summary>Per-tab pretty-print state; new tabs inherit the persisted default from
-    /// <see cref="Shared.EditorOptions.JsonPretty"/> when the shell adopts them.</summary>
+    /// <summary>Per-tab pretty-print («формат») state for JSON/XML/NDJSON; new tabs inherit the
+    /// persisted default from <see cref="Shared.EditorOptions.JsonPretty"/> when the shell adopts
+    /// them (the persist field keeps its legacy name for settings.json compatibility).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SourceText))]
     [NotifyPropertyChangedFor(nameof(IsSourceTransformActive))]
-    private bool _jsonPrettyEnabled;
+    private bool _prettyPrintEnabled;
 
-    private string? _prettyJson;
+    private string? _prettyText;
     private string? _smartText;
 
     /// <summary>True for prose-text files (.txt/.log) — they get the text outline and the
@@ -364,14 +385,21 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>What the source editor shows: the document text, or a display-only transform —
-    /// pretty-printed JSON / smart typography for prose text. The raw text stays the single
-    /// source of truth: exports, reload and search see the file as written.</summary>
+    /// pretty-printed JSON/XML/NDJSON, or smart typography for prose text. The raw text stays the
+    /// single source of truth: exports, reload and search see the file as written.</summary>
     public string SourceText =>
-        IsJson && JsonPrettyEnabled
-            ? _prettyJson ??= JsonPrettyPrinter.TryFormat(DocumentText) ?? DocumentText
+        IsPrettyPrintable && PrettyPrintEnabled
+            ? _prettyText ??= FormatPretty() ?? DocumentText
         : IsPlainText && SmartTypographyEnabled
             ? _smartText ??= SmartTypography.Apply(DocumentText)
         : DocumentText;
+
+    /// <summary>Run the type-appropriate pretty-printer over the raw text (null → show raw).</summary>
+    private string? FormatPretty() =>
+        IsJson ? JsonPrettyPrinter.TryFormat(DocumentText)
+        : IsXml ? XmlPrettyPrinter.TryFormat(DocumentText)
+        : IsNdjson ? NdjsonPrettyPrinter.TryFormat(DocumentText)
+        : null;
 
     /// <summary>True while the source editor shows a DISPLAY transform (pretty-JSON or smart
     /// typography) instead of the raw file. In-place editing is suppressed in this state so a
@@ -379,12 +407,12 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// (re-indentation, «guillemets», em-dashes) is lossy/irreversible. Toggling the transform
     /// off restores the raw text and re-enables editing.</summary>
     public bool IsSourceTransformActive =>
-        (IsJson && JsonPrettyEnabled) || (IsPlainText && SmartTypographyEnabled);
+        (IsPrettyPrintable && PrettyPrintEnabled) || (IsPlainText && SmartTypographyEnabled);
 
     // Any path that flips a transform (toolbar toggle, EditorOptions adoption, settings import)
     // refreshes the status hint, so the read-only-under-transform state is always discoverable and
     // the plain encoding·EOL status returns the moment the transform is off.
-    partial void OnJsonPrettyEnabledChanged(bool value) => RefreshTransformStatus();
+    partial void OnPrettyPrintEnabledChanged(bool value) => RefreshTransformStatus();
     partial void OnSmartTypographyEnabledChanged(bool value) => RefreshTransformStatus();
 
     private void RefreshTransformStatus()
@@ -392,13 +420,13 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             ? "Только чтение: трансформация включена — выключите её для редактирования"
             : BuildStatus();
 
-    /// <summary>Toggle pretty-print for this tab (and remember it as the default).</summary>
+    /// <summary>Toggle pretty-print (JSON/XML/NDJSON) for this tab (and remember it as the default).</summary>
     [RelayCommand]
-    private void ToggleJsonPretty()
+    private void TogglePrettyPrint()
     {
-        JsonPrettyEnabled = !JsonPrettyEnabled;
+        PrettyPrintEnabled = !PrettyPrintEnabled;
         if (Editor is not null)
-            Editor.JsonPretty = JsonPrettyEnabled;
+            Editor.JsonPretty = PrettyPrintEnabled;
     }
 
     /// <summary>Preview vs source. Defaults to Preview; only meaningful for markdown
