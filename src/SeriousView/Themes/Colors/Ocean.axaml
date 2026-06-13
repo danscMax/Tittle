@@ -5,10 +5,10 @@
          A deep blue-teal variant. Inherits the Dark variant: only the surface tokens are
          overridden here — admonitions, cv-* decorations etc. fall back to Dark.axaml. -->
 
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0C141D" />
-    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#101B26" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0A0D12" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#0D1116" />
     <!-- Opaque outline-sidebar surface (see Dark.axaml). -->
-    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#121E28" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#0F1318" />
 
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#17252F" Offset="0" />

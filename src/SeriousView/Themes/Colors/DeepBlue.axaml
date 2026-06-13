@@ -7,9 +7,9 @@
          back to Dark.axaml. The reading area is WindowBackgroundBrush (preview is transparent over it),
          the source/CSV/notice surface is EditorSurfaceBrush — so the whole app reads deep blue. -->
 
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#121A30" />
-    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#172139" />
-    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#1D294A" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#10131C" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#14161C" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#1A1E2A" />
 
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#26335A" Offset="0" />

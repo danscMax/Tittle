@@ -5,9 +5,9 @@
          Arctic blue-grey. Inherits the Dark variant: only surface/chrome/accent tokens are
          overridden — admonitions, cv-* decorations etc. fall back to Dark.axaml. -->
 
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#2E3440" />
-    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#3B4252" />
-    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#434C5E" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#272B34" />
+    <SolidColorBrush x:Key="EditorSurfaceBrush" Color="#2E3440" />
+    <SolidColorBrush x:Key="SidebarSurfaceBrush" Color="#353C49" />
 
     <LinearGradientBrush x:Key="ChromeBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
         <GradientStop Color="#434C5E" Offset="0" />

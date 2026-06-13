@@ -138,7 +138,7 @@ public class ThemeServiceTests
         service.SetMode(ThemeMode.Nord);
         Assert.Equal(AppThemeVariants.Nord, app.RequestedThemeVariant);
         Assert.True(app.TryGetResource("WindowBackgroundBrush", AppThemeVariants.Nord, out var nordBg));
-        Assert.Equal(Color.Parse("#2E3440"), ((ISolidColorBrush)nordBg!).Color);
+        Assert.Equal(Color.Parse("#272B34"), ((ISolidColorBrush)nordBg!).Color); // F-11: darkened for code contrast
         // …while an un-overridden token falls back to the inherited Dark dictionary.
         Assert.True(app.TryGetResource("AdmonitionNoteBrush", AppThemeVariants.Nord, out var nordNote));
         Assert.Equal(Color.Parse("#4493F8"), ((ISolidColorBrush)nordNote!).Color);
