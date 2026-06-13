@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using SeriousView.Core.Support;
+using SeriousView.Core.Text;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Donate;
@@ -89,7 +90,10 @@ public partial class DonateWindow : ModalWindow
     {
         try
         {
-            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            // Gate through the same http/https/mailto allowlist as SafeHyperlinkCommand. The only
+            // source today is the hard-coded DonationDirectory (https), but this keeps every shell
+            // hand-off consistent and refuses an unexpected scheme should that ever change.
+            if (MarkdownLink.IsSafe(url) && Uri.TryCreate(url, UriKind.Absolute, out var uri))
                 await Launcher.LaunchUriAsync(uri);
         }
         catch
