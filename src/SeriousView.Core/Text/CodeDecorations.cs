@@ -163,14 +163,13 @@ public static class CodeDecorations
         var i = 0;
         if (i < raw.Length && raw[i] is '-' or '+')
             i++;
-        var numStart = i;
         while (i < raw.Length && (char.IsAsciiDigit(raw[i]) || raw[i] is '.' or ','))
             i++;
-        var numText = raw[numStart..i].Replace(',', '.');
+        // Keep the optional leading sign in the parsed slice and let TryParse apply it
+        // (NumberStyles.Float allows a leading sign) — no separate re-parse of the sign.
+        var numText = raw[..i].Replace(',', '.');
         if (!double.TryParse(numText, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
             return null;
-        if (raw[..numStart] == "-")
-            value = -value;
         var unit = raw[i..].Trim();
 
         if (ByteMultipliers.TryGetValue(unit, out var bytes))

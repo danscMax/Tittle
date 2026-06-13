@@ -130,6 +130,9 @@ public class CodeDecorationsTests
     [InlineData("size 5 MB total", "5 MB", "5 242 880 байт")]
     [InlineData("only 42%", "42%", "0,42")]
     [InlineData("about 3 млн runs", "3 млн", "3 000 000")]
+    // Signed values: a leading '-' negates, a leading '+' is a no-op (one-pass sign parse).
+    [InlineData("delta -42% off", "-42%", "-0,42")]
+    [InlineData("cap +5 MB max", "+5 MB", "5 242 880 байт")]
     public void Units_CarryExpansionTooltips(string line, string token, string tooltip)
     {
         var d = Single(line, CodeDecorationKind.Unit);
