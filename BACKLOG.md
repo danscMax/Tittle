@@ -339,9 +339,11 @@ mirror `SidebarSurfaceBrush`, not `EditorSurfaceBrush`, since their editor surfa
 **codified + guarded** (`b3d7138`: per-field doc on `ThemeInfo` + `AllSwatches_MatchTheirAxamlSurfaces` over all 14).
 **Published 2026-06-13:** public GitHub repo **`danscMax/SeriousView`** (main-only workflow, no feature branches),
 bilingual EN/RU README with badges + 4 themed hero screenshots (`docs/screenshots/`), and a **redesigned app
-icon** (glossy emerald `</>` on transparent, `52dd193`, via `tools/IconForge`). **Genuinely open** (pick by priority):
-**(a) cut a tagged release** — v0.1.0 + prebuilt binaries (`build_all.ps1` → `dist/win-x64`+`win-arm64`); optionally a
-release CI workflow building all 3 OSes on tag;
+icon** (glossy emerald `</>` on transparent, `52dd193`, via `tools/IconForge`). **Released `v0.1.0` 2026-06-13**
+(`9a13668`, `<Version>` in `Directory.Build.props`): GitHub Release with self-contained single-file Windows
+binaries (win-x64 + win-arm64, `build_all.ps1`); README has a download badge. **Genuinely open** (pick by priority):
+**(a) release CI workflow** — build + attach Linux/macOS (and Windows) binaries automatically on a `v*` tag
+(the v0.1.0 release ships Windows only; CI proves Linux/mac build green);
 **(b) M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source → must stay opt-in).
 The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason

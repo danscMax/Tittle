@@ -7,6 +7,7 @@
 **A native, cross-platform desktop markdown &amp; code viewer — [Avalonia](https://avaloniaui.net/) + Skia, no WebView.**
 
 [![CI](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml/badge.svg)](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml)
+[![Download](https://img.shields.io/github/v/release/danscMax/SeriousView?sort=semver&label=download&color=2EC8BE)](https://github.com/danscMax/SeriousView/releases/latest)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)
 ![Avalonia 11.3](https://img.shields.io/badge/Avalonia-11.3-883AE3)

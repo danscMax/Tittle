@@ -7,6 +7,7 @@
 **Нативный кроссплатформенный десктопный просмотрщик markdown и кода — [Avalonia](https://avaloniaui.net/) + Skia, без WebView.**
 
 [![CI](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml/badge.svg)](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml)
+[![Скачать](https://img.shields.io/github/v/release/danscMax/SeriousView?sort=semver&label=%D1%81%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&color=2EC8BE)](https://github.com/danscMax/SeriousView/releases/latest)
 [![Лицензия: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)
 ![Avalonia 11.3](https://img.shields.io/badge/Avalonia-11.3-883AE3)
