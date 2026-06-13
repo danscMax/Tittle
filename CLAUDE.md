@@ -105,7 +105,9 @@ position shows in the status bar (relayed from `Caret.PositionChanged`); the sou
 on tab activation (must focus `Source.TextArea`, not the `TextEditor` wrapper). Go-to-line input lives
 in the **status bar** (chrome): an overlay floated over the editor won't repaint over AvaloniaEdit's GPU
 surface (sibling Border with IsVisible/Opacity/ZIndex and a Popup both failed) — see project memory.
-Known gaps (deferred): Math/KaTeX, Mermaid/diagrams, export, split-view live sync.
+Known gaps (deferred): Mermaid/diagrams. (Math, export and **split-view live sync** are now done —
+split: `DocumentViewMode.Split`, code-managed `SplitGrid` in `Features/Viewer/DocumentView.SplitLayout.cs`,
+live mutual scroll with value-based echo suppression, orientation+ratio persisted, Ctrl+\ = `Key.OemPipe`.)
 **M7.5 (shell redesign) DONE; M8 (tabs ergonomics) core DONE**: ☰ menu (default `MenuPlacement.Hidden`);
 status-bar compact preview/source toggle (eye / `{}`) beside the wrap/numbers/zoom cluster;
 **resizable + persisted outline sidebar** (`GridSplitter` → `LayoutSettings.OutlineWidth`, clamped 180–480,

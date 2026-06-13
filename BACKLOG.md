@@ -124,7 +124,7 @@ replacing in-memory text you can't save is premature, like undo/redo). **Preview
 | Breadcrumbs ✅ | DONE (`c46ee7c`) — markdown-only ancestor chain (`MarkdownOutline.AncestorChain`) as a chrome strip under the find bar, both view modes, segments navigate. Code breadcrumbs + minimap stay in the ported pool (need per-language symbol outlines). |
 | Wiki-links ✅ | DONE (`c2140a8` + `c670e6d`) — `[[name]]` → link when a sibling `name.md` exists (resolver injected into the preprocessor; existence snapshots once per tab until M14), else plain text; click opens via `Shell.OpenPathAsync` through `WikiHyperlinkCommand` (traversal-safe, `wiki:` never reaches Process.Start; http/https/mailto policy untouched). Outline shows raw `[[name]]` (accepted). |
 | `_underscore_` ✅ | DONE (`f8e42a4`) — conservative display-only pass `_x_`→`*x*` (word-boundary flanks, no intraword, fences/inline code/link URLs masked); `__x__` deliberately untouched — the renderer renders it as UNDERLINE natively. |
-| Split-view live sync | NEW backlog item (out of M10 by decision): a side-by-side layout with live mutual scrolling. `HeadingAnchors` is the ready seam — capture in one pane → `ToPosition` in the other per scroll tick + a re-entrancy latch. |
+| Split-view live sync ✅ | DONE (`95341eb`…`816ee78`, 4 waves + fix): a side-by-side source↔preview layout with live mutual scrolling. `DocumentViewMode.Split` + code-managed `SplitGrid` in `DocumentView.SplitLayout.cs` (the single Source/Preview subtrees re-hosted, never duplicated); orientation Horizontal/Vertical + ratio persisted in `LayoutSettings` (schema v2). Live mutual scroll via the `HeadingAnchors` capture/apply, loop broken by **value-based echo suppression** (a synchronous bool latch wouldn't cover Avalonia's deferred ScrollChanged) — source is master for the marker/%/anchor. Entry: status-bar `◫` toggle + Ctrl+\ (Key.OemPipe) + palette (toggle + orientation) + Настройки ▸ Раскладка radio. 21 new tests; visually verified in Dark + Light. |
 
 Also fixed here (`f06eba5`): giant fenced code blocks in the preview — embedded AvaloniaEdit editors
 can't size themselves under our infinite-height outer-scroll layout (estimates read ~2× the real
@@ -302,12 +302,12 @@ editor search; the original deliberately skipped WYSIWYG). Inline math `\(…\)`
 - Improvements 1–40 are fully placed. Ported-only features (search, sync-scroll, math, diagrams,
   export, live-reload, editing, + the pool) are M9–M16 and the ported pool.
 
-**Status (2026-06-12):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
-(Waves A–D, 22 findings, `8af0fd0`…`32f385b`; 802 tests). **Genuinely open for the next session** (pick by
-priority, all below the tech-debt checklist): new capability — **split-view live sync** (`HeadingAnchors` seam
-ready) or **M12 diagrams** (hard, WebView-less). Maintainability is now clear — **DocumentView code-behind
-split is DONE** (`84f8f77`, 6 partial files); xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the
-carried-over Lows were re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
+**Status (2026-06-13):** the full-port goal is COMPLETE and the 2026-06-12 tech-debt audit is fully closed
+(Waves A–D, 22 findings, `8af0fd0`…`32f385b`). **Split-view live sync is DONE** (`95341eb`…`816ee78`, 828 tests, +21)
+and **DocumentView code-behind split is DONE** (`84f8f77`). **Genuinely open for the next session** (pick by
+priority): new capability — **M12 diagrams** (hard, WebView-less; Mermaid is JS-only, PlantUML leaks source →
+must stay opt-in). xUnit v3 stays **Av12-gated** (see «Deferred by decision»); the carried-over Lows were
+re-verified 2026-06-12 and closed as accepted. **Av12 migration stays blocked** (Markdown.Avalonia alpha-only,
 FluentAvalonia not ported — re-verified 2026-06-12; it also gates xUnit v3 via `Avalonia.Headless.XUnit`). The
 historical log of completed work follows.
 
