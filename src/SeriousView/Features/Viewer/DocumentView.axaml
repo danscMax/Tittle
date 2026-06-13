@@ -5,6 +5,7 @@
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
              xmlns:vm="using:SeriousView.Features.Shell"
              xmlns:viewer="using:SeriousView.Features.Viewer"
+             xmlns:pdf="using:SeriousView.Features.Viewer.Pdf"
              xmlns:sh="using:SeriousView.Shared"
              x:Class="SeriousView.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
@@ -286,6 +287,10 @@
         </ScrollViewer>
       </DockPanel>
     </ScrollViewer>
+
+    <!-- PDF view (page-by-page render via PDFium): a full-area host, shown for a .pdf tab. Falls
+         back to "open externally" inside PdfView when the native engine can't render. -->
+    <pdf:PdfView IsVisible="{Binding ShowPdf}"/>
 
     <!-- Notice overlay: binary / too-large / empty files (no editor, no preview).
          Text-only (no SymbolIcon) so it renders without the FluentAvalonia Symbols font. -->

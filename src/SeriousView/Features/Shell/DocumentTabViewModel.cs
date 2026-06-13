@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Documents;
 using SeriousView.Core.Services;
 using SeriousView.Core.Text;
+using SeriousView.Features.Viewer.Pdf;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
@@ -309,6 +310,43 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     public bool IsKeyValueConfig =>
         GrammarExtension?.ToLowerInvariant() is ".toml" or ".ini" or ".env" or ".editorconfig";
 
+    // --- PDF (rendered page-by-page by PdfView; the heavy native render is off the UI thread) ---
+
+    /// <summary>True for a PDF document — shown by the dedicated PdfView, not as text.</summary>
+    public bool IsPdf => Kind == FileLoadKind.Pdf;
+
+    private PdfPagesViewModel? _pdf;
+    private bool _pdfBuilt;
+
+    /// <summary>Lazily-opened PDF page model; null when PDFium can't render it on this platform or
+    /// file (PdfView then shows the "open externally" fallback). Built on first bind, NOT in
+    /// FromLoad — it touches the native engine + disk.</summary>
+    public PdfPagesViewModel? Pdf
+    {
+        get
+        {
+            if (!_pdfBuilt)
+            {
+                _pdfBuilt = true;
+                if (IsPdf && FilePath is { } path)
+                    _pdf = PdfPagesViewModel.TryOpen(path);
+            }
+
+            return _pdf;
+        }
+    }
+
+    /// <summary>Show the PDF view (the source/preview/table hosts stay hidden for a PDF tab).</summary>
+    public bool ShowPdf => Kind == FileLoadKind.Pdf;
+
+    /// <summary>Open this document in the OS default application (PDF fallback / convenience).</summary>
+    [RelayCommand]
+    private void OpenExternally()
+    {
+        if (FilePath is { } path)
+            Shell?.OpenExternally(path);
+    }
+
     private CsvTableViewModel? _csvTable;
     private bool _csvTableBuilt;
 
@@ -445,9 +483,9 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     public bool ShowPreview => !ShowNotice && IsMarkdown && ViewMode == DocumentViewMode.Preview;
 
     /// <summary>Show the source editor (any non-markdown file, or markdown in Source mode),
-    /// unless the tab is showing its table view.</summary>
+    /// unless the tab is showing its table view or is a PDF.</summary>
     public bool ShowSource =>
-        !ShowNotice && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
+        !ShowNotice && !ShowPdf && (!IsMarkdown || ViewMode == DocumentViewMode.Source) && !ShowCsvTable;
 
     /// <summary>Show source + preview side by side (markdown only). In split, both hosts are
     /// realized but <see cref="ShowSource"/>/<see cref="ShowPreview"/> are false — the panes are
@@ -461,9 +499,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Preview-pane host visibility: shown in Preview mode and in Split.</summary>
     public bool ShowPreviewPane => ShowPreview || ShowSplit;
 
-    /// <summary>Whether the font-size zoom controls apply to this tab — the source editor or the
-    /// markdown preview (zoomed via a layout scale). False for the table view and notice overlays.</summary>
-    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit;
+    /// <summary>Whether the font-size zoom controls apply to this tab — the source editor, the
+    /// markdown preview (zoomed via a layout scale) or the PDF view (zoom → render width). False
+    /// for the table view and notice overlays.</summary>
+    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit || ShowPdf;
 
     /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
     /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>
@@ -483,8 +522,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
 
     private readonly long _sizeBytes;
 
-    /// <summary>A binary / too-large / empty document shows a notice instead of editor + preview.</summary>
-    public bool ShowNotice => Kind != FileLoadKind.Text || DocumentText.Length == 0;
+    /// <summary>A binary / too-large / empty document shows a notice instead of editor + preview.
+    /// (A PDF is NOT a notice — it routes to <see cref="ShowPdf"/>.)</summary>
+    public bool ShowNotice => Kind is FileLoadKind.Binary or FileLoadKind.TooLarge
+        || (Kind == FileLoadKind.Text && DocumentText.Length == 0);
 
     /// <summary>Message for the notice overlay (only meaningful when <see cref="ShowNotice"/>).</summary>
     public string NoticeText => Kind switch
@@ -736,6 +777,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     {
         FileLoadKind.Binary => $"Бинарный файл · {SizeText}",
         FileLoadKind.TooLarge => $"Слишком большой · {SizeText}",
+        FileLoadKind.Pdf => $"PDF · {SizeText}",
         _ when DocumentText.Length == 0 => "Пустой файл",
         _ => $"Строк: {TextMetrics.LineCount(DocumentText)}   ·   Символов: {TextMetrics.CharCount(DocumentText)}"
            + $"   ·   {EncodingName}"

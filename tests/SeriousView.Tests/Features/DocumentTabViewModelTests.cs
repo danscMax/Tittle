@@ -611,4 +611,18 @@ public class DocumentTabViewModelTests
         Assert.True(vm.ShowCsvTable);
         Assert.False(vm.ShowSource); // table replaces the source view
     }
+
+    [Fact]
+    public void PdfTab_RoutesToPdfView_NotNoticeOrSource()
+    {
+        var vm = DocumentTabViewModel.FromLoad(FileLoadResult.Pdf(12345), "/docs/report.pdf");
+
+        Assert.True(vm.IsPdf);
+        Assert.True(vm.ShowPdf);
+        Assert.False(vm.ShowNotice); // a PDF is NOT the "просмотр недоступен" notice
+        Assert.False(vm.ShowSource); // nor the (empty) source editor
+        Assert.True(vm.ZoomApplies);
+        Assert.Null(vm.Pdf);         // the file doesn't exist → graceful fallback (no throw)
+        Assert.Contains("PDF", vm.StatusText);
+    }
 }

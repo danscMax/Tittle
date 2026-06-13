@@ -88,4 +88,20 @@ public class FileReaderTests
         }
         finally { File.Delete(temp); }
     }
+
+    [Fact]
+    public async Task LoadAsync_Pdf_RoutesToPdfKind_NotBinary()
+    {
+        // A .pdf is binary by content (NUL bytes), but must route to the PDF viewer kind, not the
+        // "просмотр недоступен" binary notice — the extension check runs before classification.
+        var reader = new FileReader();
+        var temp = Path.Combine(Path.GetTempPath(), $"sv_{Guid.NewGuid():N}.pdf");
+        await File.WriteAllBytesAsync(temp, "%PDF-1.7\n\0\0\0"u8.ToArray());
+        try
+        {
+            var result = await reader.LoadAsync(temp);
+            Assert.Equal(FileLoadKind.Pdf, result.Kind);
+        }
+        finally { File.Delete(temp); }
+    }
 }

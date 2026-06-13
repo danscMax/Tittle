@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SeriousView.Features.Shell"
+             xmlns:pdf="using:SeriousView.Features.Viewer.Pdf"
+             x:Class="SeriousView.Features.Viewer.Pdf.PdfView"
+             x:DataType="vm:DocumentTabViewModel">
+  <Panel Background="{DynamicResource EditorSurfaceBrush}">
+    <!-- Rendered pages (PDFium available): a vertical, virtualized stack of fit-width page bitmaps.
+         Each page is a white, shadowed frame sized to the page aspect ratio so the scroll extent is
+         correct before its bitmap lazily renders (PdfView.axaml.cs drives realize → render). -->
+    <ScrollViewer x:Name="PageScroll" Padding="0,16"
+                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                  IsVisible="{Binding Pdf, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <ItemsControl x:Name="PagesList" ItemsSource="{Binding Pdf.Pages}" HorizontalAlignment="Center">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pdf:PdfPageViewModel">
+            <Border Margin="0,0,0,16" HorizontalAlignment="Center" Background="White"
+                    Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}"
+                    BoxShadow="0 2 14 0 #44000000">
+              <Image Source="{Binding Image}" Stretch="Fill"/>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Fallback: PDFium couldn't open the file (missing native for this RID, or corrupt/encrypted).
+         Offer the OS default viewer via the existing IShellService path. -->
+    <Border IsVisible="{Binding Pdf, Converter={x:Static ObjectConverters.IsNull}}">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="440">
+        <TextBlock Text="Не удалось отобразить PDF в приложении"
+                   TextWrapping="Wrap" TextAlignment="Center" FontSize="15"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <Button Content="Открыть во внешнем приложении" HorizontalAlignment="Center"
+                Command="{Binding OpenExternallyCommand}"
+                AutomationProperties.Name="Открыть во внешнем приложении"/>
+      </StackPanel>
+    </Border>
+  </Panel>
+</UserControl>

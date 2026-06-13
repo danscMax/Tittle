@@ -996,6 +996,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             _shell.RevealInExplorer(path);
     }
 
+    /// <summary>Open a document in the OS default application (the PDF "open externally" fallback,
+    /// reached from a tab through its <see cref="DocumentTabViewModel.Shell"/> back-reference).</summary>
+    public void OpenExternally(string path) => _shell.OpenWithDefaultApp(path);
+
     /// <summary>Move <paramref name="tab"/> to <paramref name="targetIndex"/> (tab drag-reorder, driven by
     /// the view's pointer gesture). The same instance stays selected; the index is clamped to the
     /// collection. A no-op when the tab isn't open or is already at the target.</summary>

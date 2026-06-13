@@ -15,6 +15,13 @@ public sealed class FileReader : IFileReader
     public async Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default)
     {
         var size = new FileInfo(path).Length;          // throws if missing — caller reports it
+
+        // PDF routes to its own viewer kind BEFORE the binary classifier (which would reject a PDF
+        // as «просмотр недоступен»). The bytes aren't read here — the PDF view renders pages from
+        // the path lazily — so only a sanity size guard applies.
+        if (PdfFile.IsPdfExtension(path))
+            return FileLimits.IsPdfTooLarge(size) ? FileLoadResult.TooLarge(size) : FileLoadResult.Pdf(size);
+
         if (FileLimits.IsTooLarge(size))
             return FileLoadResult.TooLarge(size);
 

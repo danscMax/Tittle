@@ -6,6 +6,9 @@ public enum FileLoadKind
     Text,
     Binary,
     TooLarge,
+
+    /// <summary>A PDF document — rendered page-by-page by the dedicated PDF view, not as text.</summary>
+    Pdf,
 }
 
 /// <summary>Outcome of loading a file for viewing. <see cref="Text"/> is normalized to LF and is
@@ -23,6 +26,9 @@ public sealed record FileLoadResult(
 
     public static FileLoadResult Binary(long sizeBytes)
         => new(FileLoadKind.Binary, "", "", "", sizeBytes, false);
+
+    public static FileLoadResult Pdf(long sizeBytes)
+        => new(FileLoadKind.Pdf, "", "", "", sizeBytes, false);
 
     public static FileLoadResult TooLarge(long sizeBytes)
         => new(FileLoadKind.TooLarge, "", "", "", sizeBytes, false);
