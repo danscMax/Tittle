@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using SeriousView;
 using SeriousView.Features.Shell;
 using SeriousView.Features.Viewer;
+using SeriousView.Platform;
 
 // Layer-1 render oracle: render leaf controls to PNG in every theme (the cheap, deterministic
 // both-theme visual check). Output dir is arg[0] (default: plans/avalonia-smoke/screenshots).
@@ -28,6 +29,19 @@ var themes = new (string Name, ThemeVariant Variant)[]
 {
     ("dark", ThemeVariant.Dark),
     ("light", ThemeVariant.Light),
+    // Custom variants ported from the original viewer (commit 3833f54) — never visually audited.
+    ("midnight", AppThemeVariants.Midnight),
+    ("ocean", AppThemeVariants.Ocean),
+    ("deepblue", AppThemeVariants.DeepBlue),
+    ("nord", AppThemeVariants.Nord),
+    ("dracula", AppThemeVariants.Dracula),
+    ("solarizeddark", AppThemeVariants.SolarizedDark),
+    ("solarizeddim", AppThemeVariants.SolarizedDim),
+    ("gruvboxdark", AppThemeVariants.GruvboxDark),
+    ("highcontrast", AppThemeVariants.HighContrast),
+    ("sepia", AppThemeVariants.Sepia),
+    ("solarizedlight", AppThemeVariants.SolarizedLight),
+    ("gruvboxlight", AppThemeVariants.GruvboxLight),
 };
 
 // (screen name, builder). Leaf controls only. Each builder is hermetic (no file/network side effects
