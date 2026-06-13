@@ -429,6 +429,15 @@
                 Command="{Binding SelectedTab.TogglePdfFitCommand}"
                 ToolTip.Tip="По ширине / 100%" AutomationProperties.Name="Масштаб PDF"
                 Content="⤢" IsVisible="{Binding SelectedTab.ShowPdf, FallbackValue=False}"/>
+        <!-- Image: rotate 90° + fit/100% toggle. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.RotateImageCommand}"
+                ToolTip.Tip="Повернуть на 90°" AutomationProperties.Name="Повернуть изображение"
+                Content="↻" IsVisible="{Binding SelectedTab.ShowImage, FallbackValue=False}"/>
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.ToggleImageFitCommand}"
+                ToolTip.Tip="Вписать / 100%" AutomationProperties.Name="Масштаб изображения"
+                Content="⤢" IsVisible="{Binding SelectedTab.ShowImage, FallbackValue=False}"/>
         <!-- Preview/source switch (markdown only) — a clearly-labelled segmented toggle replacing the
              ambiguous eye icon; the active mode fills with the accent. Each segment SETS its mode
              (ToggleViewModeCommand still backs the palette/keyboard). -->

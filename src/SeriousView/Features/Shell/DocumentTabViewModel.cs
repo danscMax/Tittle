@@ -458,6 +458,31 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Show the image view (the source/preview/table hosts stay hidden for an image tab).</summary>
     public bool ShowImage => Kind == FileLoadKind.Image;
 
+    /// <summary>Per-view image zoom factor (1 = 100%); only used when <see cref="ImageFit"/> is off.</summary>
+    [ObservableProperty]
+    private double _imageZoom = 1;
+
+    /// <summary>True = fit the image to the window (default); false = a free/100% zoom.</summary>
+    [ObservableProperty]
+    private bool _imageFit = true;
+
+    /// <summary>Image rotation in degrees (0/90/180/270).</summary>
+    [ObservableProperty]
+    private int _imageRotation;
+
+    /// <summary>Toggle fit-to-window ⟷ 100%. Either way the free zoom resets to 1 (fit ignores it;
+    /// 100% lands at actual size, and Ctrl+wheel adjusts from there).</summary>
+    [RelayCommand]
+    private void ToggleImageFit()
+    {
+        ImageFit = !ImageFit;
+        ImageZoom = 1;
+    }
+
+    /// <summary>Rotate the image 90° clockwise (wraps at 360).</summary>
+    [RelayCommand]
+    private void RotateImage() => ImageRotation = (ImageRotation + 90) % 360;
+
     private CsvTableViewModel? _csvTable;
     private bool _csvTableBuilt;
 
@@ -613,7 +638,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Whether the font-size zoom controls apply to this tab — the source editor, the
     /// markdown preview (zoomed via a layout scale) or the PDF view (zoom → render width). False
     /// for the table view and notice overlays.</summary>
-    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit || ShowPdf || ShowImage;
+    public bool ZoomApplies => ShowSource || ShowPreview || ShowSplit || ShowPdf;
 
     /// <summary>Show the code minimap beside the source editor (ported): code/text tabs with
     /// a symbol outline; markdown keeps the TOC sidebar instead.</summary>
