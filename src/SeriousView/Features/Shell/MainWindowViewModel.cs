@@ -461,6 +461,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         _errorBarCts?.Cancel();
         _errorBarCts?.Dispose();
+        _errorBarCts = null; // clear before reassigning so the superseded dismissal sees no live CTS
         var cts = _errorBarCts = new CancellationTokenSource();
         ErrorBarMessage = message;
         IsErrorBarOpen = true;
