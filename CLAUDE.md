@@ -243,3 +243,7 @@ Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `B
 - Each feature = one commit; commit messages end with a `Co-Authored-By` trailer.
 - Don't commit `bin/`, `obj/` (covered by `.gitignore`).
 - A feature isn't done without a test on its logic (Core unit or Headless UI).
+- **Git workflow: commit straight to `main` and push — no feature branches, no PRs.**
+  This is a solo repo (`danscMax/SeriousView`, GitHub); the global "branch off `main` for
+  non-trivial work" rule does NOT apply here. Always work on `main` directly and
+  `git push origin main` after committing.
