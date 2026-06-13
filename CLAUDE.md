@@ -238,6 +238,16 @@ deferred-with-reason list — inline math (no Markdown.Avalonia inline seam), HT
 (no WebView), drop overlay (overlay repaint), paste-image (Av11 clipboard has no portable
 image read; revisit on Av12 DataTransfer), spellcheck (nothing built into AvaloniaEdit).
 Feature spec source: `E:\Scripts\Markdown Viewer\CLAUDE.md`; ordered backlog: `BACKLOG.md`.
+**Beyond the port — additional native formats**: XML/NDJSON pretty-print (the JSON pretty
+toggle was generalized to one `IsPrettyPrintable` «формат» action dispatching by type in
+`SourceText`; persist-field `EditorOptions.JsonPretty` kept for settings compat); TOML/INI/.env/
+.editorconfig → a Ключ/Значение «Метаданные» table reusing the CSV overlay (`KeyValueConfig`
+→ `DelimitedTable`); and an **in-app PDF viewer** — `FileReader` routes `.pdf` to
+`FileLoadKind.Pdf` before the binary classifier, `Features/Viewer/Pdf/PdfView` renders fit-width
+pages (virtualized, lazy, off-UI-thread; PDFium serialized via one global gate; Ctrl+± re-renders),
+graceful fallback to «открыть внешне» on a missing native. Dep: **PDFtoImage 4.1.1** (pinned to
+the 4.x line — SkiaSharp 2.88.x unifies with Av11's 2.88.9; 5.x needs SkiaSharp 3.x → defer to
+Av12). Native pdfium ships per-RID via `bblanchon.PDFium` (win-x64/arm64, linux, osx all covered).
 
 ## Conventions
 

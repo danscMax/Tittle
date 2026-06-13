@@ -62,8 +62,12 @@ back-to-top; reading-width presets.
 **Code &amp; text files** — TextMate syntax highlighting, cv-* token decorations (timestamps,
 UUIDs, IPs, hashes, TODOs, log levels, units, dates — with resolved-value hover tooltips),
 indent guides, code minimap, symbol/text outlines, section folding, CSV/TSV as a sortable
-table, JSON pretty-print, smart typography for plain text, document statistics (RU-adapted
-Flesch).
+table, JSON/XML/NDJSON pretty-print, TOML/INI/.env as a key/value table, smart typography for
+plain text, document statistics (RU-adapted Flesch).
+
+**PDF** — an in-app page-by-page viewer (PDFium via Skia, no WebView): fit-width rendering,
+lazy/virtualized pages, Ctrl+± zoom; falls back to the OS viewer if the native engine is
+unavailable.
 
 **Shell** — tabs (drag-reorder, context menu, kept-alive content), single-instance file
 forwarding, live-reload with a "changed on disk" dot and position-preserving refresh,
@@ -85,6 +89,7 @@ print / save-as-PDF via the browser.
 | Markdown | Markdown.Avalonia (preview) · Markdig (export) |
 | Editor | AvaloniaEdit + TextMate (TextMateSharp grammars) |
 | Math | Sylinko.CSharpMath.Avalonia (native, no JS) |
+| PDF | PDFtoImage 4.x (PDFium, native, no WebView) |
 | MVVM | CommunityToolkit.Mvvm |
 | DI | Microsoft.Extensions.DependencyInjection |
 | Tests | xUnit + Avalonia.Headless (840+) |
