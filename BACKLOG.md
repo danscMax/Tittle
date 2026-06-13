@@ -284,10 +284,20 @@ missing try/catch on copy-as-rich-text; settings export leaking the session (pre
 only, import merges); per-keystroke full-document allocation (TextLength-first);
 per-rendered-line `DateTime.Now` (cached); TOC multi-binding churn on heading revisit
 (`MarkVisited` returns bool); viewstate per-entry cap (`MaxOrdinal`); ru-number table sort.
-**Deferred tech-debt (minor, by reviewer priority)**: merge the three preview reflow tree
-walks (fixup/sorter/collapser) into one pass; cache per-line indent columns (blank-heavy
-files re-scan ±100 neighbours per frame); `RevealInExplorer` Windows branch → ArgumentList
-(hardening; path is never content-derived today); `ExpandUnit` sign-parse cleanup.
+**Deferred tech-debt (minor, by reviewer priority) — all four resolved 2026-06-13:**
+- merge the three preview reflow tree walks (fixup/sorter/collapser) into one pass — **DONE
+  `9a1ba52`** (`RunPreviewReflowPasses` does a single bucketed `GetVisualDescendants`).
+- cache per-line indent columns (blank-heavy files re-scan ±100 neighbours per frame) — **closed
+  by the P9 fix**: `IndentGuideRenderer.EffectiveColumns` memoizes per line (version+tabSize,
+  FIFO-cap 4096), so the ±100 scan now runs only on a cache miss (newly-revealed lines). A further
+  nearest-non-blank-neighbour memo was rejected as YAGNI (marginal gain over P9).
+- `RevealInExplorer` Windows branch → ArgumentList — **kept as a raw `/select,"path"` STRING with
+  reason** (`ExpandUnit`/`377a04e`): ArgumentList would quote the whole `/select,path` token and
+  break selection on a spaced path; the quote/control-char guard already removes the only injection
+  vector and the path is never content-derived. The argument construction was extracted into a pure
+  testable `BuildRevealStartInfo(path, RevealPlatform)` seam (all platform branches now unit-tested).
+- `ExpandUnit` sign-parse cleanup — **DONE `bb18c0a`** (the sign stays in the parsed slice, applied
+  by `double.TryParse`; signed-unit tests added).
 
 **Deferred with reasons**: **HTML-fragment preview / whole-file HTML render** — no HTML
 renderer without a WebView (the original leaned on the browser + DOMPurify); revisit if a
