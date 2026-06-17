@@ -86,6 +86,12 @@ public class EditorKeyboardTests
     [AvaloniaFact]
     public void AltShiftRight_MakesRectangleSelection()
     {
+        // macOS uses Alt(Option) for word-wise caret navigation (native text-field convention), so
+        // Alt+Shift+Arrow there extends an ordinary selection, not a rectangle. Keyboard box-select is a
+        // Windows/Linux gesture in AvaloniaEdit — assert it only where that gesture applies.
+        if (System.OperatingSystem.IsMacOS())
+            return;
+
         var (window, editor) = ShowEditor("abc\ndef\nghi");
         editor.CaretOffset = 0;
 

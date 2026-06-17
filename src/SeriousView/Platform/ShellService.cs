@@ -56,7 +56,7 @@ public sealed class ShellService : IShellService
                 // no shell parsing) instead of interpolating it raw.
                 if (filePath.Contains('"') || filePath.Any(char.IsControl))
                 {
-                    var folder = Path.GetDirectoryName(filePath);
+                    var folder = WindowsDirectoryName(filePath);
                     return string.IsNullOrEmpty(folder)
                         ? null
                         : new ProcessStartInfo("explorer.exe") { ArgumentList = { folder } };
@@ -78,6 +78,16 @@ public sealed class ShellService : IShellService
                     ? null
                     : new ProcessStartInfo("xdg-open") { ArgumentList = { dir } };
         }
+    }
+
+    // Containing directory by Windows rules, independent of the HOST OS. Path.GetDirectoryName uses the
+    // host's separators, so on Linux/macOS it ignores '\' — which broke the Windows branch above when its
+    // pure per-platform contract was exercised off-Windows. Split on '\' or '/' so the result matches what
+    // explorer would see regardless of where the call runs.
+    private static string? WindowsDirectoryName(string filePath)
+    {
+        var i = filePath.LastIndexOfAny(new[] { '\\', '/' });
+        return i <= 0 ? null : filePath[..i];
     }
 
     public void OpenWithDefaultApp(string filePath)
