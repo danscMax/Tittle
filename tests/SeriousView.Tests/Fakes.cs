@@ -47,6 +47,9 @@ internal sealed class FakeFileReader : IFileReader
             ? Task.FromException<FileLoadResult>(_error)
             : Task.FromResult(_result!);
     }
+
+    public Task<string> ReloadTextAsync(string path, string encodingName, CancellationToken cancellationToken = default)
+        => Task.FromResult(_result?.Text ?? string.Empty);
 }
 
 internal sealed class FakeFileDialogService(params string?[]? paths) : IFileDialogService

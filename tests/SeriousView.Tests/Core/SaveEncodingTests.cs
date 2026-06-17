@@ -34,4 +34,19 @@ public class SaveEncodingTests
     [Fact]
     public void GetBytes_UnknownName_FallsBackToUtf8NoBom()
         => Assert.Equal(new byte[] { 0x41 }, SaveEncoding.GetBytes("A", "totally-bogus"));
+
+    [Fact]
+    public void Decode_Windows1251Bytes()
+        => Assert.Equal("Яя", SaveEncoding.Decode(new byte[] { 0xDF, 0xFF }, SaveEncoding.Windows1251));
+
+    [Fact]
+    public void Decode_StripsAMatchingBom()
+    {
+        Assert.Equal("A", SaveEncoding.Decode(new byte[] { 0xEF, 0xBB, 0xBF, 0x41 }, SaveEncoding.Utf8Bom));
+        Assert.Equal("A", SaveEncoding.Decode(new byte[] { 0xFF, 0xFE, 0x41, 0x00 }, SaveEncoding.Utf16Le));
+    }
+
+    [Fact]
+    public void Decode_Utf8NoBom()
+        => Assert.Equal("A", SaveEncoding.Decode(new byte[] { 0x41 }, SaveEncoding.Utf8));
 }

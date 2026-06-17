@@ -198,6 +198,13 @@
                 <MenuItem Header="UTF-16 BE" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-16 BE"/>
                 <MenuItem Header="Windows-1251" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="Windows-1251"/>
               </MenuItem>
+              <MenuItem Header="Переинтерпретировать как">
+                <MenuItem Header="UTF-8" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-8"/>
+                <MenuItem Header="UTF-8 с BOM" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-8 BOM"/>
+                <MenuItem Header="UTF-16 LE" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-16 LE"/>
+                <MenuItem Header="UTF-16 BE" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-16 BE"/>
+                <MenuItem Header="Windows-1251" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="Windows-1251"/>
+              </MenuItem>
             </MenuItem>
             <MenuItem Header="Инструменты">
               <MenuItem Header="Записать макрос" Command="{Binding ToggleMacroRecordingCommand}"

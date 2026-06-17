@@ -13,4 +13,9 @@ namespace SeriousView.Core.Abstractions;
 public interface IFileReader
 {
     Task<FileLoadResult> LoadAsync(string path, CancellationToken cancellationToken = default);
+
+    /// <summary>Re-read the file's raw bytes and decode them with a FORCED encoding (the «reinterpret as»
+    /// path — fixes a mis-detected encoding), normalized to LF. Throws on I/O errors like
+    /// <see cref="LoadAsync"/>.</summary>
+    Task<string> ReloadTextAsync(string path, string encodingName, CancellationToken cancellationToken = default);
 }

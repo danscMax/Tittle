@@ -53,4 +53,10 @@ public sealed class FileReader : IFileReader
         var lineEnding = LineEndings.Detect(decoded);
         return FileLoadResult.ForText(LineEndings.NormalizeToLf(decoded), encodingName, lineEnding, size);
     }
+
+    public async Task<string> ReloadTextAsync(string path, string encodingName, CancellationToken cancellationToken = default)
+    {
+        var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
+        return LineEndings.NormalizeToLf(SaveEncoding.Decode(bytes, encodingName));
+    }
 }

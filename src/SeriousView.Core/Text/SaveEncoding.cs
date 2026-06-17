@@ -46,4 +46,26 @@ public static class SaveEncoding
         body.CopyTo(result, preamble.Length);
         return result;
     }
+
+    /// <summary>Decode <paramref name="bytes"/> with a FORCED encoding (the "reinterpret as" path — fixes a
+    /// mis-detected file), stripping a leading BOM if it matches the chosen encoding.</summary>
+    public static string Decode(byte[] bytes, string? encodingName)
+    {
+        var encoding = Resolve(encodingName);
+        var preamble = encoding.GetPreamble();
+        var start = StartsWithPreamble(bytes, preamble) ? preamble.Length : 0;
+        return encoding.GetString(bytes, start, bytes.Length - start);
+    }
+
+    private static bool StartsWithPreamble(byte[] bytes, byte[] preamble)
+    {
+        if (preamble.Length == 0 || bytes.Length < preamble.Length)
+            return false;
+
+        for (var i = 0; i < preamble.Length; i++)
+            if (bytes[i] != preamble[i])
+                return false;
+
+        return true;
+    }
 }

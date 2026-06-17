@@ -731,6 +731,34 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             tab.Dispose();
     }
 
+    /// <summary>«Reinterpret as» — re-read the active file's bytes with a FORCED encoding (fixes a
+    /// mis-detected file). File-backed only; refuses over unsaved edits; the chosen encoding becomes the
+    /// save encoding too. The status label refreshes after the next save+reload re-detects it.</summary>
+    [RelayCommand]
+    private async Task ReinterpretEncodingAsync(string encodingName)
+    {
+        if (SelectedTab is not { FilePath: { } path } tab || tab.EditorActions is not { } actions)
+            return;
+
+        if (tab.IsEdited)
+        {
+            ShowError("Сохраните или отмените правки перед переинтерпретацией кодировки.");
+            return;
+        }
+
+        try
+        {
+            var text = await _fileReader.ReloadTextAsync(path, encodingName);
+            actions.Replace(0, actions.Text.Length, text);
+            tab.SaveEncodingName = encodingName;
+            StatusText = $"Переинтерпретировано как {encodingName}";
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Не удалось перечитать «{Path.GetFileName(path)}»: {ex.Message}");
+        }
+    }
+
     // --- Macros (M17): record the 3-source intent stream (typing, navigation keys, line/EOL commands),
     //     replay through MacroReplayEngine + the dispatcher. Persistence + shortcuts + dialog come later. ---
 
@@ -923,7 +951,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)
+        {
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
+            items.Add(new PaletteItem("Переинтерпретировать как Windows-1251", ReinterpretEncodingCommand,
+                parameter: SaveEncoding.Windows1251));
+            items.Add(new PaletteItem("Переинтерпретировать как UTF-8", ReinterpretEncodingCommand,
+                parameter: SaveEncoding.Utf8));
+        }
 
         if (SelectedTab is { IsPrettyPrintable: true } prettyTab)
             items.Add(new PaletteItem("Форматировать (вкл/выкл)", prettyTab.TogglePrettyPrintCommand));
