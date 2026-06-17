@@ -233,8 +233,9 @@ Tests: 47+ new (Core unit + VM); full suite 991 green. **Deferred with reason** 
   most of it (Notepad++ itself leans on column mode). A standalone, clearly-expensive future item.
 - **Keyboard column-select** (Alt+Shift+arrows) — unconfirmed on AvaloniaEdit 11.4; fiddly + not headless-testable.
   Mouse column mode works. Follow-up needing live-GUI verification.
-- **Reinterpret-as encoding** (re-decode existing bytes to fix a misdetect) — needs the M14 fresh-VM reload
-  plumbing (force an encoding on re-read) so a re-decode isn't mislabelled an edit; convert-to (save) shipped.
+- ~~Reinterpret-as encoding~~ **DONE (`cbebca0`)** — `IFileReader.ReloadTextAsync` re-reads the file bytes
+  with a forced encoding (`SaveEncoding.Decode` strips a matching BOM), swaps the document and adopts that
+  save encoding; ☰ Правка ▸ Переинтерпретировать как + palette (file-backed, refuses over unsaved edits).
 - **Status-bar click** to convert (Notepad++ idiom) — the status is one bound string; menu/palette used instead.
   A status-bar restructure is the follow-up.
 
@@ -258,14 +259,20 @@ Built on the M16 command-intent backbone, per the approved design.
 
 Tests: ~40 new (engine · intent dispatch · recorder · serializer allowlist · store round-trip); 1028 green.
 
-**Deferred follow-ups** (the core record / replay / persist works without them):
-- **Management dialog** (rename / delete saved macros) — they are auto-named «Макрос N» and replayable; a
-  rename/delete UI is the next step.
-- **Assign keyboard shortcuts** to a saved macro (the central key tunnel would consult a user keymap).
-- **«Run N times» input** (the engine supports `RepeatMode.Times`; only once / until-EOF are surfaced).
-- **Auto-record the find-bar** (Ctrl+F / Ctrl+H) as FindNext/ReplaceSelection — those intents exist and
-  replay (the until-EOF transform is proven in tests), but the interactive find-bar flow isn't tapped yet.
-- **Enter / Tab key recording** — captured only if AvaloniaEdit raises TextEntered for them (unverified).
+**Follow-ups DONE (2026-06-17):**
+- **Management dialog** (`8221533`) — ☰ Инструменты ▸ Управление макросами: rename inline, set a repeat
+  count, run N times / until-EOF, delete; over the shell as a testable `IMacroLibrary` seam. Folds in
+  the «run N times» input.
+- **Keyboard quick-slots** (`f361baa`) — Ctrl+Shift+1..9 play the Nth saved macro (positional slots).
+- **Auto-record the find-bar** (`f361baa`) — «Найти далее» → FindNext, «Заменить» → ReplaceSelection, so an
+  interactive find→replace sequence becomes a replayable until-EOF macro (literal replacement).
+
+**Still deferred (need a live-GUI smoke, or disproportionately costly):**
+- **Custom per-macro key assignment** beyond the positional Ctrl+Shift+1..9 slots — a key-capture UI.
+- **Regex-group-aware replace intent** — the find-bar replace records a literal `ReplaceSelection`; a
+  group-substituting replay needs its own intent.
+- **Enter / Tab key recording** — depends on whether AvaloniaEdit raises `TextEntered` for them; adding it
+  blind risks a double newline, so it needs a headless-input / live verification first.
 
 ## M18 — More file formats · planned
 
