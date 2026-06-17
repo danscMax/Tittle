@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -32,9 +33,11 @@ public static class HtmlExporter
         new MarkdownPipelineBuilder().DisableHtml().UseAdvancedExtensions().UseYamlFrontMatter().Build();
 
     public static string Export(
-        string markdown, string title, bool darkTheme, Func<string, bool>? wikiLinkResolver = null)
+        string markdown, string title, bool darkTheme,
+        Func<string, bool>? wikiLinkResolver = null, string? diagramsKrokiUrl = null)
     {
-        var prepared = ConvertWikiLinks(markdown ?? string.Empty, wikiLinkResolver);
+        var prepared = ConvertDiagrams(markdown ?? string.Empty, diagramsKrokiUrl);
+        prepared = ConvertWikiLinks(prepared, wikiLinkResolver);
         var body = RenderSanitized(prepared);
         var safeTitle = WebUtility.HtmlEncode(title);
 
@@ -86,6 +89,21 @@ public static class HtmlExporter
         renderer.Render(document);
         writer.Flush();
         return writer.ToString();
+    }
+
+    /// <summary>When diagrams are enabled (a Kroki URL is given), rewrite ```mermaid/```plantuml/…
+    /// fences to a markdown image <c>![type](krokiGetUrl)</c> — the browser fetches the rendered
+    /// diagram (a self-contained file can't run Mermaid's JS). Disabled (null/blank URL) → the fence
+    /// stays code. Shares the preview's fence walk via <see cref="MarkdownPreprocessor.WalkDiagramFences"/>.</summary>
+    private static string ConvertDiagrams(string markdown, string? krokiUrl)
+    {
+        if (string.IsNullOrWhiteSpace(krokiUrl))
+            return markdown;
+
+        var lines = new List<string>(LineEndings.NormalizeToLf(markdown).Split('\n'));
+        lines = MarkdownPreprocessor.WalkDiagramFences(
+            lines, (type, body) => new[] { $"![{type}]({KrokiUrl.Get(krokiUrl!, type, body)})" });
+        return string.Join("\n", lines);
     }
 
     /// <summary>[[name]] → a relative markdown link to the sibling note (Markdig renders the

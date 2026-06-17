@@ -31,7 +31,7 @@ public sealed class DocumentExportService
     public async Task<string> ExportHtmlAsync(DocumentTabViewModel tab, string target)
     {
         var html = HtmlExporter.Export(
-            tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver());
+            tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver(), DiagramsUrl(tab));
         await AtomicFile.WriteAllTextAsync(target, html);
         return $"Экспортировано: {Path.GetFileName(target)}";
     }
@@ -40,7 +40,7 @@ public sealed class DocumentExportService
     /// and opens in the default browser — its print dialog (Ctrl+P) covers paper and selectable PDF.</summary>
     public async Task<string> PrintViaBrowserAsync(DocumentTabViewModel tab)
     {
-        var html = HtmlExporter.Export(tab.DocumentText, tab.Header, darkTheme: false, tab.BuildWikiResolver());
+        var html = HtmlExporter.Export(tab.DocumentText, tab.Header, darkTheme: false, tab.BuildWikiResolver(), DiagramsUrl(tab));
         // A per-print random subdirectory makes the path unpredictable (no co-process can pre-create
         // or symlink it) while keeping a readable file name for the browser tab.
         var dir = Path.Combine(Path.GetTempPath(), "SeriousView", Path.GetRandomFileName());
@@ -57,10 +57,15 @@ public sealed class DocumentExportService
     public async Task<string> CopyAsRichTextAsync(DocumentTabViewModel tab)
     {
         var html = HtmlExporter.Export(
-            tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver());
+            tab.DocumentText, tab.Header, IsAppEffectivelyDark(_theme.Mode), tab.BuildWikiResolver(), DiagramsUrl(tab));
         await _clipboard.SetHtmlAsync(html, tab.DocumentText);
         return "Скопировано как форматированный текст";
     }
+
+    /// <summary>The Kroki URL to embed diagrams in the export, or null when diagrams are off — then
+    /// the fences stay as code (the same gate as the preview).</summary>
+    private static string? DiagramsUrl(DocumentTabViewModel tab)
+        => tab.Diagrams is { Enabled: true } d && !string.IsNullOrWhiteSpace(d.KrokiUrl) ? d.KrokiUrl : null;
 
     /// <summary>One "is the app dark" answer for every export flavour: the dark family is dark, Light
     /// is light, and Auto resolves against the variant the OS gave us — so export and copy-as-rich-text

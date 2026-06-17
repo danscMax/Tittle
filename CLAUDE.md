@@ -244,7 +244,10 @@ so ```mermaid/```plantuml/```dot/… fences in the preview POST to a **Kroki** s
 encoded `type|body`); `AdmonitionBlockHandler` renders it async (Mermaid→PNG `Bitmap`, else SVG via
 `SvgImage`; in-memory cache; source+error fallback). **Strictly opt-in** (`DiagramOptions`/`DiagramSettings`,
 default OFF, configurable URL incl. self-host — diagram text leaves the machine) via Настройки ▸ Раскладка.
-HTML-export of diagrams deliberately deferred (fence stays code in export).
+HTML-export of diagrams DONE: when enabled, each fence → `![type](krokiGetUrl)` (browser fetches the
+image; GET payload zlib+base64url via `Core/Text/KrokiUrl`); disabled → fence stays code. Fence walk
+shared with the preview via `MarkdownPreprocessor.WalkDiagramFences`; preview also gained a disk cache
+(`Core/Services/DiagramCacheKey`) + render spinner + click-to-lightbox.
 **Beyond the port — additional native formats**: XML/NDJSON pretty-print (the JSON pretty
 toggle was generalized to one `IsPrettyPrintable` «формат» action dispatching by type in
 `SourceText`; persist-field `EditorOptions.JsonPretty` kept for settings compat); TOML/INI/.env/

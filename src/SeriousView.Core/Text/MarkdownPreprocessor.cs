@@ -180,6 +180,22 @@ public static partial class MarkdownPreprocessor
     // opaque-transport contract as ::: math. Detects fences itself (own state walk) since it runs
     // before the shared code-region scan. Unknown languages and unclosed fences pass through.
     private static List<string> ConvertDiagramFences(List<string> lines)
+        // Preview: a diagram fence → a ::: diagram container ("type|body", percent-encoded — the
+        // opaque ::: transport the viewer's handler decodes and renders via Kroki).
+        => WalkDiagramFences(lines, (krokiType, body) => new[]
+        {
+            "::: diagram",
+            Uri.EscapeDataString(krokiType) + "|" + Uri.EscapeDataString(body),
+            ":::",
+        });
+
+    /// <summary>Walk fenced blocks: a diagram fence (a language Kroki renders) is replaced by
+    /// <paramref name="renderDiagram"/>'s lines (blank-line padded so the engine parses it as its
+    /// own block), receiving the Kroki type + the joined body; EVERY other fence — a bare ```, a
+    /// ```python, or a ```mermaid example shown inside an outer fence — is copied verbatim, so a
+    /// non-diagram fence is never peeked into. Shared by the preview pass and the HTML export.</summary>
+    internal static List<string> WalkDiagramFences(
+        List<string> lines, Func<string, string, IEnumerable<string>> renderDiagram)
     {
         var result = new List<string>(lines.Count);
         for (var i = 0; i < lines.Count; i++)
@@ -191,9 +207,6 @@ public static partial class MarkdownPreprocessor
                 continue;
             }
 
-            // Consume the WHOLE fenced block to its closer — diagram fences are converted, every
-            // other fence (a bare ```, ```python, or a ```mermaid shown inside an outer fence) is
-            // copied verbatim, so we never peek inside a non-diagram fence.
             var fence = open.Groups["fence"].Value;
             var body = new List<string>();
             var j = i + 1;
@@ -217,9 +230,7 @@ public static partial class MarkdownPreprocessor
             if (DiagramTypes.ToKrokiType(open.Groups["lang"].Value) is { } krokiType)
             {
                 result.Add(string.Empty);
-                result.Add("::: diagram");
-                result.Add(Uri.EscapeDataString(krokiType) + "|" + Uri.EscapeDataString(string.Join("\n", body)));
-                result.Add(":::");
+                result.AddRange(renderDiagram(krokiType, string.Join("\n", body)));
                 result.Add(string.Empty);
             }
             else

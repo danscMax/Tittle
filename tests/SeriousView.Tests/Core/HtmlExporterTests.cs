@@ -155,4 +155,18 @@ public class HtmlExporterTests
         Assert.DoesNotContain("<script src", html); // no external scripts
         Assert.StartsWith("<!DOCTYPE html>", html);
     }
+
+    [Fact]
+    public void Export_Diagrams_Enabled_EmbedsKrokiImage_Disabled_KeepsCode()
+    {
+        const string md = "# D\n\n```mermaid\ngraph TD;A-->B\n```";
+
+        var off = HtmlExporter.Export(md, "doc", true, null, diagramsKrokiUrl: null);
+        Assert.DoesNotContain("<img", off);
+        Assert.Contains("graph TD", off); // fence stays as code
+
+        var on = HtmlExporter.Export(md, "doc", true, null, diagramsKrokiUrl: "https://kroki.io");
+        Assert.Contains("<img", on);
+        Assert.Contains("https://kroki.io/mermaid/png/", on);
+    }
 }
