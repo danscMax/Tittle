@@ -99,7 +99,7 @@ public static class MacroSerializer
         DeleteTextIntent d => new() { Op = "deleteText", Forward = d.Forward },
         MoveCaretIntent mv => new() { Op = "moveCaret", Motion = mv.Motion.ToString() },
         FindNextIntent f => new() { Op = "findNext", Pattern = f.Pattern, Regex = f.Regex, CaseSensitive = f.CaseSensitive },
-        ReplaceSelectionIntent r => new() { Op = "replaceSelection", Text = r.Text },
+        ReplaceSelectionIntent r => new() { Op = "replaceSelection", Text = r.Text, Pattern = r.Pattern, Regex = r.Regex, CaseSensitive = r.CaseSensitive },
         _ => new() { Op = "unknown" },
     };
 
@@ -112,7 +112,7 @@ public static class MacroSerializer
         "deleteText" => new DeleteTextIntent(s.Forward ?? false),
         "moveCaret" when Enum.TryParse<CaretMotion>(s.Motion, out var motion) => new MoveCaretIntent(motion),
         "findNext" => new FindNextIntent(s.Pattern ?? "", s.Regex ?? false, s.CaseSensitive ?? false),
-        "replaceSelection" => new ReplaceSelectionIntent(s.Text ?? ""),
+        "replaceSelection" => new ReplaceSelectionIntent(s.Text ?? "", s.Pattern, s.Regex ?? false, s.CaseSensitive ?? false),
         _ => null,
     };
 }

@@ -32,7 +32,17 @@ public static class EditorCommandDispatcher
             case ReplaceSelectionIntent rep:
             {
                 var (start, length) = actions.Selection;
-                actions.Replace(start, length, rep.Text);
+                var replacement = rep.Text;
+                if (rep.Regex && !string.IsNullOrEmpty(rep.Pattern))
+                {
+                    // Re-run the group substitution against the matched (selected) text, mirroring what
+                    // the live find-bar replace did at record time. ReplaceAll carries the ReDoS guard and
+                    // returns the text unchanged on an invalid/timed-out pattern, so replay never throws.
+                    var selected = actions.Text.Substring(start, length);
+                    replacement = TextSearch.ReplaceAll(selected, rep.Pattern, rep.Text, rep.CaseSensitive, regex: true).NewText;
+                }
+
+                actions.Replace(start, length, replacement);
                 return true;
             }
 

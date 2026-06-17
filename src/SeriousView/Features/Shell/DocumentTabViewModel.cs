@@ -323,10 +323,13 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             ? TextSearch.ReplaceAll(matchedText, SearchQuery, ReplaceText, SearchCaseSensitive, regex: true).NewText
             : ReplaceText;
 
-        // Record a ReplaceSelection intent while recording (literal replacement; a regex-group replace
-        // records the raw replace text — a regex-aware replace intent is a follow-up).
+        // Record a ReplaceSelection intent while recording. For a regex replace, carry the pattern + flags
+        // so replay re-runs the group substitution ($1, $2 …) against each match instead of inserting the
+        // literal template; a literal replace records just the text (Pattern stays null → unchanged behavior).
         if (Shell?.IsRecordingMacro == true)
-            Shell.RecordIntent(new ReplaceSelectionIntent(ReplaceText));
+            Shell.RecordIntent(SearchRegex
+                ? new ReplaceSelectionIntent(ReplaceText, SearchQuery, Regex: true, SearchCaseSensitive)
+                : new ReplaceSelectionIntent(ReplaceText));
         actions.Replace(match.Offset, match.Length, replacement);
         RecomputeSearch();          // the edit shifts offsets → re-scan the live text
         StepSearch(forward: true);  // advance to the next match

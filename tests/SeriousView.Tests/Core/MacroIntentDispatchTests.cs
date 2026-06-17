@@ -103,4 +103,38 @@ public class MacroIntentDispatchTests
 
         Assert.Equal("b b b", ed.Text);
     }
+
+    [Fact]
+    public void ReplaceSelection_Regex_SubstitutesGroupsAgainstSelection()
+    {
+        // "x=y" fully selected; a recorded regex replace swaps the two groups on replay — not the literal "$2=$1".
+        var ed = new FakeEditorActions("x=y", 0, 3);
+        EditorCommandDispatcher.Apply(ed, new ReplaceSelectionIntent("$2=$1", @"(\w+)=(\w+)", Regex: true));
+        Assert.Equal("y=x", ed.Text);
+    }
+
+    [Fact]
+    public void ReplaceSelection_Regex_OnlyRewritesTheSelectedMatch()
+    {
+        var ed = new FakeEditorActions("n12n", 1, 2); // "12" selected
+        EditorCommandDispatcher.Apply(ed, new ReplaceSelectionIntent("[$1]", @"(\d+)", Regex: true));
+        Assert.Equal("n[12]n", ed.Text);
+    }
+
+    [Fact]
+    public void Replay_RegexFindReplace_UntilEof_SubstitutesEachMatch()
+    {
+        // Swap every "k=v" pair across the document, run until the find reaches EOF — group substitution
+        // must survive recording (regression for the literal-template bug).
+        var ed = new FakeEditorActions("a=1 b=2", 0, 0);
+        var macro = new Macro("swap", RepeatMode.UntilNoMatch, 0, new IEditorIntent[]
+        {
+            new FindNextIntent(@"(\w+)=(\w+)", Regex: true, CaseSensitive: false),
+            new ReplaceSelectionIntent("$2=$1", @"(\w+)=(\w+)", Regex: true),
+        });
+
+        MacroReplayEngine.Replay(macro, intent => EditorCommandDispatcher.Apply(ed, intent));
+
+        Assert.Equal("1=a 2=b", ed.Text);
+    }
 }

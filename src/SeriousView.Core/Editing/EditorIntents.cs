@@ -63,5 +63,10 @@ public sealed record MoveCaretIntent(CaretMotion Motion) : IEditorIntent;
 /// does NOT wrap) — that is what ends an until-no-match replay.</summary>
 public sealed record FindNextIntent(string Pattern, bool Regex, bool CaseSensitive) : IEditorIntent;
 
-/// <summary>Replace the current selection with text — the find-driven-edit partner of FindNext.</summary>
-public sealed record ReplaceSelectionIntent(string Text) : IEditorIntent;
+/// <summary>Replace the current selection with text — the find-driven-edit partner of FindNext. When
+/// <c>Regex</c> is set and <c>Pattern</c> is non-null, the replacement is computed by substituting the
+/// pattern's groups (<c>$1</c>, <c>$2</c> …) into the selected (matched) text on replay, so a recorded
+/// regex replace reproduces its group substitution instead of inserting the literal template. A literal
+/// replace leaves <c>Pattern</c> null / <c>Regex</c> false (the default), so old macros are unaffected.</summary>
+public sealed record ReplaceSelectionIntent(
+    string Text, string? Pattern = null, bool Regex = false, bool CaseSensitive = false) : IEditorIntent;

@@ -16,6 +16,7 @@ public class MacroSerializerTests
             new DeleteTextIntent(Forward: true),
             new FindNextIntent("x", Regex: true, CaseSensitive: false),
             new ReplaceSelectionIntent("y"),
+            new ReplaceSelectionIntent("$2=$1", "(\\w+)=(\\w+)", Regex: true, CaseSensitive: true),
             new TransformLinesIntent(LineOp.SortAscending),
             new ConvertEolIntent(Eol.CrLf),
         });
