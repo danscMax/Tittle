@@ -1,0 +1,19 @@
+# Codifies the whitespace contract `dotnet format` already enforces in CI (the Format-check job).
+# Deliberately minimal — only the rules the format gate verifies today; no new analyzer/style rules
+# that would flag existing code. The C# style itself follows the .NET defaults.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{cs,csproj,props,targets}]
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

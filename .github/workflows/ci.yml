@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Cancel an in-flight run when a newer commit supersedes it (a push burst no longer
+# leaves a tail of doomed runs grinding to completion). PRs and main isolate by ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-test:
     name: Build & Test (${{ matrix.os }})
@@ -15,12 +21,19 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5  # SDK band comes from global.json
+
+      # No lockfiles (RID-native packages don't play with RestorePackagesWithLockFile), so cache the
+      # global package folder keyed on the single CPM manifest instead of setup-dotnet's lockfile cache.
+      - name: Cache NuGet
+        uses: actions/cache@v5
         with:
-          dotnet-version: '9.0.x'
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
 
       - name: Restore
         run: dotnet restore SeriousView.sln
@@ -36,12 +49,17 @@ jobs:
     name: Format check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5  # SDK band comes from global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v5
         with:
-          dotnet-version: '9.0.x'
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
 
       - name: Verify formatting
         run: dotnet format SeriousView.sln --verify-no-changes --verbosity diagnostic

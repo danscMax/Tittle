@@ -61,7 +61,7 @@
 
   <ItemGroup Label="Export (M13)">
     <!-- CommonMark+GFM to HTML for the self-contained export. Zero dependencies. -->
-    <PackageVersion Include="Markdig" Version="1.2.0" />
+    <PackageVersion Include="Markdig" Version="1.3.1" />
   </ItemGroup>
 
   <ItemGroup Label="MVVM + DI">

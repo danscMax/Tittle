@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # NuGet: surface patch/minor bumps (like Markdig 1.2.0 -> 1.3.1) automatically. Major bumps are
+  # IGNORED on purpose — the project deliberately stays on the Avalonia 11 / SkiaSharp 2.88.x line
+  # (see CLAUDE.md "Avalonia 11, not 12"); the Av12 majors are migrated by hand when the ecosystem
+  # ships stable (Markdown.Avalonia + FluentAvalonia). One grouped PR keeps the noise down.
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      nuget-minor-patch:
+        update-types: [ minor, patch ]
+    ignore:
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major" ]
+
+  # Keep the CI actions current (the v4 -> v5/v6 bump that fixed the Node 20 deprecation would
+  # have surfaced here automatically).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

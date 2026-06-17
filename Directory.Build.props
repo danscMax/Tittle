@@ -10,6 +10,15 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Product version (drives Assembly/File/InformationalVersion + the build manifest). Bump per release. -->
     <Version>0.1.0</Version>
+
+    <!-- Dependency hygiene: warn (NU1901-NU1904) on any direct OR transitive package with a known
+         vulnerability at restore time. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+
+    <!-- Deterministic output; normalise embedded paths in CI builds (set by the CI env var). -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
 </Project>
