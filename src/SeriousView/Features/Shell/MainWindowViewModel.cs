@@ -589,7 +589,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
         IShellService shell, string[] args, IDocumentWatcher? documentWatcher = null,
-        ViewStateStore? viewState = null)
+        ViewStateStore? viewState = null, IMacroStore? macroStore = null)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
@@ -601,6 +601,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _export = new DocumentExportService(theme, shell, clipboard);
         _watcher = documentWatcher;
         _viewState = viewState;
+        _macroStore = macroStore;
+        if (_macroStore is not null)
+        {
+            _macros.AddRange(_macroStore.Load());
+            _lastMacro = _macros.Count > 0 ? _macros[^1] : null;
+            HasMacro = _macros.Count > 0;
+        }
+
         if (_watcher is not null)
             _watcher.Changed += OnWatcherChanged;
 
@@ -726,6 +734,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     //     replay through MacroReplayEngine + the dispatcher. Persistence + shortcuts + dialog come later. ---
 
     private readonly MacroRecorder _macroRecorder = new();
+    private readonly List<Macro> _macros = new();
+    private readonly IMacroStore? _macroStore;
     private Macro? _lastMacro;
 
     [ObservableProperty]
@@ -743,12 +753,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     {
         if (_macroRecorder.IsRecording)
         {
-            _lastMacro = _macroRecorder.Stop("Записанный макрос");
+            var macro = _macroRecorder.Stop($"Макрос {_macros.Count + 1}");
             IsRecordingMacro = false;
-            HasMacro = _lastMacro is not null;
-            StatusText = _lastMacro is { } m
-                ? $"Макрос записан: {m.Steps.Count} шаг(ов)"
-                : "Запись отменена — действий не было";
+            if (macro is not null)
+            {
+                _macros.Add(macro);
+                _lastMacro = macro;
+                HasMacro = true;
+                _macroStore?.Save(_macros); // persist the library to %AppData%/SeriousView/macros.json
+                StatusText = $"Макрос «{macro.Name}» записан: {macro.Steps.Count} шаг(ов)";
+            }
+            else
+            {
+                StatusText = "Запись отменена — действий не было";
+            }
         }
         else
         {
@@ -771,6 +789,16 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         var run = macro with { Mode = mode };
         MacroReplayEngine.Replay(run, intent => EditorCommandDispatcher.Apply(actions, intent));
+    }
+
+    /// <summary>Replay a specific saved macro (chosen from the palette) with its own mode.</summary>
+    [RelayCommand]
+    private void PlaySavedMacro(Macro? macro)
+    {
+        if (macro is null || SelectedTab?.EditorActions is not { } actions)
+            return;
+
+        MacroReplayEngine.Replay(macro, intent => EditorCommandDispatcher.Apply(actions, intent));
     }
 
     /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active
@@ -879,11 +907,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         items.Add(new PaletteItem(IsRecordingMacro ? "Остановить запись макроса" : "Записать макрос",
             ToggleMacroRecordingCommand));
-        if (HasMacro)
-        {
-            items.Add(new PaletteItem("Воспроизвести макрос", PlayMacroCommand));
-            items.Add(new PaletteItem("Воспроизвести макрос до конца файла", PlayMacroToEndCommand));
-        }
+        if (_lastMacro is not null)
+            items.Add(new PaletteItem("Воспроизвести последний макрос до конца файла", PlayMacroToEndCommand));
+        foreach (var macro in _macros)
+            items.Add(new PaletteItem($"Воспроизвести: {macro.Name}", PlaySavedMacroCommand, parameter: macro));
 
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));

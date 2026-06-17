@@ -117,6 +117,7 @@ public partial class App : Application
         services.AddSingleton<IRecentFilesStore, RecentFilesStore>();
         services.AddSingleton<IDocumentWatcher, DocumentWatcher>();
         services.AddSingleton<ViewStateStore>(); // per-file visited/bookmark state (ported)
+        services.AddSingleton<IMacroStore, MacroStore>(); // macro library (M17)
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
