@@ -14,4 +14,8 @@ public interface IEditorActions
     /// <summary>Replace <paramref name="length"/> chars at <paramref name="start"/> with
     /// <paramref name="newText"/> (one undo step), then select the inserted text.</summary>
     void Replace(int start, int length, string newText);
+
+    /// <summary>Set the selection (start + length); a length of 0 places a bare caret. Used by caret
+    /// moves and find-next (selecting the match).</summary>
+    void SetSelection(int start, int length);
 }

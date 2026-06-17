@@ -9,16 +9,42 @@ namespace SeriousView.Core.Editing;
 /// observing and replay by re-dispatching here. Pure of UI; tested with a fake surface.</summary>
 public static class EditorCommandDispatcher
 {
-    public static void Apply(IEditorActions actions, IEditorIntent intent)
+    /// <summary>Apply one intent. Returns whether it made PROGRESS — most intents return true; a
+    /// <see cref="FindNextIntent"/> that found nothing at/after the caret (EOF) and a no-op delete at a
+    /// boundary return false, which is what ends an until-no-match macro replay.</summary>
+    public static bool Apply(IEditorActions actions, IEditorIntent intent)
     {
         switch (intent)
         {
             case TransformLinesIntent t:
                 ApplyLineOp(actions, t.Op);
-                break;
+                return true;
             case ConvertEolIntent c:
                 ApplyConvertEol(actions, c.Target);
-                break;
+                return true;
+            case InsertTextIntent ins:
+            {
+                var (start, length) = actions.Selection;
+                actions.Replace(start, length, ins.Text);
+                return true;
+            }
+
+            case ReplaceSelectionIntent rep:
+            {
+                var (start, length) = actions.Selection;
+                actions.Replace(start, length, rep.Text);
+                return true;
+            }
+
+            case DeleteTextIntent del:
+                return ApplyDelete(actions, del.Forward);
+            case MoveCaretIntent mv:
+                ApplyMove(actions, mv.Motion);
+                return true;
+            case FindNextIntent f:
+                return ApplyFindNext(actions, f);
+            default:
+                return true;
         }
     }
 
@@ -28,6 +54,119 @@ public static class EditorCommandDispatcher
         var converted = LineEndings.ConvertTo(text, target);
         if (!string.Equals(converted, text, StringComparison.Ordinal))
             actions.Replace(0, text.Length, converted);
+    }
+
+    private static bool ApplyDelete(IEditorActions actions, bool forward)
+    {
+        var (start, length) = actions.Selection;
+        if (length > 0)
+        {
+            actions.Replace(start, length, ""); // delete the selection
+            return true;
+        }
+
+        var text = actions.Text;
+        if (forward)
+        {
+            if (start >= text.Length)
+                return false; // nothing ahead
+            actions.Replace(start, 1, "");
+        }
+        else
+        {
+            if (start <= 0)
+                return false; // backspace at the start
+            actions.Replace(start - 1, 1, "");
+        }
+
+        return true;
+    }
+
+    private static void ApplyMove(IEditorActions actions, CaretMotion motion)
+    {
+        var text = actions.Text;
+        var (start, length) = actions.Selection;
+        var caret = Math.Clamp(start + length, 0, text.Length); // the active end of the selection
+        actions.SetSelection(CaretTarget(text, caret, motion), 0);
+    }
+
+    private static bool ApplyFindNext(IEditorActions actions, FindNextIntent f)
+    {
+        var text = actions.Text;
+        var (start, length) = actions.Selection;
+        var from = start + length;
+        var outcome = TextSearch.FindAll(text, f.Pattern, f.CaseSensitive, f.Regex);
+        foreach (var m in outcome.Matches)
+        {
+            if (m.Offset >= from)
+            {
+                actions.SetSelection(m.Offset, m.Length);
+                return true;
+            }
+        }
+
+        return false; // no match at/after the caret — EOF (no wrap), which stops until-no-match replay
+    }
+
+    private static int CaretTarget(string text, int caret, CaretMotion motion) => motion switch
+    {
+        CaretMotion.Left => Math.Max(0, caret - 1),
+        CaretMotion.Right => Math.Min(text.Length, caret + 1),
+        CaretMotion.LineStart => LineStartOffset(text, caret),
+        CaretMotion.LineEnd => LineEndOffset(text, caret),
+        CaretMotion.DocStart => 0,
+        CaretMotion.DocEnd => text.Length,
+        CaretMotion.WordLeft => WordLeftOffset(text, caret),
+        CaretMotion.WordRight => WordRightOffset(text, caret),
+        CaretMotion.Up => VerticalOffset(text, caret, up: true),
+        CaretMotion.Down => VerticalOffset(text, caret, up: false),
+        _ => caret,
+    };
+
+    private static int LineStartOffset(string text, int caret)
+        => caret <= 0 ? 0 : text.LastIndexOf('\n', caret - 1) + 1;
+
+    private static int LineEndOffset(string text, int caret)
+    {
+        var nl = caret < text.Length ? text.IndexOf('\n', caret) : -1;
+        return nl < 0 ? text.Length : nl;
+    }
+
+    private static bool IsWordChar(char c) => char.IsLetterOrDigit(c) || c == '_';
+
+    private static int WordRightOffset(string text, int i)
+    {
+        while (i < text.Length && !IsWordChar(text[i])) i++; // skip non-word
+        while (i < text.Length && IsWordChar(text[i])) i++;  // skip the word
+        return i;
+    }
+
+    private static int WordLeftOffset(string text, int i)
+    {
+        while (i > 0 && !IsWordChar(text[i - 1])) i--; // skip non-word
+        while (i > 0 && IsWordChar(text[i - 1])) i--;  // skip the word
+        return i;
+    }
+
+    private static int VerticalOffset(string text, int caret, bool up)
+    {
+        var lineStart = LineStartOffset(text, caret);
+        var column = caret - lineStart;
+        if (up)
+        {
+            if (lineStart == 0)
+                return caret; // already on the first line
+            var prevStart = LineStartOffset(text, lineStart - 1);
+            var prevLen = (lineStart - 1) - prevStart; // chars before the '\n' ending the previous line
+            return prevStart + Math.Min(column, prevLen);
+        }
+
+        var lineEnd = LineEndOffset(text, caret);
+        if (lineEnd >= text.Length)
+            return caret; // already on the last line
+        var nextStart = lineEnd + 1;
+        var nextLen = LineEndOffset(text, nextStart) - nextStart;
+        return nextStart + Math.Min(column, nextLen);
     }
 
     private static void ApplyLineOp(IEditorActions actions, LineOp op)

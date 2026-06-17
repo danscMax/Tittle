@@ -190,4 +190,6 @@ internal sealed class FakeEditorActions : IEditorActions
         Selection = (start, newText.Length);
         ReplaceCalls++;
     }
+
+    public void SetSelection(int start, int length) => Selection = (start, length);
 }

@@ -19,8 +19,13 @@ internal sealed class AvaloniaEditorActions(TextEditor editor) : IEditorActions
             return;
 
         document.Replace(start, length, newText); // a single Replace is already one undo step
+        SetSelection(start, newText.Length);
+    }
+
+    public void SetSelection(int start, int length)
+    {
         editor.SelectionStart = start;
-        editor.SelectionLength = newText.Length;
-        editor.CaretOffset = start + newText.Length;
+        editor.SelectionLength = length;
+        editor.CaretOffset = start + length;
     }
 }
