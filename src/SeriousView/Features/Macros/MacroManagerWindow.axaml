@@ -17,7 +17,10 @@
           BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="18">
     <DockPanel LastChildFill="True">
       <TextBlock DockPanel.Dock="Top" Text="Управление макросами" FontSize="16" FontWeight="SemiBold"
-                 Foreground="{DynamicResource ChromeForegroundBrush}" Margin="0,0,0,12"/>
+                 Foreground="{DynamicResource ChromeForegroundBrush}" Margin="0,0,0,4"/>
+      <TextBlock DockPanel.Dock="Top" Margin="0,0,0,12" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource ChromeForegroundMutedBrush}"
+                 Text="Первые 9 макросов запускаются с клавиатуры: Ctrl+Shift+1…9."/>
       <Button DockPanel.Dock="Bottom" Content="Готово" HorizontalAlignment="Right" Classes="accent"
               Margin="0,12,0,0" AutomationProperties.Name="Закрыть" Click="OnDone"/>
       <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding IsEmpty}"

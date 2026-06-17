@@ -768,6 +768,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             MacroReplayEngine.Replay(macro, intent => EditorCommandDispatcher.Apply(actions, intent));
     }
 
+    /// <summary>Play the Nth saved macro (1-based) — the Ctrl+Shift+1..9 quick-slots.</summary>
+    public void PlayMacroBySlot(int oneBasedIndex)
+    {
+        if (oneBasedIndex >= 1 && oneBasedIndex <= _macros.Count)
+            ReplayMacro(_macros[oneBasedIndex - 1]);
+    }
+
     /// <summary>Raised when the user opens the macro manager — the View shows the dialog.</summary>
     public event Action? MacroManagerRequested;
 

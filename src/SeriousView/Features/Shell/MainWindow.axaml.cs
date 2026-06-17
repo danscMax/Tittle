@@ -137,6 +137,14 @@ public partial class MainWindow : AppWindow
             return;
         }
 
+        // Ctrl+Shift+1..9 play the Nth saved macro (positional quick-slots; custom assignment is a follow-up).
+        if (ctrl && shift && !alt && MacroSlotForKey(e.Key) is { } slot)
+        {
+            vm.PlayMacroBySlot(slot);
+            e.Handled = true;
+            return;
+        }
+
         // Line operations carry a LineOp parameter, so they bypass the parameterless command switch below.
         var lineOp = (ctrl, shift, alt, e.Key) switch
         {
@@ -216,6 +224,21 @@ public partial class MainWindow : AppWindow
             _ => null,
         };
     }
+
+    // Ctrl+Shift+1..9 → a 1-based saved-macro slot (digit row or NumPad).
+    private static int? MacroSlotForKey(Key key) => key switch
+    {
+        Key.D1 or Key.NumPad1 => 1,
+        Key.D2 or Key.NumPad2 => 2,
+        Key.D3 or Key.NumPad3 => 3,
+        Key.D4 or Key.NumPad4 => 4,
+        Key.D5 or Key.NumPad5 => 5,
+        Key.D6 or Key.NumPad6 => 6,
+        Key.D7 or Key.NumPad7 => 7,
+        Key.D8 or Key.NumPad8 => 8,
+        Key.D9 or Key.NumPad9 => 9,
+        _ => null,
+    };
 
     // Open the Ctrl+K command palette as a fresh owned top-level window (rebuilt each time so it reflects
     // the current commands / recent files / active tab). It closes itself on run / Esc / click-away.
