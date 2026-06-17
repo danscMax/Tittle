@@ -760,7 +760,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
     }
 
     // --- Macros (M17): record the 3-source intent stream (typing, navigation keys, line/EOL commands),
-    //     replay through MacroReplayEngine + the dispatcher. Persistence + shortcuts + dialog come later. ---
+    //     replay through MacroReplayEngine + the dispatcher. Persisted to macros.json; played from the
+    //     manager dialog, the Ctrl+Shift+1..9 slots, or a custom per-macro key gesture. ---
 
     private readonly MacroRecorder _macroRecorder = new();
     private readonly List<Macro> _macros = new();
@@ -801,6 +802,22 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
     {
         if (oneBasedIndex >= 1 && oneBasedIndex <= _macros.Count)
             ReplayMacro(_macros[oneBasedIndex - 1]);
+    }
+
+    /// <summary>Play the saved macro bound to this key-gesture string (a custom per-macro shortcut), and
+    /// return whether one matched. The key tunnel checks built-in shortcuts and the positional
+    /// Ctrl+Shift+1..9 slots first, so a custom binding can never shadow them.</summary>
+    public bool PlayMacroByGesture(string gesture)
+    {
+        foreach (var m in _macros)
+            if (!string.IsNullOrEmpty(m.Shortcut)
+                && string.Equals(m.Shortcut, gesture, StringComparison.OrdinalIgnoreCase))
+            {
+                ReplayMacro(m);
+                return true;
+            }
+
+        return false;
     }
 
     /// <summary>Raised when the user opens the macro manager — the View shows the dialog.</summary>

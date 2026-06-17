@@ -191,7 +191,14 @@ public partial class MainWindow : AppWindow
         };
 
         if (command is null)
+        {
+            // No built-in shortcut matched — try a user-assigned macro shortcut. Require a Ctrl/Alt
+            // modifier so a binding can't shadow plain typing; built-ins and the Ctrl+Shift+1..9 slots
+            // are handled above, so they always win over a custom binding.
+            if ((ctrl || alt) && vm.PlayMacroByGesture(new KeyGesture(e.Key, e.KeyModifiers).ToString()))
+                e.Handled = true;
             return;
+        }
 
         if (command.CanExecute(null))
             command.Execute(null);

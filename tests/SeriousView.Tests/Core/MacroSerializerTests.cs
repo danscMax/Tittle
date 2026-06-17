@@ -19,7 +19,7 @@ public class MacroSerializerTests
             new ReplaceSelectionIntent("$2=$1", "(\\w+)=(\\w+)", Regex: true, CaseSensitive: true),
             new TransformLinesIntent(LineOp.SortAscending),
             new ConvertEolIntent(Eol.CrLf),
-        });
+        }, Shortcut: "Ctrl+Shift+M");
 
         var back = MacroSerializer.Deserialize(MacroSerializer.Serialize(new[] { macro }));
 
@@ -27,6 +27,7 @@ public class MacroSerializerTests
         Assert.Equal(macro.Name, back[0].Name);
         Assert.Equal(macro.Mode, back[0].Mode);
         Assert.Equal(macro.Count, back[0].Count);
+        Assert.Equal(macro.Shortcut, back[0].Shortcut);
         Assert.Equal(macro.Steps, back[0].Steps); // element-wise; each intent is a value-equal record
     }
 

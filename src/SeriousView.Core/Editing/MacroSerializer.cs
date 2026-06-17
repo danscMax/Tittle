@@ -21,6 +21,7 @@ public sealed class MacroDto
     public string Name { get; set; } = "";
     public string Mode { get; set; } = nameof(RepeatMode.Once);
     public int Count { get; set; } = 1;
+    public string? Shortcut { get; set; }
     public List<MacroStepDto> Steps { get; set; } = new();
 }
 
@@ -77,7 +78,7 @@ public static class MacroSerializer
                     steps.Add(intent);
 
             if (steps.Count > 0 && Enum.TryParse<RepeatMode>(m.Mode, out var mode))
-                result.Add(new Macro(m.Name, mode, m.Count, steps));
+                result.Add(new Macro(m.Name, mode, m.Count, steps, m.Shortcut));
         }
 
         return result;
@@ -88,6 +89,7 @@ public static class MacroSerializer
         Name = m.Name,
         Mode = m.Mode.ToString(),
         Count = m.Count,
+        Shortcut = m.Shortcut,
         Steps = m.Steps.Select(ToStepDto).ToList(),
     };
 
