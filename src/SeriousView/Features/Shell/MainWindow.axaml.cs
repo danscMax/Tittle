@@ -14,6 +14,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Windowing;
 using SeriousView.Core.Abstractions;
+using SeriousView.Core.Editing;
 using SeriousView.Core.Settings;
 using SeriousView.Features.Palette;
 using SeriousView.Features.Settings;
@@ -132,6 +133,21 @@ public partial class MainWindow : AppWindow
             (ctrl && shift && !alt && e.Key == Key.P))
         {
             OpenCommandPalette(vm);
+            e.Handled = true;
+            return;
+        }
+
+        // Line operations carry a LineOp parameter, so they bypass the parameterless command switch below.
+        var lineOp = (ctrl, shift, alt, e.Key) switch
+        {
+            (true, false, false, Key.D) => (LineOp?)LineOp.Duplicate,
+            (false, false, true, Key.Up) => LineOp.MoveUp,
+            (false, false, true, Key.Down) => LineOp.MoveDown,
+            _ => null,
+        };
+        if (lineOp is { } op && vm.SelectedTab?.ApplyLineOpCommand is { } lineCmd && lineCmd.CanExecute(op))
+        {
+            lineCmd.Execute(op);
             e.Handled = true;
             return;
         }

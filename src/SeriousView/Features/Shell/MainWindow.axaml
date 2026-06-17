@@ -5,6 +5,7 @@
         xmlns:views="using:SeriousView.Features.Welcome"
         xmlns:conv="using:SeriousView.Shared"
         xmlns:core="using:SeriousView.Core.Abstractions"
+        xmlns:editing="using:SeriousView.Core.Editing"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:wnd="using:FluentAvalonia.UI.Windowing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -148,6 +149,35 @@
                         IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <Separator/>
               <MenuItem Header="Закрыть вкладку" InputGesture="Ctrl+W" Command="{Binding CloseActiveTabCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Правка">
+              <MenuItem Header="Сортировать строки (А→Я)" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.SortAscending}"/>
+              <MenuItem Header="Сортировать строки (Я→А)" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.SortDescending}"/>
+              <MenuItem Header="Удалить дубликаты строк" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.RemoveDuplicates}"/>
+              <MenuItem Header="Убрать хвостовые пробелы" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.TrimTrailing}"/>
+              <Separator/>
+              <MenuItem Header="ВЕРХНИЙ РЕГИСТР" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Upper}"/>
+              <MenuItem Header="нижний регистр" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Lower}"/>
+              <MenuItem Header="Заголовочный Регистр" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Title}"/>
+              <Separator/>
+              <MenuItem Header="Переместить строку вверх" InputGesture="Alt+Up"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.MoveUp}"/>
+              <MenuItem Header="Переместить строку вниз" InputGesture="Alt+Down"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.MoveDown}"/>
+              <MenuItem Header="Дублировать строку" InputGesture="Ctrl+D"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Duplicate}"/>
+              <MenuItem Header="Объединить строки" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Join}"/>
             </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">

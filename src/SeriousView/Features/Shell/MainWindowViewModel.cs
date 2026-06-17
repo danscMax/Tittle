@@ -770,8 +770,20 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             items.Add(new PaletteItem("Сохранить", SaveActiveTabCommand));
 
         if (SelectedTab is { EditorActions: not null } editorTab)
-            items.Add(new PaletteItem("Сортировать строки (А→Я)", editorTab.ApplyLineOpCommand,
-                parameter: LineOp.SortAscending));
+        {
+            var lineOp = editorTab.ApplyLineOpCommand;
+            items.Add(new PaletteItem("Строки: сортировать (А→Я)", lineOp, parameter: LineOp.SortAscending));
+            items.Add(new PaletteItem("Строки: сортировать (Я→А)", lineOp, parameter: LineOp.SortDescending));
+            items.Add(new PaletteItem("Строки: удалить дубликаты", lineOp, parameter: LineOp.RemoveDuplicates));
+            items.Add(new PaletteItem("Строки: убрать хвостовые пробелы", lineOp, parameter: LineOp.TrimTrailing));
+            items.Add(new PaletteItem("Регистр: ВЕРХНИЙ", lineOp, parameter: LineOp.Upper));
+            items.Add(new PaletteItem("Регистр: нижний", lineOp, parameter: LineOp.Lower));
+            items.Add(new PaletteItem("Регистр: Заголовочный", lineOp, parameter: LineOp.Title));
+            items.Add(new PaletteItem("Строки: переместить вверх", lineOp, "Alt+↑", LineOp.MoveUp));
+            items.Add(new PaletteItem("Строки: переместить вниз", lineOp, "Alt+↓", LineOp.MoveDown));
+            items.Add(new PaletteItem("Строки: дублировать", lineOp, "Ctrl+D", LineOp.Duplicate));
+            items.Add(new PaletteItem("Строки: объединить", lineOp, parameter: LineOp.Join));
+        }
 
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
