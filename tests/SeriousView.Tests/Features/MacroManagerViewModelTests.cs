@@ -145,6 +145,19 @@ public class MacroManagerViewModelTests
     }
 
     [Fact]
+    public void Capture_StealsGestureFromAnotherRow()
+    {
+        var lib = new FakeMacroLibrary(MWithShortcut("A", "Ctrl+M"), M("B"));
+        var vm = new MacroManagerViewModel(lib);
+
+        vm.BeginCaptureCommand.Execute(vm.Rows[1]); // bind Ctrl+M to B (A already has it)
+        vm.ApplyCapturedShortcut("Ctrl+M");
+
+        Assert.Null(vm.Rows[0].Shortcut);             // stolen from A
+        Assert.Equal("Ctrl+M", vm.Rows[1].Shortcut);
+    }
+
+    [Fact]
     public void ClearShortcut_UnbindsAndPersists()
     {
         var lib = new FakeMacroLibrary(MWithShortcut("A", "Ctrl+Shift+M"));

@@ -154,6 +154,12 @@ public partial class MacroManagerViewModel : ObservableObject
         if (gesture is null)
             return;
 
+        // One combo plays exactly one macro: steal the gesture from any other row already bound to it
+        // (gestures are normalized KeyGesture.ToString() output, so an ordinal compare is exact).
+        foreach (var other in Rows)
+            if (other != row && other.Shortcut == gesture)
+                other.Shortcut = null;
+
         row.Shortcut = gesture;
         Commit();
     }
