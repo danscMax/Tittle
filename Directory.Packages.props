@@ -48,7 +48,7 @@
          Av11 native (same trap as PDFtoImage 5.x). Avalonia floor 11.2.0 ≤ our 11.3.17. Raster
          images need no package — Avalonia decodes PNG/JPEG/WebP/BMP/GIF via Skia natively;
          SvgImage/SvgSource render .svg as an IImage. Do NOT bump past 2.88.x until the Av12 migration. -->
-    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="PDF rendering (PDFium via SkiaSharp)">
