@@ -1,0 +1,59 @@
+<shared:ModalWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="using:SeriousView.Shared"
+        xmlns:macros="using:SeriousView.Features.Macros"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="420"
+        x:Class="SeriousView.Features.Macros.MacroManagerWindow"
+        x:DataType="macros:MacroManagerViewModel"
+        Title="Макросы"
+        Width="580" Height="440" MinWidth="460" MinHeight="240"
+        ShowInTaskbar="False" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="18">
+    <DockPanel LastChildFill="True">
+      <TextBlock DockPanel.Dock="Top" Text="Управление макросами" FontSize="16" FontWeight="SemiBold"
+                 Foreground="{DynamicResource ChromeForegroundBrush}" Margin="0,0,0,12"/>
+      <Button DockPanel.Dock="Bottom" Content="Готово" HorizontalAlignment="Right" Classes="accent"
+              Margin="0,12,0,0" AutomationProperties.Name="Закрыть" Click="OnDone"/>
+      <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding IsEmpty}"
+                 Text="Пока нет записанных макросов. ☰ Инструменты ▸ Записать макрос."
+                 TextWrapping="Wrap" Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="macros:MacroRowViewModel" x:CompileBindings="False">
+              <Border Background="{DynamicResource ChromeBackgroundBrush}" CornerRadius="7"
+                      BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+                      Padding="8" Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" VerticalAlignment="Center">
+                  <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" Watermark="Имя макроса"
+                           VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                  <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12"
+                             Foreground="{DynamicResource ChromeForegroundMutedBrush}"
+                             Text="{Binding StepCount, StringFormat='{}{0} шаг.'}"/>
+                  <NumericUpDown Grid.Column="2" Value="{Binding Count, Mode=TwoWay}" Minimum="1" Maximum="9999"
+                                 Width="96" Margin="0,0,8,0" ToolTip.Tip="Сколько раз повторить"
+                                 AutomationProperties.Name="Число повторов"/>
+                  <Button Grid.Column="3" Content="▶ ×N" Margin="0,0,4,0" ToolTip.Tip="Воспроизвести N раз"
+                          Command="{Binding $parent[ItemsControl].DataContext.PlayTimesCommand}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="4" Content="▶▶" Margin="0,0,4,0" ToolTip.Tip="До конца файла"
+                          Command="{Binding $parent[ItemsControl].DataContext.PlayToEndCommand}"
+                          CommandParameter="{Binding}"/>
+                  <Button Grid.Column="5" Content="&#x2715;" ToolTip.Tip="Удалить"
+                          Command="{Binding $parent[ItemsControl].DataContext.DeleteCommand}"
+                          CommandParameter="{Binding}"/>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </DockPanel>
+  </Border>
+</shared:ModalWindow>

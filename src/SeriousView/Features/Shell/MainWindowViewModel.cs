@@ -16,12 +16,13 @@ using SeriousView.Core.Services;
 using SeriousView.Core.Support;
 using SeriousView.Core.Text;
 using SeriousView.Core.Settings;
+using SeriousView.Features.Macros;
 using SeriousView.Features.Palette;
 using SeriousView.Shared;
 
 namespace SeriousView.Features.Shell;
 
-public partial class MainWindowViewModel : ViewModelBase, IDisposable
+public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLibrary
 {
     private bool _disposed;
 
@@ -747,6 +748,32 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <summary>Feed an intent to the recorder (the 3 sources call this); a no-op unless recording.</summary>
     public void RecordIntent(IEditorIntent intent) => _macroRecorder.Record(intent);
 
+    /// <summary>IMacroLibrary: the saved macros (read by the manager dialog).</summary>
+    public IReadOnlyList<Macro> Macros => _macros;
+
+    /// <summary>IMacroLibrary: replace the library wholesale (rename/delete from the manager) and persist.</summary>
+    public void ReplaceMacroLibrary(IReadOnlyList<Macro> macros)
+    {
+        _macros.Clear();
+        _macros.AddRange(macros);
+        _lastMacro = _macros.Count > 0 ? _macros[^1] : null;
+        HasMacro = _macros.Count > 0;
+        _macroStore?.Save(_macros);
+    }
+
+    /// <summary>IMacroLibrary: replay a macro (with its own mode) on the active editor.</summary>
+    public void ReplayMacro(Macro macro)
+    {
+        if (SelectedTab?.EditorActions is { } actions)
+            MacroReplayEngine.Replay(macro, intent => EditorCommandDispatcher.Apply(actions, intent));
+    }
+
+    /// <summary>Raised when the user opens the macro manager — the View shows the dialog.</summary>
+    public event Action? MacroManagerRequested;
+
+    [RelayCommand]
+    private void ShowMacroManager() => MacroManagerRequested?.Invoke();
+
     /// <summary>Start recording, or stop and keep the captured macro for replay.</summary>
     [RelayCommand]
     private void ToggleMacroRecording()
@@ -920,6 +947,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         items.Add(new PaletteItem(IsRecordingMacro ? "Остановить запись макроса" : "Записать макрос",
             ToggleMacroRecordingCommand));
+        items.Add(new PaletteItem("Управление макросами…", ShowMacroManagerCommand));
         if (_lastMacro is not null)
             items.Add(new PaletteItem("Воспроизвести последний макрос до конца файла", PlayMacroToEndCommand));
         foreach (var macro in _macros)

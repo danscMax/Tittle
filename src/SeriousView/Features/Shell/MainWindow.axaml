@@ -208,6 +208,8 @@
                         IsEnabled="{Binding HasMacro}"/>
               <MenuItem Header="Воспроизвести до конца файла" Command="{Binding PlayMacroToEndCommand}"
                         IsEnabled="{Binding HasMacro}"/>
+              <Separator/>
+              <MenuItem Header="Управление макросами…" Command="{Binding ShowMacroManagerCommand}"/>
             </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">

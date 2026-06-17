@@ -262,6 +262,15 @@ public partial class MainWindow : AppWindow
     private void OnDonateRequested()
         => new Features.Donate.DonateWindow().ShowDialog(this);
 
+    private void OnMacroManagerRequested()
+    {
+        if (DataContext is MainWindowViewModel vm)
+            new Features.Macros.MacroManagerWindow
+            {
+                DataContext = new Features.Macros.MacroManagerViewModel(vm),
+            }.ShowDialog(this);
+    }
+
     // Omnibar address field: Enter opens the typed path (reusing the open tab if any), Esc reverts to the
     // active tab's path. async-void event handler — OpenPathAsync is itself guarded (a bad path becomes an
     // error message, never a crash), so nothing can escape to the global backstop.
@@ -423,6 +432,7 @@ public partial class MainWindow : AppWindow
         viewModel.StatsRequested += OnStatsRequested;
         viewModel.HelpRequested += OnHelpRequested;
         viewModel.DonateRequested += OnDonateRequested;
+        viewModel.MacroManagerRequested += OnMacroManagerRequested;
         // The tab strip lays out horizontally; translate a vertical wheel into sideways scroll so
         // overflowing tabs are reachable by the wheel (Avalonia doesn't flip the wheel axis itself).
         TabStrip.PointerWheelChanged += OnTabStripWheel;
@@ -658,6 +668,7 @@ public partial class MainWindow : AppWindow
             vm.StatsRequested -= OnStatsRequested;
             vm.HelpRequested -= OnHelpRequested;
             vm.DonateRequested -= OnDonateRequested;
+            vm.MacroManagerRequested -= OnMacroManagerRequested;
         }
 
         // Detach every VM subscription and stop its timer now the window is going away. Dispose()
