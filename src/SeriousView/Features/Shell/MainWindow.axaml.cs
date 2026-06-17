@@ -152,6 +152,12 @@ public partial class MainWindow : AppWindow
             return;
         }
 
+        // While recording a macro, capture caret navigation + deletion flowing to the editor (the 3rd
+        // recording source; typing → TextEntered, line/EOL → their VM dispatch). Record the intent but
+        // do NOT handle the key — the editor still performs the real move/delete.
+        if (vm.IsRecordingMacro && MacroKeyIntent(ctrl, shift, alt, e.Key) is { } macroIntent)
+            vm.RecordIntent(macroIntent);
+
         var command = (ctrl, shift, alt, e.Key) switch
         {
             (true, false, false, Key.O) => vm.OpenFileCommand,
@@ -184,6 +190,31 @@ public partial class MainWindow : AppWindow
         // Ctrl+G just opened the go-to-line input — move focus into it.
         if (e.Key == Key.G && vm.SelectedTab?.IsGoToLineOpen == true)
             Dispatcher.UIThread.Post(() => { GoToLineBox.Focus(); GoToLineBox.SelectAll(); });
+    }
+
+    // Maps a plain caret-navigation / deletion key to its macro intent (null otherwise). Shift/Alt are
+    // excluded for v1 — shift-extend selection-by-keyboard recording is deferred.
+    private static IEditorIntent? MacroKeyIntent(bool ctrl, bool shift, bool alt, Key key)
+    {
+        if (shift || alt)
+            return null;
+
+        return (ctrl, key) switch
+        {
+            (false, Key.Left) => new MoveCaretIntent(CaretMotion.Left),
+            (false, Key.Right) => new MoveCaretIntent(CaretMotion.Right),
+            (false, Key.Up) => new MoveCaretIntent(CaretMotion.Up),
+            (false, Key.Down) => new MoveCaretIntent(CaretMotion.Down),
+            (false, Key.Home) => new MoveCaretIntent(CaretMotion.LineStart),
+            (false, Key.End) => new MoveCaretIntent(CaretMotion.LineEnd),
+            (true, Key.Left) => new MoveCaretIntent(CaretMotion.WordLeft),
+            (true, Key.Right) => new MoveCaretIntent(CaretMotion.WordRight),
+            (true, Key.Home) => new MoveCaretIntent(CaretMotion.DocStart),
+            (true, Key.End) => new MoveCaretIntent(CaretMotion.DocEnd),
+            (false, Key.Back) => new DeleteTextIntent(Forward: false),
+            (false, Key.Delete) => new DeleteTextIntent(Forward: true),
+            _ => null,
+        };
     }
 
     // Open the Ctrl+K command palette as a fresh owned top-level window (rebuilt each time so it reflects

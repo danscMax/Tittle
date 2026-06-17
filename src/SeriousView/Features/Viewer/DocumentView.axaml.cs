@@ -86,6 +86,8 @@ public partial class DocumentView : UserControl
         Minimap.LineRequested += OnMinimapLineRequested;
         // In-place editing (M15): track the unsaved-changes flag (see OnSourceTextChanged).
         Source.TextChanged += OnSourceTextChanged;
+        // Macro recording (M17): typed text is the InsertText source of the 3-source tap.
+        Source.TextArea.TextEntered += OnEditorTextEntered;
         // Find bar (Ctrl+F) lives in this view: Enter / Shift+Enter cycle matches, Esc closes (the
         // central MainWindow dispatcher only opens it).
         SearchBox.KeyDown += OnSearchBoxKeyDown;
@@ -105,6 +107,13 @@ public partial class DocumentView : UserControl
 
     private void OnAttachedRefreshPalette(object? sender, VisualTreeAttachmentEventArgs e)
         => RefreshCvPalette();
+
+    // Macro recording: forward each typed run to the shell recorder (a no-op unless recording).
+    private void OnEditorTextEntered(object? sender, Avalonia.Input.TextInputEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(e.Text))
+            _vm?.Shell?.RecordIntent(new SeriousView.Core.Editing.InsertTextIntent(e.Text));
+    }
 
     private void OnThemeVariantChangedRefresh(object? sender, EventArgs e)
     {
@@ -135,6 +144,7 @@ public partial class DocumentView : UserControl
         Preview.RemoveHandler(PointerPressedEvent, OnPreviewPointerPressed);
         Minimap.LineRequested -= OnMinimapLineRequested;
         Source.TextChanged -= OnSourceTextChanged;
+        Source.TextArea.TextEntered -= OnEditorTextEntered;
         SearchBox.KeyDown -= OnSearchBoxKeyDown;
         if (Source.ContextFlyout is MenuFlyout editorMenu)
             editorMenu.Opening -= OnEditorMenuOpening;

@@ -722,6 +722,57 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             tab.Dispose();
     }
 
+    // --- Macros (M17): record the 3-source intent stream (typing, navigation keys, line/EOL commands),
+    //     replay through MacroReplayEngine + the dispatcher. Persistence + shortcuts + dialog come later. ---
+
+    private readonly MacroRecorder _macroRecorder = new();
+    private Macro? _lastMacro;
+
+    [ObservableProperty]
+    private bool _isRecordingMacro;
+
+    [ObservableProperty]
+    private bool _hasMacro;
+
+    /// <summary>Feed an intent to the recorder (the 3 sources call this); a no-op unless recording.</summary>
+    public void RecordIntent(IEditorIntent intent) => _macroRecorder.Record(intent);
+
+    /// <summary>Start recording, or stop and keep the captured macro for replay.</summary>
+    [RelayCommand]
+    private void ToggleMacroRecording()
+    {
+        if (_macroRecorder.IsRecording)
+        {
+            _lastMacro = _macroRecorder.Stop("Записанный макрос");
+            IsRecordingMacro = false;
+            HasMacro = _lastMacro is not null;
+            StatusText = _lastMacro is { } m
+                ? $"Макрос записан: {m.Steps.Count} шаг(ов)"
+                : "Запись отменена — действий не было";
+        }
+        else
+        {
+            _macroRecorder.Start();
+            IsRecordingMacro = true;
+            StatusText = "● Идёт запись макроса…";
+        }
+    }
+
+    [RelayCommand]
+    private void PlayMacro() => RunMacro(RepeatMode.Once);
+
+    [RelayCommand]
+    private void PlayMacroToEnd() => RunMacro(RepeatMode.UntilNoMatch);
+
+    private void RunMacro(RepeatMode mode)
+    {
+        if (_lastMacro is not { } macro || SelectedTab?.EditorActions is not { } actions)
+            return;
+
+        var run = macro with { Mode = mode };
+        MacroReplayEngine.Replay(run, intent => EditorCommandDispatcher.Apply(actions, intent));
+    }
+
     /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active
     /// markdown tab's view toggle and the recent files). Rebuilt per open so it reflects current state.</summary>
     public IReadOnlyList<PaletteItem> BuildPaletteItems()
@@ -824,6 +875,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
                     items.Add(new PaletteItem($"Закладка: {bmTab.Outline[ordinal].Text}",
                         bmTab.NavigateToHeadingCommand, parameter: bmTab.Outline[ordinal]));
             }
+        }
+
+        items.Add(new PaletteItem(IsRecordingMacro ? "Остановить запись макроса" : "Записать макрос",
+            ToggleMacroRecordingCommand));
+        if (HasMacro)
+        {
+            items.Add(new PaletteItem("Воспроизвести макрос", PlayMacroCommand));
+            items.Add(new PaletteItem("Воспроизвести макрос до конца файла", PlayMacroToEndCommand));
         }
 
         foreach (var r in RecentItems)

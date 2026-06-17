@@ -199,6 +199,16 @@
                 <MenuItem Header="Windows-1251" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="Windows-1251"/>
               </MenuItem>
             </MenuItem>
+            <MenuItem Header="Инструменты">
+              <MenuItem Header="Записать макрос" Command="{Binding ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding !IsRecordingMacro}"/>
+              <MenuItem Header="Остановить запись" Command="{Binding ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding IsRecordingMacro}"/>
+              <MenuItem Header="Воспроизвести макрос" Command="{Binding PlayMacroCommand}"
+                        IsEnabled="{Binding HasMacro}"/>
+              <MenuItem Header="Воспроизвести до конца файла" Command="{Binding PlayMacroToEndCommand}"
+                        IsEnabled="{Binding HasMacro}"/>
+            </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">
                 <MenuItem Header="Тёмная" ToggleType="Radio" GroupName="Theme"

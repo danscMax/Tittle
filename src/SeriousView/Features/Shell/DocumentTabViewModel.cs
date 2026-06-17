@@ -892,7 +892,14 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     private void ApplyLineOp(LineOp op)
     {
         if (EditorActions is { } actions)
-            EditorCommandDispatcher.Apply(actions, new TransformLinesIntent(op));
+            DispatchRecorded(actions, new TransformLinesIntent(op));
+    }
+
+    // Record the intent into the shell's macro recorder (a no-op unless recording), then apply it.
+    private void DispatchRecorded(IEditorActions actions, IEditorIntent intent)
+    {
+        Shell?.RecordIntent(intent);
+        EditorCommandDispatcher.Apply(actions, intent);
     }
 
     /// <summary>Convert the document's line endings (LF / CRLF / CR) through the backbone. The label
@@ -901,7 +908,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     private void ApplyEol(Eol target)
     {
         if (EditorActions is { } actions)
-            EditorCommandDispatcher.Apply(actions, new ConvertEolIntent(target));
+            DispatchRecorded(actions, new ConvertEolIntent(target));
     }
 
     /// <summary>Target encoding for saving this tab (Ctrl+S). Defaults to UTF-8 (no BOM), matching the
