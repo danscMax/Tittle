@@ -268,14 +268,22 @@ Tests: ~40 new (engine · intent dispatch · recorder · serializer allowlist ·
 - **Auto-record the find-bar** (`f361baa`) — «Найти далее» → FindNext, «Заменить» → ReplaceSelection, so an
   interactive find→replace sequence becomes a replayable until-EOF macro (literal replacement).
 
-**Still deferred (need a live-GUI smoke, or disproportionately costly):**
-- **Custom per-macro key assignment** beyond the positional Ctrl+Shift+1..9 slots — a key-capture UI.
-- **Regex-group-aware replace intent** — the find-bar replace records a literal `ReplaceSelection`; a
-  group-substituting replay needs its own intent.
+- **Regex-group-aware replace intent** (`08cb00a`) — `ReplaceSelectionIntent` now carries the pattern +
+  regex/case flags; on replay the dispatcher re-runs the group substitution ($1, $2 …) against the matched
+  selection (ReDoS-guarded via `TextSearch.ReplaceAll`). Old macros load unchanged. +3 dispatch tests +
+  serializer round-trip.
+- **Custom per-macro key assignment** (`e928667`) — the manager dialog's «⌨ задать» captures a Ctrl/Alt
+  combo per macro (Esc cancels, ✕ clears), stored on `Macro.Shortcut` in macros.json; the key tunnel plays
+  the bound macro for an unhandled gesture (built-in shortcuts + Ctrl+Shift+1..9 slots are checked first, so
+  they still win). +6 tests (capture/clear/persist + a window KeyDown-handler test).
 - ~~Enter / Tab key recording~~ **DONE** — a headless keyboard smoke (`EditorKeyboardTests`) settled it:
   Enter raises `TextEntered` (already captured by the typing tap — no double record), Tab does NOT (it
   inserts a flat "\t"), so `MainWindow.MacroKeyIntent` now records Tab → `InsertText("\t")` for a collapsed
   caret (a selection block-indents, which InsertText can't replay → skipped). +9 `MacroKeyIntentTests`.
+
+**Still deferred:** only **multi-caret** (tracked under M16) — AvaloniaEdit has a single caret; the column
+mode (Alt+Shift keyboard + Alt+drag mouse, both confirmed working) covers the common Notepad++ multi-line
+edit. A large standalone effort, intentionally not started.
 
 ## M18 — More file formats · planned
 
