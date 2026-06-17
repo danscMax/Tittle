@@ -145,7 +145,8 @@ public partial class PdfView : UserControl
         for (var i = 0; i < page - 1 && i < pdf.Pages.Count; i++)
             y += pdf.Pages[i].DisplayHeight + PageGap;
 
-        PageScroll.Offset = PageScroll.Offset.WithY(Math.Max(0, y - 8));
+        // Scroll exactly to the page top so the counter (UpdatePageText, same accumulation) agrees.
+        PageScroll.Offset = PageScroll.Offset.WithY(Math.Max(0, y));
     }
 
     // Minimal IObserver for the Bounds observable — fires the resize re-fit (no Rx dependency).
