@@ -801,6 +801,19 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         MacroReplayEngine.Replay(macro, intent => EditorCommandDispatcher.Apply(actions, intent));
     }
 
+    /// <summary>Remove a saved macro from the library (basic management; rename + a full dialog later).</summary>
+    [RelayCommand]
+    private void DeleteMacro(Macro? macro)
+    {
+        if (macro is null || !_macros.Remove(macro))
+            return;
+
+        _lastMacro = _macros.Count > 0 ? _macros[^1] : null;
+        HasMacro = _macros.Count > 0;
+        _macroStore?.Save(_macros);
+        StatusText = $"Макрос «{macro.Name}» удалён";
+    }
+
     /// <summary>Build the Ctrl+K command-palette entries from the shell's own commands (+ the active
     /// markdown tab's view toggle and the recent files). Rebuilt per open so it reflects current state.</summary>
     public IReadOnlyList<PaletteItem> BuildPaletteItems()
@@ -911,6 +924,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             items.Add(new PaletteItem("Воспроизвести последний макрос до конца файла", PlayMacroToEndCommand));
         foreach (var macro in _macros)
             items.Add(new PaletteItem($"Воспроизвести: {macro.Name}", PlaySavedMacroCommand, parameter: macro));
+        foreach (var macro in _macros)
+            items.Add(new PaletteItem($"Удалить макрос: {macro.Name}", DeleteMacroCommand, parameter: macro));
 
         foreach (var r in RecentItems)
             items.Add(new PaletteItem($"Недавнее: {r.Name}", r.OpenCommand));
