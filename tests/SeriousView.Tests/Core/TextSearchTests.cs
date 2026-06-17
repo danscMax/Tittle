@@ -117,4 +117,50 @@ public class TextSearchTests
         Assert.Equal(-1, TextSearch.NextMatchIndex(none, 0));
         Assert.Equal(-1, TextSearch.PreviousMatchIndex(none, 0));
     }
+
+    [Fact]
+    public void ReplaceAll_Literal_CountsAndReplaces()
+        => Assert.Equal(new ReplaceOutcome("X bar X", 2, true), TextSearch.ReplaceAll("foo bar foo", "foo", "X"));
+
+    [Fact]
+    public void ReplaceAll_Literal_CaseInsensitiveByDefault_SensitiveWhenAsked()
+    {
+        Assert.Equal(new ReplaceOutcome("X X", 2, true), TextSearch.ReplaceAll("Foo foo", "foo", "X"));
+        Assert.Equal(new ReplaceOutcome("Foo X", 1, true),
+            TextSearch.ReplaceAll("Foo foo", "foo", "X", caseSensitive: true));
+    }
+
+    [Fact]
+    public void ReplaceAll_Literal_NonOverlapping()
+        => Assert.Equal(new ReplaceOutcome("bb", 2, true), TextSearch.ReplaceAll("aaaa", "aa", "b"));
+
+    [Fact]
+    public void ReplaceAll_Regex_GroupSubstitution()
+        => Assert.Equal(new ReplaceOutcome("1a 2b", 2, true),
+            TextSearch.ReplaceAll("a1 b2", @"([a-z])([0-9])", "$2$1", regex: true));
+
+    [Fact]
+    public void ReplaceAll_Regex_Invalid_LeavesTextUnchanged()
+        => Assert.Equal(new ReplaceOutcome("test", 0, false), TextSearch.ReplaceAll("test", "[bad", "x", regex: true));
+
+    [Fact]
+    public void ReplaceAll_EmptyQuery_NoChange()
+        => Assert.Equal(new ReplaceOutcome("text", 0, true), TextSearch.ReplaceAll("text", "", "x"));
+
+    [Fact]
+    public void ReplaceAll_Regex_CatastrophicBacktracking_BailsOut_Unchanged()
+    {
+        // The non-matching '!' tail makes "(a+)+$" backtrack exponentially (a pure run of 'a' would
+        // match on the first greedy pass). The match timeout must bail out and leave the text unchanged.
+        var text = new string('a', 50_000) + "!";
+
+        var sw = Stopwatch.StartNew();
+        var r = TextSearch.ReplaceAll(text, "(a+)+$", "X", regex: true);
+        sw.Stop();
+
+        Assert.True(r.PatternValid);          // valid syntax — it just timed out
+        Assert.Equal(0, r.Count);
+        Assert.Equal(text, r.NewText);        // bailed out → text unchanged
+        Assert.True(sw.ElapsedMilliseconds < 2000, $"took {sw.ElapsedMilliseconds} ms");
+    }
 }

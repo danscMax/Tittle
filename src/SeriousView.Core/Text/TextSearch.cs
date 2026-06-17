@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace SeriousView.Core.Text;
@@ -11,6 +12,11 @@ public readonly record struct MatchRange(int Offset, int Length);
 /// query compiled — <see cref="PatternValid"/> is false only for an invalid regex (the find bar paints
 /// the regex toggle red). Literal queries are always valid.</summary>
 public readonly record struct SearchOutcome(IReadOnlyList<MatchRange> Matches, bool PatternValid);
+
+/// <summary>Result of a replace-all: the rewritten <see cref="NewText"/>, how many replacements were made
+/// (<see cref="Count"/>), and whether the query compiled (<see cref="PatternValid"/> — false only for an
+/// invalid regex, in which case the original text is returned unchanged).</summary>
+public readonly record struct ReplaceOutcome(string NewText, int Count, bool PatternValid);
 
 /// <summary>
 /// Finds all occurrences of a query in text — literal or regex, case-insensitive by default. Pure and
@@ -90,6 +96,73 @@ public static class TextSearch
         }
 
         return new SearchOutcome(matches, PatternValid: true);
+    }
+
+    /// <summary>Replace every match of <paramref name="query"/> in <paramref name="text"/> with
+    /// <paramref name="replacement"/>. Literal or regex (regex supports <c>$1</c> group substitution),
+    /// case-insensitive by default. Returns the rewritten text + replacement count; an invalid regex
+    /// leaves the text unchanged with <see cref="ReplaceOutcome.PatternValid"/> = false. Shares the find
+    /// path's ReDoS timeout — a pathological pattern bails out and leaves the text unchanged.</summary>
+    public static ReplaceOutcome ReplaceAll(string? text, string? query, string? replacement,
+        bool caseSensitive = false, bool regex = false)
+    {
+        text ??= "";
+        replacement ??= "";
+        if (text.Length == 0 || string.IsNullOrEmpty(query))
+            return new ReplaceOutcome(text, 0, PatternValid: true);
+
+        return regex
+            ? ReplaceRegex(text, query, replacement, caseSensitive)
+            : ReplaceLiteral(text, query, replacement, caseSensitive);
+    }
+
+    private static ReplaceOutcome ReplaceLiteral(string text, string query, string replacement, bool caseSensitive)
+    {
+        var comparison = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+        var sb = new StringBuilder(text.Length);
+        var count = 0;
+        var pos = 0;
+        while (true)
+        {
+            var i = text.IndexOf(query, pos, comparison);
+            if (i < 0)
+            {
+                sb.Append(text, pos, text.Length - pos);
+                break;
+            }
+
+            sb.Append(text, pos, i - pos);
+            sb.Append(replacement);
+            count++;
+            pos = i + query.Length; // non-overlapping
+        }
+
+        return new ReplaceOutcome(sb.ToString(), count, PatternValid: true);
+    }
+
+    private static ReplaceOutcome ReplaceRegex(string text, string pattern, string replacement, bool caseSensitive)
+    {
+        Regex re;
+        try
+        {
+            re = new Regex(pattern, caseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase, MatchTimeout);
+        }
+        catch (ArgumentException)
+        {
+            return new ReplaceOutcome(text, 0, PatternValid: false); // invalid pattern — leave text as-is
+        }
+
+        var count = 0;
+        try
+        {
+            var result = re.Replace(text, m => { count++; return m.Result(replacement); });
+            return new ReplaceOutcome(result, count, PatternValid: true);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // Valid syntax, just backtracked past the budget — leave the text unchanged, never hang.
+            return new ReplaceOutcome(text, 0, PatternValid: true);
+        }
     }
 
     /// <summary>Index into <paramref name="matches"/> of the first match starting after
