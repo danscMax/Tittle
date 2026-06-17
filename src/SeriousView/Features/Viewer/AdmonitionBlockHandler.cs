@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Svg.Skia;
@@ -31,9 +33,12 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
     private readonly Func<string?>? _krokiUrlProvider;
 
     // One shared client + an in-memory cache (keyed by url\ntype\nbody) so identical diagrams
-    // aren't re-fetched on every preview rebuild. Static: shared across tabs/handlers.
+    // aren't re-fetched on every preview rebuild. Static: shared across tabs/handlers. A second
+    // tier persists rendered diagrams on disk so they survive a restart.
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
     private static readonly ConcurrentDictionary<string, DiagramImage> DiagramCache = new();
+    private static readonly string DiskCacheDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SeriousView", "diagram-cache");
 
     public AdmonitionBlockHandler(MdEngine engine, Func<string?>? krokiUrlProvider = null)
     {
@@ -181,12 +186,11 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
             return border;
         }
 
-        border.Child = new TextBlock
-        {
-            Text = $"Рендеринг диаграммы ({type})…",
-            Foreground = ThemedMuted(),
-            Margin = new Avalonia.Thickness(4),
-        };
+        // Indeterminate spinner while the (async) render is in flight.
+        var loading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(4) };
+        loading.Children.Add(new ProgressBar { IsIndeterminate = true, Width = 120, Height = 4, VerticalAlignment = VerticalAlignment.Center });
+        loading.Children.Add(new TextBlock { Text = $"Рендеринг диаграммы ({type})…", Foreground = ThemedMuted(), VerticalAlignment = VerticalAlignment.Center });
+        border.Child = loading;
 
         _ = RenderDiagramAsync(border, url!, type, body);
         return border;
@@ -199,7 +203,7 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         {
             if (!DiagramCache.TryGetValue(key, out var image))
             {
-                image = await KrokiClient.RenderAsync(Http, url, type, body, CancellationToken.None);
+                image = await LoadOrFetchAsync(url, type, body);
                 DiagramCache[key] = image;
             }
 
@@ -211,6 +215,24 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
             await Dispatcher.UIThread.InvokeAsync(() =>
                 border.Child = DiagramError($"Не удалось отрендерить диаграмму: {ex.Message}", body));
         }
+    }
+
+    // Disk cache → network. The on-disk copy survives restarts; a write failure is non-fatal.
+    private static async Task<DiagramImage> LoadOrFetchAsync(string url, string type, string body)
+    {
+        var path = Path.Combine(DiskCacheDir, DiagramCacheKey.FileName(url, type, body));
+        if (File.Exists(path))
+            return new DiagramImage(await File.ReadAllBytesAsync(path), path.EndsWith(".svg", StringComparison.Ordinal));
+
+        var image = await KrokiClient.RenderAsync(Http, url, type, body, CancellationToken.None);
+        try
+        {
+            Directory.CreateDirectory(DiskCacheDir);
+            await File.WriteAllBytesAsync(path, image.Bytes);
+        }
+        catch { /* best-effort cache; rendering still succeeds */ }
+
+        return image;
     }
 
     private static Control BuildImageControl(DiagramImage image)
@@ -228,14 +250,23 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         }
 
         // Natural size, but never upscale past the diagram's own width; the preview's horizontal
-        // scroll handles anything wider than the reading column.
-        return new Image
+        // scroll handles anything wider than the reading column. A click opens the lightbox
+        // (top-level window) at full size — overlays over AvaloniaEdit don't repaint.
+        var control = new Image
         {
             Source = source,
             Stretch = Stretch.Uniform,
             MaxWidth = source.Size.Width > 0 ? source.Size.Width : double.PositiveInfinity,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = new Cursor(StandardCursorType.Hand),
         };
+        control.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(control).Properties.IsLeftButtonPressed
+                && TopLevel.GetTopLevel(control) is Window owner)
+                ImageLightboxWindow.Open(owner, source);
+        };
+        return control;
     }
 
     // On any failure, show the diagram source so its content is never lost, plus the reason.
