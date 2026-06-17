@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
+using SeriousView.Core.Editing;
 using SeriousView.Core.Export;
 using SeriousView.Core.Services;
 using SeriousView.Core.Support;
@@ -767,6 +768,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         if (SelectedTab is not null)
             items.Add(new PaletteItem("Сохранить", SaveActiveTabCommand));
+
+        if (SelectedTab is { EditorActions: not null } editorTab)
+            items.Add(new PaletteItem("Сортировать строки (А→Я)", editorTab.ApplyLineOpCommand,
+                parameter: LineOp.SortAscending));
 
         if (SelectedTab is { FilePath: not null } fileTab)
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));

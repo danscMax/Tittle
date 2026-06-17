@@ -155,6 +155,7 @@ public partial class DocumentView : UserControl
         if (_vm is not null)
         {
             _vm.EditorTextProvider = () => Source.Text ?? string.Empty; // M15 save pulls from here
+            _vm.EditorActions = new AvaloniaEditorActions(Source);       // command-intent backbone surface
             ApplySourceEditMode(); // read-only while a display transform (pretty-JSON/typography) is on
             _vm.NavigationRequested += OnNavigationRequested;
             _vm.GoToLineRequested += OnGoToLineRequested;
@@ -268,6 +269,7 @@ public partial class DocumentView : UserControl
         if (_vm is not null)
         {
             _vm.EditorTextProvider = null;
+            _vm.EditorActions = null;
             _vm.NavigationRequested -= OnNavigationRequested;
             _vm.GoToLineRequested -= OnGoToLineRequested;
             _vm.SearchUpdated -= OnSearchUpdated;

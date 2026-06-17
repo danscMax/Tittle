@@ -167,3 +167,27 @@ internal sealed class FakeSettingsStore : ISettingsStore
         SaveCount++;
     }
 }
+
+/// <summary>In-memory <see cref="IEditorActions"/> — applies replaces to a plain string so the
+/// command-intent dispatcher can be tested without AvaloniaEdit.</summary>
+internal sealed class FakeEditorActions : IEditorActions
+{
+    public FakeEditorActions(string text, int selStart = 0, int selLength = 0)
+    {
+        Text = text;
+        Selection = (selStart, selLength);
+    }
+
+    public string Text { get; private set; }
+
+    public (int Start, int Length) Selection { get; set; }
+
+    public int ReplaceCalls { get; private set; }
+
+    public void Replace(int start, int length, string newText)
+    {
+        Text = Text.Remove(start, length).Insert(start, newText);
+        Selection = (start, newText.Length);
+        ReplaceCalls++;
+    }
+}

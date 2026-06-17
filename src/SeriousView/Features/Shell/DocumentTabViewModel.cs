@@ -9,7 +9,9 @@ using Avalonia.Svg.Skia;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SeriousView.Core.Abstractions;
 using SeriousView.Core.Documents;
+using SeriousView.Core.Editing;
 using SeriousView.Core.Services;
 using SeriousView.Core.Text;
 using SeriousView.Features.Viewer.Pdf;
@@ -817,6 +819,19 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Pull seam to the live editor text, wired by <c>DocumentView</c>; null when
     /// no view is attached (then there is nothing unsaved to pull).</summary>
     public Func<string>? EditorTextProvider { get; set; }
+
+    /// <summary>Editor-command surface wired by <c>DocumentView</c> (mirrors <see cref="EditorTextProvider"/>);
+    /// null for tabs with no source editor (image / PDF). The line-operation commands route through it.</summary>
+    public IEditorActions? EditorActions { get; set; }
+
+    /// <summary>Apply a Notepad++-style line operation through the command-intent backbone. No-op when no
+    /// editor surface is attached. One command, parameterized by <see cref="LineOp"/>, drives every entry.</summary>
+    [RelayCommand]
+    private void ApplyLineOp(LineOp op)
+    {
+        if (EditorActions is { } actions)
+            EditorCommandDispatcher.Apply(actions, new TransformLinesIntent(op));
+    }
 
     /// <summary>Bumped on every visited/bookmark mutation so the TOC multi-bindings recompute.</summary>
     [ObservableProperty]
