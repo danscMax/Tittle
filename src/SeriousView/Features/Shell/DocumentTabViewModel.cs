@@ -261,7 +261,14 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    private void NextMatch() => StepSearch(forward: true);
+    private void NextMatch()
+    {
+        // Record a FindNext intent while a macro is recording, so find-driven edits replay (the intent
+        // is non-wrapping on replay → it ends an until-EOF run at the last match).
+        if (Shell?.IsRecordingMacro == true && SearchQuery.Length > 0)
+            Shell.RecordIntent(new FindNextIntent(SearchQuery, SearchRegex, SearchCaseSensitive));
+        StepSearch(forward: true);
+    }
 
     [RelayCommand]
     private void PreviousMatch() => StepSearch(forward: false);
@@ -316,6 +323,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             ? TextSearch.ReplaceAll(matchedText, SearchQuery, ReplaceText, SearchCaseSensitive, regex: true).NewText
             : ReplaceText;
 
+        // Record a ReplaceSelection intent while recording (literal replacement; a regex-group replace
+        // records the raw replace text — a regex-aware replace intent is a follow-up).
+        if (Shell?.IsRecordingMacro == true)
+            Shell.RecordIntent(new ReplaceSelectionIntent(ReplaceText));
         actions.Replace(match.Offset, match.Length, replacement);
         RecomputeSearch();          // the edit shifts offsets → re-scan the live text
         StepSearch(forward: true);  // advance to the next match
