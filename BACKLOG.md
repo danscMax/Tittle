@@ -208,6 +208,49 @@ mode switching.
 
 ---
 
+## ★ M16 — Notepad++-class editing toolkit + command-intent backbone · **DONE (2026-06-17)**
+
+Design + plan: `plans/editor-toolkit-macros/2026-06-17-{design,phase1-plan}.md` (gitignored). User-approved
+phased approach: a shared **command-intent backbone** so Phase 2 macros record/replay editing with no retrofit.
+
+- **Backbone** (`f8737c5`): `Core/Editing` (`IEditorIntent`, `EditorCommandDispatcher`) + the `IEditorActions`
+  port (Text/Selection/Replace; impl `AvaloniaEditorActions` over the Source editor, wired by `DocumentView`
+  beside `EditorTextProvider`). Introduced WITH its first consumer (ARCHITECTURE §7), not a standalone commit.
+- **Line operations** (`f8737c5`/`a8da13d`): pure `Core/Text/LineOperations` — sort (asc/desc, ordinal),
+  remove-duplicates, trim-trailing, change-case (upper/lower/title, Cyrillic-aware), move/duplicate/join over a
+  line range. A parameterized `ApplyLineOp` command → ☰ Правка submenu + palette + keys (Ctrl+D dup, Alt+↑/↓ move).
+- **Find & Replace** (`b7fe033`): replace row on the existing find bar (Ctrl+H), Заменить / Заменить всё,
+  regex `$1` group substitution (`TextSearch.ReplaceAll`), on the LIVE editor text via the seam; find now scans
+  the live editor text too (reflects unsaved edits).
+- **Column / block editing**: built into AvaloniaEdit (Alt+drag, column typing, rectangular paste —
+  `EnableRectangularSelection` default on; nothing to build). Verified by probe.
+- **EOL conversion** (`159fe5f`): `ConvertEolIntent` → `LineEndings.ConvertTo` (recordable); ☰ Правка ▸ Конец строк.
+- **Save encoding** (`0bb123d`): per-tab `SaveEncodingName` (UTF-8/BOM · UTF-16 LE/BE · Windows-1251; default
+  UTF-8-no-BOM = prior policy) → Ctrl+S serializes via `SaveEncoding.GetBytes` + `AtomicFile.WriteAllBytesAsync`.
+
+Tests: 47+ new (Core unit + VM); full suite 991 green. **Deferred with reason** (not debt):
+- **Multi-caret** (VS Code-class) — AvaloniaEdit core has one `Caret`; opaque/buggy (#427). Column mode covers
+  most of it (Notepad++ itself leans on column mode). A standalone, clearly-expensive future item.
+- **Keyboard column-select** (Alt+Shift+arrows) — unconfirmed on AvaloniaEdit 11.4; fiddly + not headless-testable.
+  Mouse column mode works. Follow-up needing live-GUI verification.
+- **Reinterpret-as encoding** (re-decode existing bytes to fix a misdetect) — needs the M14 fresh-VM reload
+  plumbing (force an encoding on re-read) so a re-decode isn't mislabelled an edit; convert-to (save) shipped.
+- **Status-bar click** to convert (Notepad++ idiom) — the status is one bound string; menu/palette used instead.
+  A status-bar restructure is the follow-up.
+
+## M17 — Macros (record / replay) · planned
+
+Per the approved design: full macros on the backbone — record at **full fidelity** (typing + navigation +
+commands, the 3-source tap), replay once / N times / until-no-match (EOF), save named macros (`macros.json`),
+assign shortcuts, a management dialog. Security: editor-only intent allowlist (a saved macro can't be a
+code-exec vector). The recorder/player consume the `EditorCommandDispatcher` seam.
+
+## M18 — More file formats · planned
+
+Hex viewer for binaries, more TextMate grammars, etc. — re-scope on arrival.
+
+---
+
 ## Ported feature pool (from the original viewer — slot opportunistically, not milestones)
 
 Full-port goal (2026-06-11): carry over ALL functionality from `E:\Scripts\Markdown Viewer`.

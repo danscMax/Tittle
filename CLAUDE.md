@@ -262,6 +262,17 @@ zoom (reuses the preview's `ScaleTransformConverter`), graceful «открыть
 **Avalonia.Svg.Skia 11.2.0.2** — pinned to the SkiaSharp 2.88.x line (11.2.7.1/11.3.0+ jumped to
 SkiaSharp 3.x → would clash with Av11's 2.88.9; same trap as PDFtoImage 5.x). NB: a sub-namespace
 under `Features/Viewer` must NOT be `Image` — it shadows the Avalonia `Image` type (use `Images`).
+**M16 editing toolkit + command-intent backbone DONE (2026-06-17)**: a shared editor command-intent layer
+(`Core/Editing/IEditorIntent` + `EditorCommandDispatcher` + the `Core/Abstractions/IEditorActions` port, impl
+`Features/Viewer/AvaloniaEditorActions` wired by `DocumentView` beside `EditorTextProvider`) so the planned
+Phase-2 macros record/replay with no retrofit. On it: **line operations** (`Core/Text/LineOperations` —
+sort/dedup/trim/case/move/duplicate/join; parameterized `ApplyLineOp` command → ☰ Правка + palette + Ctrl+D /
+Alt+↑↓), **Find & Replace** (Ctrl+H replace row, regex `$1` via `TextSearch.ReplaceAll`, on the LIVE editor
+text — find re-scans it too), **EOL conversion** (`ConvertEolIntent` → `LineEndings.ConvertTo`), and
+**save-encoding** choice (per-tab `SaveEncodingName` → `SaveEncoding.GetBytes` + `AtomicFile.WriteAllBytesAsync`).
+Column/block editing is AvaloniaEdit-built-in (Alt+drag). Deferred-with-reason: multi-caret, keyboard
+column-select (Alt+Shift+arrows), reinterpret-as-encoding, status-bar-click conversion. Macros (M17) + more
+formats (M18) are planned — see `BACKLOG.md` and `plans/editor-toolkit-macros/`.
 
 ## Conventions
 
