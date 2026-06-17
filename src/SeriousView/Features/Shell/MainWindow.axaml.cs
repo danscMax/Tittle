@@ -163,7 +163,9 @@ public partial class MainWindow : AppWindow
         // While recording a macro, capture caret navigation + deletion flowing to the editor (the 3rd
         // recording source; typing → TextEntered, line/EOL → their VM dispatch). Record the intent but
         // do NOT handle the key — the editor still performs the real move/delete.
-        if (vm.IsRecordingMacro && MacroKeyIntent(ctrl, shift, alt, e.Key) is { } macroIntent)
+        if (vm.IsRecordingMacro
+            && MacroKeyIntent(ctrl, shift, alt, e.Key, vm.SelectedTab?.EditorActions?.Selection.Length ?? 0)
+                is { } macroIntent)
             vm.RecordIntent(macroIntent);
 
         var command = (ctrl, shift, alt, e.Key) switch
@@ -200,9 +202,14 @@ public partial class MainWindow : AppWindow
             Dispatcher.UIThread.Post(() => { GoToLineBox.Focus(); GoToLineBox.SelectAll(); });
     }
 
-    // Maps a plain caret-navigation / deletion key to its macro intent (null otherwise). Shift/Alt are
-    // excluded for v1 — shift-extend selection-by-keyboard recording is deferred.
-    private static IEditorIntent? MacroKeyIntent(bool ctrl, bool shift, bool alt, Key key)
+    // Maps a plain caret-navigation / deletion / Tab key to its macro intent (null otherwise). These are
+    // the edits that reach the editor WITHOUT raising TextEntered, so the typing tap (OnEditorTextEntered)
+    // misses them — verified in EditorKeyboardTests (Enter, by contrast, DOES raise TextEntered, so it is
+    // intentionally absent here to avoid a double record). Shift/Alt are excluded: shift-extend selection
+    // recording is deferred, and Alt+Shift drives AvaloniaEdit's built-in column selection. `selectionLength`
+    // gates Tab — only a collapsed caret inserts a flat "\t"; with a selection AvaloniaEdit block-indents,
+    // which an InsertText can't faithfully replay.
+    internal static IEditorIntent? MacroKeyIntent(bool ctrl, bool shift, bool alt, Key key, int selectionLength)
     {
         if (shift || alt)
             return null;
@@ -221,6 +228,8 @@ public partial class MainWindow : AppWindow
             (true, Key.End) => new MoveCaretIntent(CaretMotion.DocEnd),
             (false, Key.Back) => new DeleteTextIntent(Forward: false),
             (false, Key.Delete) => new DeleteTextIntent(Forward: true),
+            // Tab inserts "\t" but does NOT raise TextEntered (tabs-to-spaces is off → a single "\t").
+            (false, Key.Tab) when selectionLength == 0 => new InsertTextIntent("\t"),
             _ => null,
         };
     }

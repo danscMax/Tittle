@@ -231,8 +231,9 @@ phased approach: a shared **command-intent backbone** so Phase 2 macros record/r
 Tests: 47+ new (Core unit + VM); full suite 991 green. **Deferred with reason** (not debt):
 - **Multi-caret** (VS Code-class) — AvaloniaEdit core has one `Caret`; opaque/buggy (#427). Column mode covers
   most of it (Notepad++ itself leans on column mode). A standalone, clearly-expensive future item.
-- **Keyboard column-select** (Alt+Shift+arrows) — unconfirmed on AvaloniaEdit 11.4; fiddly + not headless-testable.
-  Mouse column mode works. Follow-up needing live-GUI verification.
+- ~~Keyboard column-select~~ **CONFIRMED working (AvaloniaEdit 11.4.1)** — Alt+Shift+Arrow already yields a
+  `RectangleSelection` out of the box (proven in `EditorKeyboardTests` under headless input). Nothing to build;
+  together with Alt+drag (mouse) this covers the common Notepad++ column-edit need.
 - ~~Reinterpret-as encoding~~ **DONE (`cbebca0`)** — `IFileReader.ReloadTextAsync` re-reads the file bytes
   with a forced encoding (`SaveEncoding.Decode` strips a matching BOM), swaps the document and adopts that
   save encoding; ☰ Правка ▸ Переинтерпретировать как + palette (file-backed, refuses over unsaved edits).
@@ -271,8 +272,10 @@ Tests: ~40 new (engine · intent dispatch · recorder · serializer allowlist ·
 - **Custom per-macro key assignment** beyond the positional Ctrl+Shift+1..9 slots — a key-capture UI.
 - **Regex-group-aware replace intent** — the find-bar replace records a literal `ReplaceSelection`; a
   group-substituting replay needs its own intent.
-- **Enter / Tab key recording** — depends on whether AvaloniaEdit raises `TextEntered` for them; adding it
-  blind risks a double newline, so it needs a headless-input / live verification first.
+- ~~Enter / Tab key recording~~ **DONE** — a headless keyboard smoke (`EditorKeyboardTests`) settled it:
+  Enter raises `TextEntered` (already captured by the typing tap — no double record), Tab does NOT (it
+  inserts a flat "\t"), so `MainWindow.MacroKeyIntent` now records Tab → `InsertText("\t")` for a collapsed
+  caret (a selection block-indents, which InsertText can't replay → skipped). +9 `MacroKeyIntentTests`.
 
 ## M18 — More file formats · planned
 
