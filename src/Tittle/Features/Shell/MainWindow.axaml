@@ -1,0 +1,626 @@
+<wnd:AppWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Tittle.Features.Shell"
+        xmlns:controls="using:Tittle.Features.Viewer"
+        xmlns:views="using:Tittle.Features.Welcome"
+        xmlns:conv="using:Tittle.Shared"
+        xmlns:core="using:Tittle.Core.Abstractions"
+        xmlns:editing="using:Tittle.Core.Editing"
+        xmlns:text="using:Tittle.Core.Text"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:wnd="using:FluentAvalonia.UI.Windowing"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
+        x:Class="Tittle.Features.Shell.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding Title}"
+        Icon="/Assets/tittle.png"
+        Width="1100" Height="750"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        TransparencyLevelHint="None"
+        DragDrop.AllowDrop="True">
+  <wnd:AppWindow.Styles>
+    <!-- Compact flat buttons for the editor controls that now live in the status bar (wrap/numbers/zoom). -->
+    <Style Selector="Button.statusbtn">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="6,1"/>
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
+    </Style>
+    <!-- Segmented Предпросмотр|Исходник view switch in the status bar (replaces the ambiguous eye
+         icon). Two flat buttons share one bordered pill; the active segment (driven by a conditional
+         seg-on class bound to ShowPreview/ShowSource) fills with the accent. -->
+    <Style Selector="Border.segmented">
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style Selector="Button.segment">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="9,2"/>
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}"/>
+    </Style>
+    <Style Selector="Button.segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource OutlineItemHoverBrush}"/>
+    </Style>
+    <!-- Active segment: accent fill wins over the hover setter (later, more specific). -->
+    <Style Selector="Button.segment.seg-on /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="Button.segment.seg-on">
+      <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+    </Style>
+    <!-- Omnibar address field: a borderless TextBox that blends into the omnibar pill (the outer Border
+         already draws the box). Editable + selectable so the path can be copied or replaced (Enter opens
+         it; see code-behind). We flatten the FluentAvalonia template's PART_BorderElement across all
+         states so no inner box/border appears on hover/focus. -->
+    <Style Selector="TextBox.omnibar-input">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Padding" Value="2,2"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="TextBox.omnibar-input:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+  </wnd:AppWindow.Styles>
+  <!-- AppWindow draws our content into the title-bar area (ExtendsContentIntoTitleBar, set in
+       code-behind). The single top strip = brand + tab strip + buttons, painted with the
+       semi-transparent ChromeOverlayBrush so it picks up the app colour AND lets the OS
+       backdrop (Mica/Acrylic) show through. System min/max/close buttons are drawn on top at
+       the right; the empty Col3 reserves room for them (TitleBar.RightInset). The editor stays
+       solid (EditorSurfaceBrush) for readability; solid fallback in code-behind when no blur. -->
+  <DockPanel LastChildFill="True">
+
+    <!-- Title strip wrapped in a Border so it casts a soft shadow onto the body below
+         (ZIndex keeps the shadow above the editor/welcome content). -->
+    <Border DockPanel.Dock="Top" ZIndex="1" BoxShadow="{DynamicResource ChromeShadow}">
+    <Panel>
+    <!-- Chrome fill on a hit-test-invisible layer so the empty title-bar zones still drag the
+         window — a non-null Background on the Grid itself swallows the AppWindow drag. -->
+    <Border Background="{DynamicResource ChromeOverlayBrush}" IsHitTestVisible="False"/>
+    <!-- Col3 reserves the system caption-button band. Its Width is set on the COLUMN (not on a child
+         Border) in code-behind from TitleBar.RightInset: an Auto column fed by a child's late-set
+         Width does not re-distribute the star omnibar column, leaving the reserve at 0 and the
+         right-hand cluster sliding under min/max/close. Sizing the ColumnDefinition directly is the
+         canonical WinUI/FluentAvalonia padding-column pattern and always reflows correctly. -->
+    <Grid x:Name="TitleGrid" MinHeight="40">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+        <!-- [3] caption-button reserve — Width set from code-behind (TitleGrid.ColumnDefinitions[3]). -->
+        <ColumnDefinition Width="0"/>
+      </Grid.ColumnDefinitions>
+      <!-- ☰ menu — the etalon default (MenuPlacement.Hidden). Replaces the "Tittle" wordmark
+           (which crowded the tabs) and gathers File/View commands. First real consumer of Layout:
+           shown only for the Hidden placement (Bar / TitleBar presets arrive with Settings → Layout).
+           AllowInteractionInTitleBar so the click opens the flyout instead of dragging the window.
+           Standard Avalonia MenuFlyout/MenuItem — FluentAvalonia themes them to match the chrome. -->
+      <Button Grid.Column="0" AutomationProperties.AutomationId="MenuButton" ToolTip.Tip="Меню"
+              Classes="chrome-menu" Margin="6,0,2,0" VerticalAlignment="Center"
+              wnd:AppWindow.AllowInteractionInTitleBar="True"
+              IsVisible="{Binding Layout.MenuPlacement, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Hidden}">
+        <TextBlock Text="&#x2630;" FontSize="16"/>
+        <Button.Flyout>
+          <MenuFlyout Placement="BottomEdgeAlignedLeft">
+            <MenuItem Header="Файл">
+              <MenuItem Header="Открыть…" InputGesture="Ctrl+O" Command="{Binding OpenFileCommand}"/>
+              <MenuItem Header="Открыть пример" Command="{Binding OpenSampleCommand}"/>
+              <MenuItem Header="Недавние" IsEnabled="{Binding HasRecent}" ItemsSource="{Binding RecentItems}">
+                <MenuItem.ItemContainerTheme>
+                  <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}"
+                                x:DataType="vm:RecentFileItem">
+                    <Setter Property="Header" Value="{Binding Name}"/>
+                    <Setter Property="Command" Value="{Binding OpenCommand}"/>
+                    <Setter Property="ToolTip.Tip" Value="{Binding Path}"/>
+                  </ControlTheme>
+                </MenuItem.ItemContainerTheme>
+              </MenuItem>
+              <Separator/>
+              <MenuItem Header="Сохранить" InputGesture="Ctrl+S" Command="{Binding SaveActiveTabCommand}"
+                        IsEnabled="{Binding HasTabs}"/>
+              <Separator/>
+              <MenuItem Header="Экспорт в HTML…" Command="{Binding ExportHtmlCommand}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <MenuItem Header="Копировать как форматированный текст" Command="{Binding CopyAsRichTextCommand}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <MenuItem Header="Печать / PDF (через браузер)…" Command="{Binding PrintViaBrowserCommand}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <Separator/>
+              <MenuItem Header="Закрыть вкладку" InputGesture="Ctrl+W" Command="{Binding CloseActiveTabCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Правка">
+              <MenuItem Header="Найти…" InputGesture="Ctrl+F" Command="{Binding SelectedTab.OpenSearchCommand}"/>
+              <MenuItem Header="Заменить…" InputGesture="Ctrl+H" Command="{Binding SelectedTab.OpenReplaceCommand}"/>
+              <Separator/>
+              <MenuItem Header="Сортировать строки (А→Я)" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.SortAscending}"/>
+              <MenuItem Header="Сортировать строки (Я→А)" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.SortDescending}"/>
+              <MenuItem Header="Удалить дубликаты строк" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.RemoveDuplicates}"/>
+              <MenuItem Header="Убрать хвостовые пробелы" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.TrimTrailing}"/>
+              <Separator/>
+              <MenuItem Header="ВЕРХНИЙ РЕГИСТР" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Upper}"/>
+              <MenuItem Header="нижний регистр" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Lower}"/>
+              <MenuItem Header="Заголовочный Регистр" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Title}"/>
+              <Separator/>
+              <MenuItem Header="Переместить строку вверх" InputGesture="Alt+Up"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.MoveUp}"/>
+              <MenuItem Header="Переместить строку вниз" InputGesture="Alt+Down"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.MoveDown}"/>
+              <MenuItem Header="Дублировать строку" InputGesture="Ctrl+D"
+                        Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Duplicate}"/>
+              <MenuItem Header="Объединить строки" Command="{Binding SelectedTab.ApplyLineOpCommand}"
+                        CommandParameter="{x:Static editing:LineOp.Join}"/>
+              <Separator/>
+              <MenuItem Header="Конец строк">
+                <MenuItem Header="LF (Unix)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.Lf}"/>
+                <MenuItem Header="CRLF (Windows)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.CrLf}"/>
+                <MenuItem Header="CR (Mac classic)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.Cr}"/>
+              </MenuItem>
+              <MenuItem Header="Кодировка (сохранять как)">
+                <MenuItem Header="UTF-8" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-8"/>
+                <MenuItem Header="UTF-8 с BOM" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-8 BOM"/>
+                <MenuItem Header="UTF-16 LE" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-16 LE"/>
+                <MenuItem Header="UTF-16 BE" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-16 BE"/>
+                <MenuItem Header="Windows-1251" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="Windows-1251"/>
+              </MenuItem>
+              <MenuItem Header="Переинтерпретировать как">
+                <MenuItem Header="UTF-8" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-8"/>
+                <MenuItem Header="UTF-8 с BOM" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-8 BOM"/>
+                <MenuItem Header="UTF-16 LE" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-16 LE"/>
+                <MenuItem Header="UTF-16 BE" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="UTF-16 BE"/>
+                <MenuItem Header="Windows-1251" Command="{Binding ReinterpretEncodingCommand}" CommandParameter="Windows-1251"/>
+              </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Инструменты">
+              <MenuItem Header="Записать макрос" Command="{Binding ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding !IsRecordingMacro}"/>
+              <MenuItem Header="Остановить запись" Command="{Binding ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding IsRecordingMacro}"/>
+              <MenuItem Header="Воспроизвести макрос" Command="{Binding PlayMacroCommand}"
+                        IsEnabled="{Binding HasMacro}"/>
+              <MenuItem Header="Воспроизвести до конца файла" Command="{Binding PlayMacroToEndCommand}"
+                        IsEnabled="{Binding HasMacro}"/>
+              <Separator/>
+              <MenuItem Header="Управление макросами…" Command="{Binding ShowMacroManagerCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Вид">
+              <MenuItem Header="Тема">
+                <MenuItem Header="Тёмная" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Dark}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Dark}"/>
+                <MenuItem Header="Полночь" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Midnight}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Midnight}"/>
+                <MenuItem Header="Океан" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Ocean}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Ocean}"/>
+                <MenuItem Header="Глубокий синий" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.DeepBlue}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=DeepBlue}"/>
+                <MenuItem Header="Светлая" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Light}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Light}"/>
+                <MenuItem Header="Авто" ToggleType="Radio" GroupName="Theme"
+                          Command="{Binding SetThemeCommand}" CommandParameter="{x:Static core:ThemeMode.Auto}"
+                          IsChecked="{Binding CurrentTheme, Mode=OneWay, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Auto}"/>
+              </MenuItem>
+              <Separator/>
+              <MenuItem Header="Перенос строк" InputGesture="Alt+Z" ToggleType="CheckBox"
+                        IsChecked="{Binding Editor.WordWrap, Mode=TwoWay}"/>
+              <MenuItem Header="Номера строк" InputGesture="Ctrl+L" ToggleType="CheckBox"
+                        IsChecked="{Binding Editor.ShowLineNumbers, Mode=TwoWay}"/>
+              <MenuItem Header="Декоративный фон" ToggleType="CheckBox"
+                        IsChecked="{Binding Layout.ReadingMode, Mode=TwoWay}"
+                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+              <Separator/>
+              <MenuItem Header="Перейти к строке…" InputGesture="Ctrl+G" Command="{Binding OpenGoToLineCommand}"/>
+              <Separator/>
+              <MenuItem Header="Раскладка…" Command="{Binding OpenLayoutSettingsCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Справка">
+              <MenuItem Header="Горячие клавиши" InputGesture="F1" Command="{Binding ShowHelpCommand}"/>
+              <MenuItem Header="Статистика документа" Command="{Binding ShowStatsCommand}"/>
+              <Separator/>
+              <MenuItem Header="Поддержать автора…" Command="{Binding ShowDonateCommand}"/>
+            </MenuItem>
+          </MenuFlyout>
+        </Button.Flyout>
+      </Button>
+
+      <!-- Omnibar (etalon header): active document path · 📂 Open · ⌘ palette, in a slim inset field.
+           Toggled by Layout.ShowOmnibar. AllowInteractionInTitleBar so its buttons click; the empty
+           title area around it (it is centred + width-capped) still drags the window. -->
+      <Border Grid.Column="1" x:Name="Omnibar" AutomationProperties.AutomationId="Omnibar"
+              IsVisible="{Binding Layout.ShowOmnibar}"
+              wnd:AppWindow.AllowInteractionInTitleBar="True"
+              Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="6"
+              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+              HorizontalAlignment="Center" MinWidth="340" MaxWidth="760"
+              Margin="8,6" Padding="3,1" VerticalAlignment="Center">
+        <DockPanel>
+          <Button DockPanel.Dock="Left" Classes="chrome-menu" ToolTip.Tip="Открыть файл (Ctrl+O)"
+                  AutomationProperties.Name="Открыть файл"
+                  Command="{Binding OpenFileCommand}" Padding="6,3">
+            <TextBlock Text="📂" FontSize="14"/>
+          </Button>
+          <Button DockPanel.Dock="Right" Classes="chrome-menu" ToolTip.Tip="Команды (Ctrl+K · Ctrl+Shift+P)"
+                  AutomationProperties.Name="Палитра команд"
+                  Click="OnPaletteButtonClick" Padding="8,3">
+            <TextBlock Text="⌘" FontSize="14"/>
+          </Button>
+          <!-- Editable address field: shows the active document's path (selectable → copy), and opening
+               another path is just typing it and pressing Enter (Esc reverts). Enter/Esc are handled in
+               code-behind on this named box; the text mirrors the VM's OmnibarText scratch buffer. -->
+          <TextBox x:Name="OmnibarBox" Classes="omnibar-input" Margin="6,0"
+                   Text="{Binding OmnibarText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   Watermark="Путь к файлу…" AutomationProperties.Name="Адрес файла"
+                   ToolTip.Tip="Путь к файлу — Enter открывает, Esc отменяет"/>
+        </DockPanel>
+      </Border>
+
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
+                  VerticalAlignment="Center" Margin="10,0"
+                  wnd:AppWindow.AllowInteractionInTitleBar="True">
+        <!-- Per-document quick toggles kept next to the tabs. Open / Theme live in the ☰ menu;
+             the preview/source toggle now lives in the status bar (ViewTogglePlacement.Tabs/Omnibar
+             remain future presets); wrap / numbers / zoom are in the status bar too. -->
+        <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
+        <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
+                Command="{Binding ToggleOutlineCommand}" Padding="8,3">
+          <PathIcon Data="{StaticResource IconSidebar}" Width="16" Height="16"/>
+        </Button>
+        <!-- Decorative-background toggle — markdown preview only (meaningless in source view). -->
+        <Button AutomationProperties.AutomationId="ReadingModeButton" ToolTip.Tip="Декоративный фон"
+                IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
+                Command="{Binding ToggleReadingModeCommand}" Padding="8,3">
+          <PathIcon Data="{StaticResource IconDocument}" Width="16" Height="16"/>
+        </Button>
+      </StackPanel>
+
+    </Grid>
+    </Panel>
+    </Border>
+
+    <!-- Tab strip — moved out of the caption row (the etalon puts the omnibar there). Shown only when
+         tabs are open; the VsCodeTab theme draws the active-tab accent line meeting the body below. -->
+    <Border DockPanel.Dock="Top" IsVisible="{Binding HasTabs}"
+            Background="{DynamicResource ChromeOverlayBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1">
+      <ListBox x:Name="TabStrip" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+               ItemContainerTheme="{StaticResource VsCodeTab}"
+               Background="Transparent" BorderThickness="0" Padding="0"
+               HorizontalAlignment="Left" VerticalAlignment="Bottom"
+               ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               ScrollViewer.VerticalScrollBarVisibility="Disabled"
+               ScrollViewer.AllowAutoHide="True">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:DocumentTabViewModel">
+            <!-- Hover shows the full path (#30); right-click opens the tab context menu (#25). The menu's
+                 commands live on the shell VM and are reached via the tab's Shell back-reference — a
+                 context flyout is a popup, so its bindings can't walk the visual tree up to the shell. -->
+            <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding FilePath}">
+              <StackPanel.ContextFlyout>
+                <MenuFlyout>
+                  <MenuItem Header="Закрыть" Command="{Binding Shell.CloseTabCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть другие" Command="{Binding Shell.CloseOtherTabsCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть справа" Command="{Binding Shell.CloseTabsToRightCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Закрыть все" Command="{Binding Shell.CloseAllTabsCommand}"/>
+                  <Separator/>
+                  <MenuItem Header="Копировать путь" Command="{Binding Shell.CopyFilePathCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Копировать имя" Command="{Binding Shell.CopyFileNameCommand}" CommandParameter="{Binding}"/>
+                  <Separator/>
+                  <MenuItem Header="Перезагрузить с диска" Command="{Binding Shell.ReloadTabCommand}" CommandParameter="{Binding}"/>
+                  <MenuItem Header="Показать в проводнике" Command="{Binding Shell.RevealInExplorerCommand}" CommandParameter="{Binding}"/>
+                </MenuFlyout>
+              </StackPanel.ContextFlyout>
+              <PathIcon Width="15" Height="15" VerticalAlignment="Center"
+                        Data="{Binding GrammarExtension, Converter={x:Static conv:ExtensionToIconConverter.Instance}}"/>
+              <!-- Cap the title and ellipsize it (full name is in the tab tooltip): an unbounded
+                   header let a long filename stretch the tab past the strip width, which tripped the
+                   ListBox's horizontal scrollbar. VS Code-style variable-width tabs. -->
+              <TextBlock Text="{Binding Header}" VerticalAlignment="Center"
+                         MaxWidth="200" TextTrimming="CharacterEllipsis"/>
+              <!-- "Changed on disk" dot (M14): an external edit happened since this tab loaded. -->
+              <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                       Fill="{DynamicResource AccentBrush}"
+                       IsVisible="{Binding IsChangedOnDisk}"
+                       ToolTip.Tip="Файл изменён на диске"/>
+              <!-- Unsaved-changes marker (M15): the editor buffer differs from the file. -->
+              <TextBlock Text="●" FontSize="9" VerticalAlignment="Center"
+                         Foreground="{DynamicResource ChromeForegroundMutedBrush}"
+                         IsVisible="{Binding IsEdited}"
+                         ToolTip.Tip="Есть несохранённые правки (Ctrl+S)"/>
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Border>
+
+    <!-- Contextual editor toolbar (M7.5 ф6): a thin source-mode row under the tabs. Shown per ToolbarMode
+         (Off never · Contextual in Source · Fixed always) via ToolbarVisibilityConverter; hosts Find + wrap +
+         numbers (zoom stays in the status bar). When ToolbarMode is Off the wrap/numbers fall back to the
+         status bar — never duplicated (the converter keeps them in exactly one place). -->
+    <Border DockPanel.Dock="Top" Background="{DynamicResource ChromeOverlayBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
+      <Border.IsVisible>
+        <MultiBinding Converter="{x:Static conv:ToolbarVisibilityConverter.Instance}" ConverterParameter="toolbar">
+          <Binding Path="Layout.ToolbarMode"/>
+          <Binding Path="SelectedTab.ShowSource" FallbackValue="False"/>
+          <Binding Path="HasTabs"/>
+        </MultiBinding>
+      </Border.IsVisible>
+      <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+        <Button Command="{Binding OpenSearchCommand}" ToolTip.Tip="Найти (Ctrl+F)"
+                AutomationProperties.Name="Найти" Classes="statusbtn">
+          <PathIcon Data="{StaticResource IconSearch}" Width="15" Height="15"/>
+        </Button>
+        <Border Width="1" Margin="6,2" Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
+        <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                AutomationProperties.Name="Перенос строк" Classes="statusbtn">
+          <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
+        </Button>
+        <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                AutomationProperties.Name="Номера строк" Classes="statusbtn">
+          <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
+        </Button>
+        <Button Command="{Binding SelectedTab.TogglePrettyPrintCommand}" ToolTip.Tip="Форматировать (JSON / XML / NDJSON)"
+                AutomationProperties.Name="Форматировать" Content="{}" Classes="statusbtn"
+                IsVisible="{Binding SelectedTab.IsPrettyPrintable, FallbackValue=False}"/>
+      </StackPanel>
+    </Border>
+
+    <!-- Open-error InfoBar (#28): a prominent strip above the content — the status-bar message
+         alone is easy to miss. The VM auto-dismisses it after ~7 s; the built-in ✕ writes
+         IsOpen=false back through the two-way binding. -->
+    <ui:InfoBar DockPanel.Dock="Top" Severity="Error" IsClosable="True"
+                IsOpen="{Binding IsErrorBarOpen, Mode=TwoWay}"
+                Message="{Binding ErrorBarMessage}"
+                AutomationProperties.Name="Ошибка открытия файла"/>
+
+    <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
+         (lines · chars · language), divided by a thin separator. -->
+    <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"
+            Background="{DynamicResource StatusBarBackgroundBrush}" Padding="{DynamicResource StatusBarPadding}">
+      <DockPanel>
+        <!-- Поддержать автора (♥) — far-left status-bar action; opens the donation modal (also in
+             ☰ ▸ Справка and the Ctrl+K palette). Accent-tinted vector heart, always visible; the
+             status bar renders reliably (no caption-button interaction like the title strip). -->
+        <Button DockPanel.Dock="Left" Classes="statusbtn" Margin="0,0,8,0"
+                AutomationProperties.AutomationId="DonateButton"
+                ToolTip.Tip="Поддержать автора" AutomationProperties.Name="Поддержать автора"
+                Command="{Binding ShowDonateCommand}">
+          <PathIcon Data="{StaticResource IconHeart}" Width="14" Height="14"
+                    Foreground="{DynamicResource AccentBrush}"/>
+        </Button>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.StatusText}"
+                   IsVisible="{Binding HasTabs}"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Selection word count (ported) — empty text collapses to nothing. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.SelectionInfo, FallbackValue=''}"
+                   Margin="0,0,12,0" Foreground="{DynamicResource StatusBarForegroundBrush}"
+                   FontSize="11.5" Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Scroll position (ported) — "NN%" through the document, both view modes. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.ScrollPercentText, FallbackValue=''}"
+                   Margin="0,0,12,0" Foreground="{DynamicResource StatusBarForegroundBrush}"
+                   FontSize="11.5" Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Caret position — only meaningful (and shown) while the source editor is visible. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.CaretText}"
+                   IsVisible="{Binding SelectedTab.ShowSource, FallbackValue=False}" Margin="0,0,12,0"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- PDF page counter «стр N / M» — written by PdfView from the scroll position. -->
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SelectedTab.PdfPageText}"
+                   IsVisible="{Binding SelectedTab.ShowPdf, FallbackValue=False}" Margin="0,0,12,0"
+                   Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                   Opacity="0.92" VerticalAlignment="Center"/>
+        <!-- Zoom — in the status bar for the source editor AND the markdown preview (the preview is
+             scaled via a layout transform by the same font-size value). Hidden for table/notice tabs. -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,10,0"
+                    VerticalAlignment="Center" IsVisible="{Binding SelectedTab.ZoomApplies, FallbackValue=False}">
+          <Button Command="{Binding ZoomOutCommand}" ToolTip.Tip="Меньше (Ctrl+−)"
+                  AutomationProperties.Name="Уменьшить шрифт" Content="A−" Classes="statusbtn"/>
+          <Button Command="{Binding ZoomResetCommand}" ToolTip.Tip="Сбросить масштаб (Ctrl+0)"
+                  AutomationProperties.Name="Размер шрифта" Content="{Binding Editor.FontSize}" Classes="statusbtn"/>
+          <Button Command="{Binding ZoomInCommand}" ToolTip.Tip="Больше (Ctrl++)"
+                  AutomationProperties.Name="Увеличить шрифт" Content="A+" Classes="statusbtn"/>
+        </StackPanel>
+        <!-- Wrap · numbers FALLBACK — shown here only when ToolbarMode is Off; otherwise they live in the
+             contextual toolbar above (the converter keeps them in exactly one place). -->
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2" Margin="0,0,4,0"
+                    VerticalAlignment="Center">
+          <StackPanel.IsVisible>
+            <MultiBinding Converter="{x:Static conv:ToolbarVisibilityConverter.Instance}" ConverterParameter="statusfallback">
+              <Binding Path="Layout.ToolbarMode"/>
+              <Binding Path="SelectedTab.ShowSource" FallbackValue="False"/>
+              <Binding Path="HasTabs"/>
+            </MultiBinding>
+          </StackPanel.IsVisible>
+          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+                  AutomationProperties.Name="Перенос строк" Classes="statusbtn">
+            <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
+          </Button>
+          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+                  AutomationProperties.Name="Номера строк" Classes="statusbtn">
+            <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
+          </Button>
+        </StackPanel>
+        <!-- Table/source toggle for delimited files (ported csv-as-table) — in the status bar,
+             which stays visible in both views (the contextual toolbar hides with the editor). -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.ToggleCsvViewCommand}"
+                ToolTip.Tip="Таблица / исходник" AutomationProperties.Name="Таблица или исходник"
+                Content="▦"
+                IsVisible="{Binding SelectedTab.CsvTable, FallbackValue=False, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <!-- PDF fit-to-width ⟷ actual size (100%) toggle. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.TogglePdfFitCommand}"
+                ToolTip.Tip="По ширине / 100%" AutomationProperties.Name="Масштаб PDF"
+                Content="⤢" IsVisible="{Binding SelectedTab.ShowPdf, FallbackValue=False}"/>
+        <!-- Image: rotate 90° + fit/100% toggle. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.RotateImageCommand}"
+                ToolTip.Tip="Повернуть на 90°" AutomationProperties.Name="Повернуть изображение"
+                Content="↻" IsVisible="{Binding SelectedTab.ShowImage, FallbackValue=False}"/>
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                Command="{Binding SelectedTab.ToggleImageFitCommand}"
+                ToolTip.Tip="Вписать / 100%" AutomationProperties.Name="Масштаб изображения"
+                Content="⤢" IsVisible="{Binding SelectedTab.ShowImage, FallbackValue=False}"/>
+        <!-- Preview/source switch (markdown only) — a clearly-labelled segmented toggle replacing the
+             ambiguous eye icon; the active mode fills with the accent. Each segment SETS its mode
+             (ToggleViewModeCommand still backs the palette/keyboard). -->
+        <Border DockPanel.Dock="Right" Classes="segmented" Margin="0,0,6,0"
+                AutomationProperties.AutomationId="ViewModeSwitch"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}">
+          <StackPanel Orientation="Horizontal">
+            <Button Classes="segment" Content="Предпросмотр"
+                    AutomationProperties.AutomationId="ViewModePreview"
+                    Classes.seg-on="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
+                    Command="{Binding SelectedTab.ShowPreviewModeCommand}"/>
+            <Button Classes="segment" Content="Исходник"
+                    AutomationProperties.AutomationId="ViewModeSource"
+                    Classes.seg-on="{Binding SelectedTab.ShowSource, FallbackValue=False}"
+                    Command="{Binding SelectedTab.ShowSourceModeCommand}"/>
+          </StackPanel>
+        </Border>
+        <!-- Split toggle (markdown only): source + preview side by side with live mutual scroll.
+             A separate toggle beside the segmented pair; on → Split, off → Preview. -->
+        <Button DockPanel.Dock="Right" Classes="statusbtn" Margin="0,0,6,0"
+                AutomationProperties.AutomationId="ViewModeSplit"
+                Command="{Binding SelectedTab.ToggleSplitCommand}"
+                ToolTip.Tip="Разделённый вид (Ctrl+\)" AutomationProperties.Name="Разделённый вид"
+                Content="&#x25EB;"
+                IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
+        <Border DockPanel.Dock="Right" Width="1" Margin="10,1" IsVisible="{Binding HasTabs}"
+                Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
+        <!-- Left segment: status messages, replaced by the go-to-line input (Ctrl+G) while open.
+             Lives in the status bar (chrome) rather than over the editor, where an overlay won't
+             repaint over AvaloniaEdit's GPU surface. -->
+        <Panel>
+          <TextBlock Text="{Binding StatusText}" IsVisible="{Binding !SelectedTab.IsGoToLineOpen, FallbackValue=True}"
+                     Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"
+                     VerticalAlignment="Center"/>
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                      IsVisible="{Binding SelectedTab.IsGoToLineOpen, FallbackValue=False}">
+            <TextBlock Text="Перейти к строке:" VerticalAlignment="Center"
+                       IsVisible="{Binding !SelectedTab.IsPdf, FallbackValue=True}"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
+            <TextBlock Text="Перейти к странице:" VerticalAlignment="Center"
+                       IsVisible="{Binding SelectedTab.IsPdf, FallbackValue=False}"
+                       Foreground="{DynamicResource StatusBarForegroundBrush}" FontSize="11.5"/>
+            <TextBox x:Name="GoToLineBox" Width="72" Height="22" Padding="6,1" FontSize="11.5"
+                     AutomationProperties.Name="Номер строки"
+                     Text="{Binding SelectedTab.GoToLineText}" VerticalAlignment="Center"/>
+          </StackPanel>
+        </Panel>
+      </DockPanel>
+    </Border>
+
+    <!-- Outline sidebar (col 0, user-resizable via the splitter; code-behind collapses it to 0 when
+         hidden) + drag handle (col 1) + document body (col 2). The pixel width of OutlineColumn is
+         restored/persisted in code-behind (a ColumnDefinition has no DataContext to bind through). -->
+    <Grid x:Name="BodyGrid">
+      <Grid.ColumnDefinitions>
+        <!-- [0] outline sidebar — width restored / persisted / collapsed from code-behind. -->
+        <ColumnDefinition Width="240" MinWidth="180" MaxWidth="480"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Body surfaces are layered HERE, at the grid level, so the decorative reading glow is a SINGLE
+           continuous gradient across the whole body instead of being painted twice (once per panel) — the
+           old approach resolved its percentage-based radial centres against each panel's own (very
+           different) width, so the gradients didn't line up and broke along the sidebar's right edge,
+           worst at the bottom where ReaderGlowB is centred. The panels above (OutlinePanel / preview) are
+           transparent so these layers show through:
+             1. full-body opaque base (editor surface)
+             2. opaque sidebar surface over col 0 (the sidebar is now non-transparent)
+             3. ONE hit-test-invisible glow spanning the whole body, under the content, above the surfaces.
+           Order matters: later children paint on top. -->
+      <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource EditorSurfaceBrush}"/>
+      <Border Grid.Column="0" Background="{DynamicResource SidebarSurfaceBrush}"
+              IsVisible="{Binding IsOutlinePaneVisible}"/>
+      <Panel Grid.Column="0" Grid.ColumnSpan="3" IsHitTestVisible="False">
+        <!-- Shown only with a document open AND the decorative background on; the welcome screen
+             paints its own glow, so gating on HasTabs avoids doubling it up. -->
+        <Panel.IsVisible>
+          <MultiBinding Converter="{x:Static conv:AllTrueConverter.Instance}">
+            <Binding Path="HasTabs"/>
+            <Binding Path="Layout.ReadingMode" FallbackValue="False"/>
+          </MultiBinding>
+        </Panel.IsVisible>
+        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"/>
+        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"/>
+      </Panel>
+
+      <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
+      <GridSplitter Grid.Column="1" AutomationProperties.AutomationId="OutlineSplitter"
+                    ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
+                    Width="5" Background="Transparent" Cursor="SizeWestEast"
+                    IsVisible="{Binding IsOutlinePaneVisible}"/>
+
+      <Panel Grid.Column="2">
+        <!-- Welcome view shown when no tabs are open. -->
+        <views:WelcomeView IsVisible="{Binding !HasTabs}"/>
+        <!-- Every open tab's DocumentView stays realized (overlapping in a Panel); only the active tab's
+             is visible. Switching tabs toggles IsActive instead of re-templating, so the editor + TextMate
+             install + the markdown visual tree survive across switches (no rebuild hitch on Ctrl+Tab). -->
+        <ItemsControl ItemsSource="{Binding Tabs}" IsVisible="{Binding HasTabs}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <Panel/>
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:DocumentTabViewModel">
+              <controls:DocumentView IsVisible="{Binding IsActive}"
+                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Panel>
+    </Grid>
+
+  </DockPanel>
+</wnd:AppWindow>

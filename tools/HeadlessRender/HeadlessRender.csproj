@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Layer-1 render oracle (max.avalonia-smoke): render LEAF controls headlessly to PNG in every
-       theme via Avalonia + Skia drawing. Standalone — kept OUT of SeriousView.sln so it never
+       theme via Avalonia + Skia drawing. Standalone — kept OUT of Tittle.sln so it never
        affects the app build/test. Run via dotnet run (project tools/HeadlessRender) with an out dir.
        Never construct MainWindow here: its FluentAvalonia chrome shapes the "Symbols" glyph font,
        which crashes under headless Skia. Leaf controls (DocumentView, dialogs) render fine. -->
@@ -12,6 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" />
-    <ProjectReference Include="..\..\src\SeriousView\SeriousView.csproj" />
+    <ProjectReference Include="..\..\src\Tittle\Tittle.csproj" />
   </ItemGroup>
 </Project>

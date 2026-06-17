@@ -1,4 +1,4 @@
-# SeriousView — Architecture
+# Tittle — Architecture
 
 How the codebase is organised and **where new code goes**. Deliberately pragmatic: a thin core,
 feature-sliced UI, and three projects — no Clean-Architecture ceremony, no speculative scaffolding.
@@ -12,21 +12,21 @@ MVVM (CommunityToolkit.Mvvm), DI (Microsoft.Extensions.DependencyInjection), Cen
 
 ```
             ┌─────────────────────────────┐
-            │ SeriousView (UI, Avalonia)  │  Features/ · Platform/ · Shared/ · Themes/
+            │ Tittle (UI, Avalonia)  │  Features/ · Platform/ · Shared/ · Themes/
             │   depends on ▼              │
             ├─────────────────────────────┤
-            │ SeriousView.Core (net9.0)   │  pure logic + Abstractions (ports). NO Avalonia.
+            │ Tittle.Core (net9.0)   │  pure logic + Abstractions (ports). NO Avalonia.
             └─────────────────────────────┘
-            SeriousView.Tests mirrors both (Headless UI + unit).
+            Tittle.Tests mirrors both (Headless UI + unit).
 ```
 
 ## 2. Projects
 
 | Project | Role | Rules |
 |---|---|---|
-| **SeriousView.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IAppSettingsService, IRecentFilesStore), `Services/` (RecentFilesList, FileReader, AppSettingsService), `Text/` (TextMetrics, MarkdownFile/Link/Preprocessor/Outline, TextEncodingDetector, BinaryContent, LineEndings), `Documents/` (FileLoadResult, FileLimits), `Settings/` (AppSettings, WindowPlacement, SessionState, EditorSettings, WindowPlacementValidator), `Diagnostics/` (CrashLog). One BCL dep (`System.Text.Encoding.CodePages`) for Windows-1251. | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
-| **SeriousView** (UI, WinExe) | Avalonia app. `Features/` (Shell, Welcome, Viewer, …), `Platform/` (Avalonia/IO port impls), `Shared/` (cross-feature VM base, converters, `EditorOptions` — shared editor font/wrap/line-numbers), `Themes/`, `App`. AssemblyName=SeriousView. | Talks to the outside world only through Core ports. |
-| **SeriousView.Tests** | xUnit + Avalonia.Headless. Mirrors structure: `Core/`, `Features/`, `Platform/`. | Pure logic → `[Fact]`; UI/resources → `[AvaloniaFact]` + `TestAppBuilder`. |
+| **Tittle.Core** | Pure logic + ports (interfaces). `Abstractions/` (IFileReader, IFileDialogService, IThemeService+ThemeMode, ISettingsStore, IAppSettingsService, IRecentFilesStore), `Services/` (RecentFilesList, FileReader, AppSettingsService), `Text/` (TextMetrics, MarkdownFile/Link/Preprocessor/Outline, TextEncodingDetector, BinaryContent, LineEndings), `Documents/` (FileLoadResult, FileLimits), `Settings/` (AppSettings, WindowPlacement, SessionState, EditorSettings, WindowPlacementValidator), `Diagnostics/` (CrashLog). One BCL dep (`System.Text.Encoding.CodePages`) for Windows-1251. | **No Avalonia, no UI.** No DDD layers — keep it flat and small. |
+| **Tittle** (UI, WinExe) | Avalonia app. `Features/` (Shell, Welcome, Viewer, …), `Platform/` (Avalonia/IO port impls), `Shared/` (cross-feature VM base, converters, `EditorOptions` — shared editor font/wrap/line-numbers), `Themes/`, `App`. AssemblyName=Tittle. | Talks to the outside world only through Core ports. |
+| **Tittle.Tests** | xUnit + Avalonia.Headless. Mirrors structure: `Core/`, `Features/`, `Platform/`. | Pure logic → `[Fact]`; UI/resources → `[AvaloniaFact]` + `TestAppBuilder`. |
 
 ## 3. Dependency rule
 
@@ -37,7 +37,7 @@ Never `using Avalonia` inside Core.
 ## 4. How to add a feature
 
 1. Create `Features/<Name>/` with `<Name>View.axaml(.cs)` + `<Name>ViewModel.cs`
-   (namespace `SeriousView.Features.<Name>`; VM derives `ViewModelBase` from `Shared/`).
+   (namespace `Tittle.Features.<Name>`; VM derives `ViewModelBase` from `Shared/`).
 2. Need the outside world (files, shell, clipboard, a renderer)? Add a **port** interface to
    `Core/Abstractions` **and its implementation in `Platform/`** (or pure logic in `Core`).
    **Create the port only when its real consumer exists** (see §7).
@@ -71,9 +71,9 @@ Treat the remaining rows as direction, not committed contracts.
 
 ## 6. Conventions
 
-- **Namespace = folder.** `SeriousView.Features.<Name>`, `SeriousView.Platform`, `SeriousView.Shared`,
-  `SeriousView.Core.*`. (`App`/`Program` stay at root `SeriousView`.) Keeps IDE0130 happy.
-- **avares://** uses the **AssemblyName** (`SeriousView`), not folder/namespace — `avares://SeriousView/Themes/...`.
+- **Namespace = folder.** `Tittle.Features.<Name>`, `Tittle.Platform`, `Tittle.Shared`,
+  `Tittle.Core.*`. (`App`/`Program` stay at root `Tittle`.) Keeps IDE0130 happy.
+- **avares://** uses the **AssemblyName** (`Tittle`), not folder/namespace — `avares://Tittle/Themes/...`.
   Don't rename the assembly without checking theme loading (`ThemeServiceTests.ColorTokens` is the canary).
 - **MVVM**: `[ObservableProperty]`/`[RelayCommand]` source generators (VMs are `partial`). Compiled bindings
   on by default → every View/DataTemplate needs `x:DataType`.
@@ -98,8 +98,8 @@ dialog or Search overlay).
 ## 9. Build & verify
 
 ```
-dotnet build SeriousView.sln -c Debug      # build
-dotnet test  SeriousView.sln               # unit + Headless UI (baseline: 28)
-dotnet format SeriousView.sln              # CI verifies formatting
-dotnet run --project src/SeriousView       # run (or: SeriousView <file>)
+dotnet build Tittle.sln -c Debug      # build
+dotnet test  Tittle.sln               # unit + Headless UI (baseline: 28)
+dotnet format Tittle.sln              # CI verifies formatting
+dotnet run --project src/Tittle       # run (or: Tittle <file>)
 ```

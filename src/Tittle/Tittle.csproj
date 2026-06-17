@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\tittle.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Desktop tuning: workstation GC (ServerGC off) fits a UI app; background/concurrent GC is
+         left ON (the default) so Gen2 collections don't pause the UI thread on large documents.
+         InvariantGlobalization trims ICU (encodings still work via CodePagesEncodingProvider). -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <TieredCompilation>true</TieredCompilation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="FluentAvaloniaUI" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="AvaloniaEdit.TextMate" />
+    <PackageReference Include="TextMateSharp.Grammars" />
+    <!-- Native markdown rendering (MarkdownScrollViewer). ColorText/ColorDocument come transitively. -->
+    <PackageReference Include="Markdown.Avalonia" />
+    <!-- LaTeX block rendering in the preview (M11), no WebView. -->
+    <PackageReference Include="Sylinko.CSharpMath.Avalonia" />
+    <!-- Vector image files (.svg) → SvgImage/SvgSource (IImage). Raster images need no package. -->
+    <PackageReference Include="Avalonia.Svg.Skia" />
+    <!-- PDF page rendering (PDFium via SkiaSharp). Pinned to the 4.x line: it tracks SkiaSharp
+         2.88.x (Avalonia 11's major) — PDFtoImage 5.x jumped to SkiaSharp 3.x and would clash.
+         Native pdfium binaries arrive transitively via bblanchon.PDFium per RID; a missing native
+         degrades gracefully to "open externally" (see Pdf/PdfDocumentSource). -->
+    <PackageReference Include="PDFtoImage" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <!-- DevTools (F12) only in Debug builds -->
+    <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Headless UI tests drive view internals (e.g. flyout state refresh) that can't be
+         reached by showing popups (FluentAvalonia Symbols font can't shape headless). -->
+    <InternalsVisibleTo Include="Tittle.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tittle.Core\Tittle.Core.csproj" />
+  </ItemGroup>
+
+</Project>

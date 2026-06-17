@@ -1,0 +1,321 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ae="using:AvaloniaEdit"
+             xmlns:aeediting="using:AvaloniaEdit.Editing"
+             xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:vm="using:Tittle.Features.Shell"
+             xmlns:viewer="using:Tittle.Features.Viewer"
+             xmlns:pdf="using:Tittle.Features.Viewer.Pdf"
+             xmlns:img="using:Tittle.Features.Viewer.Images"
+             xmlns:sh="using:Tittle.Shared"
+             x:Class="Tittle.Features.Viewer.DocumentView"
+             x:DataType="vm:DocumentTabViewModel">
+  <UserControl.Styles>
+    <!-- Line-number gutter: AvaloniaEdit packs the numbers hard against the code with no breathing
+         room, so they visually merge with the text. The LineNumberMargin is added to TextArea.LeftMargins
+         in code (not the template), so style it by type — a right margin opens a gutter gap; a left
+         margin keeps the numbers off the window edge. (Colour is set via LineNumbersForeground on the
+         editor so the numbers read as a muted gutter, not as code.) -->
+    <Style Selector="aeediting|LineNumberMargin">
+      <Setter Property="Margin" Value="6,0,12,0"/>
+    </Style>
+    <!-- Find-bar controls: flat compact nav/close buttons; the regex toggle reddens on an invalid pattern. -->
+    <Style Selector="Button.findbtn">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="7,2"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="ToggleButton.findtoggle">
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="7,2"/>
+      <Setter Property="Margin" Value="2,0,0,0"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ToggleButton.findtoggle.invalid">
+      <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AdmonitionCautionBrush}"/>
+    </Style>
+    <!-- Breadcrumb segments: flat muted buttons that light up on hover; the separator before
+         the FIRST crumb is hidden (nth-child on the items' presenters). -->
+    <Style Selector="Button.crumb">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinWidth" Value="0"/>
+      <Setter Property="Padding" Value="5,2"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+    </Style>
+    <Style Selector="Button.crumb:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+    <Style Selector="ItemsControl#BreadcrumbsList ContentPresenter:nth-child(1) TextBlock.crumb-sep">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <!-- CSV table header cells: flat, bold, sticky above the row scroller. -->
+    <Style Selector="Button.csv-header">
+      <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ChromeBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="0,0,1,1"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="6,4"/>
+      <Setter Property="FontSize" Value="12.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+  </UserControl.Styles>
+  <!-- One tab's body: an optional find bar (Ctrl+F) docked on top, then the source editor, rendered
+       preview, and a notice overlay sharing the area (ShowSource / ShowPreview / ShowNotice exclusive). -->
+  <DockPanel>
+    <!-- Find bar — a chrome strip docked above the editor, NOT an overlay (an overlay over AvaloniaEdit's
+         GPU surface won't repaint — see project memory). Per-tab; shown on IsSearchOpen. -->
+    <Border DockPanel.Dock="Top" IsVisible="{Binding IsSearchOpen}"
+            Background="{DynamicResource ChromeBackgroundBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
+      <StackPanel Spacing="5">
+      <DockPanel LastChildFill="True">
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x2715;" ToolTip.Tip="Закрыть (Esc)"
+                AutomationProperties.Name="Закрыть поиск" Command="{Binding CloseSearchCommand}"/>
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x203A;" ToolTip.Tip="Следующее (Enter)"
+                AutomationProperties.Name="Следующее совпадение" Command="{Binding NextMatchCommand}"/>
+        <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x2039;" ToolTip.Tip="Предыдущее (Shift+Enter)"
+                AutomationProperties.Name="Предыдущее совпадение" Command="{Binding PreviousMatchCommand}"/>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding SearchStatus}" VerticalAlignment="Center"
+                   Margin="10,0,4,0" MinWidth="64" TextAlignment="Right" FontSize="12"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <ToggleButton DockPanel.Dock="Right" Classes="findtoggle" Content=".*" ToolTip.Tip="Регулярное выражение"
+                      AutomationProperties.Name="Регулярное выражение"
+                      Classes.invalid="{Binding SearchInvalidRegex}"
+                      IsChecked="{Binding SearchRegex, Mode=TwoWay}"/>
+        <ToggleButton DockPanel.Dock="Right" Classes="findtoggle" Content="Aa" ToolTip.Tip="Учитывать регистр"
+                      AutomationProperties.Name="Учитывать регистр"
+                      IsChecked="{Binding SearchCaseSensitive, Mode=TwoWay}"/>
+        <TextBox x:Name="SearchBox" Watermark="Найти" AutomationProperties.Name="Найти"
+                 Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+      </DockPanel>
+      <DockPanel LastChildFill="True" IsVisible="{Binding IsReplaceMode}">
+        <Button DockPanel.Dock="Right" Content="Все" ToolTip.Tip="Заменить всё" Margin="4,0,0,0" Padding="9,3"
+                AutomationProperties.Name="Заменить всё" Command="{Binding ReplaceAllCommand}"/>
+        <Button DockPanel.Dock="Right" Content="Заменить" ToolTip.Tip="Заменить совпадение и далее" Padding="9,3"
+                AutomationProperties.Name="Заменить" Command="{Binding ReplaceCurrentCommand}"/>
+        <TextBox x:Name="ReplaceBox" Watermark="Заменить на" AutomationProperties.Name="Заменить на"
+                 Text="{Binding ReplaceText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+      </DockPanel>
+      </StackPanel>
+    </Border>
+
+    <!-- Breadcrumbs (M10): ancestor chain of the active heading — a docked chrome strip (never
+         an overlay over the editor's GPU surface), shown in BOTH view modes whenever the doc
+         has an outline (stable height; the chain merely empties above the first heading).
+         Segments navigate via the same command as the outline. -->
+    <Border x:Name="BreadcrumbBar" DockPanel.Dock="Top" MinHeight="26"
+            IsVisible="{Binding HasOutline, FallbackValue=False}"
+            Background="{DynamicResource ChromeBackgroundBrush}"
+            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="12,0">
+      <ItemsControl x:Name="BreadcrumbsList" ItemsSource="{Binding Breadcrumbs}"
+                    VerticalAlignment="Center" AutomationProperties.Name="Путь заголовков">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:CompileBindings="False">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Classes="crumb-sep" Text="›" Margin="3,0" VerticalAlignment="Center"
+                         Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+              <Button Classes="crumb" Content="{Binding Text}"
+                      Command="{Binding $parent[ItemsControl].DataContext.NavigateToHeadingCommand}"
+                      CommandParameter="{Binding}"/>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Border>
+
+    <Panel>
+    <!-- Source + preview live in a split grid. DocumentView.SplitLayout.cs owns the geometry — the
+         track sizes, the Horizontal/Vertical orientation and the splitter visibility — so the SAME
+         single Source/Preview subtrees serve Source-only, Preview-only AND side-by-side split (they
+         are never duplicated or reparented). Host IsVisible keeps a hidden pane out of layout;
+         the split grid's track length reveals it. The CSV table and notice are full-area overlays. -->
+    <Grid x:Name="SplitGrid">
+    <!-- Source host: any non-markdown file, or a markdown file in Source/Split.
+         The code minimap (ported) sits in a SIBLING column — floated over the editor
+         it would never repaint (AvaloniaEdit GPU surface, see project memory). -->
+    <Border x:Name="SourceHost" IsVisible="{Binding ShowSourcePane}">
+    <Grid ColumnDefinitions="*,Auto">
+    <ae:TextEditor x:Name="Source"
+                   viewer:EditorBehavior.Text="{Binding SourceText}"
+                   viewer:EditorBehavior.GrammarExtension="{Binding GrammarExtension}"
+                   viewer:EditorBehavior.SuppressHighlight="{Binding HighlightSuppressed}"
+                   Background="{DynamicResource EditorSurfaceBrush}"
+                   FontFamily="Cascadia Code,Consolas,Courier New,monospace"
+                   FontSize="{Binding Editor.FontSize, FallbackValue=14}"
+                   LineNumbersForeground="{DynamicResource ChromeForegroundMutedBrush}"
+                   ShowLineNumbers="{Binding Editor.ShowLineNumbers, FallbackValue=True}"
+                   WordWrap="{Binding Editor.WordWrap, FallbackValue=False}"
+                   HorizontalScrollBarVisibility="Auto"
+                   VerticalScrollBarVisibility="Auto">
+      <!-- Right-click menu (#26): the viewer is read-only, so just clipboard + find.
+           Copy/SelectAll go straight to the editor (code-behind); Найти reuses the tab's
+           Ctrl+F seam. Copy's enabled state refreshes on Opening (see ctor). -->
+      <ae:TextEditor.ContextFlyout>
+        <MenuFlyout>
+          <MenuItem x:Name="EditorCopyItem" Header="Копировать" InputGesture="Ctrl+C" Click="OnEditorCopyClick"/>
+          <MenuItem Header="Выделить всё" InputGesture="Ctrl+A" Click="OnEditorSelectAllClick"/>
+          <Separator/>
+          <MenuItem Header="Найти…" InputGesture="Ctrl+F" Click="OnEditorFindClick"/>
+        </MenuFlyout>
+      </ae:TextEditor.ContextFlyout>
+    </ae:TextEditor>
+    <Border Grid.Column="1" Background="{DynamicResource EditorSurfaceBrush}"
+            IsVisible="{Binding ShowMinimap, FallbackValue=False}"
+            ToolTip.Tip="Мини-карта">
+      <viewer:MinimapStrip x:Name="Minimap" Width="15" AutomationProperties.Name="Мини-карта"/>
+    </Border>
+    </Grid>
+    </Border>
+
+    <!-- Splitter between the two panes — shown only in split mode; its track + ResizeDirection are
+         set in DocumentView.SplitLayout.cs (Columns for horizontal, Rows for vertical). -->
+    <GridSplitter x:Name="SplitSplitter" IsVisible="False"
+                  Background="{DynamicResource ChromeBorderBrush}"
+                  AutomationProperties.AutomationId="SplitSplitter"/>
+
+    <!-- Rendered markdown preview: one full-width field with a soft, barely-there accent glow behind
+         the text (toggled by «Декоративный фон»). Markdown.Avalonia's own scrollbar can't be themed
+         dark, so the OUTER app ScrollViewer does the scrolling (its dark slim thumb rides the window
+         edge, reserving a gutter so it never overlays the prose) while the inner MarkdownScrollViewer
+         keeps the styled render with its vertical scroll disabled. Padding keeps the prose off the
+         edges (#4). MarkdownStyleName is deliberately NOT set (the auto FluentAvalonia style follows
+         Light/Dark); the hyperlink command is hardened in code-behind. -->
+    <!-- Transparent so the shell's single continuous reading glow (and the editor-surface base under it)
+         show through — the glow is painted ONCE at BodyGrid level, not per-panel, so it stays continuous
+         across the sidebar/content seam. Don't put an opaque background or a per-panel glow back here. -->
+    <Border x:Name="PreviewHost" IsVisible="{Binding ShowPreviewPane}">
+    <Panel Background="Transparent">
+      <!-- BringIntoViewOnFocusChange off: clicking an embedded code editor focuses it, and the
+           default focus-scroll would yank the page around (the reader's position is sacred). -->
+      <ScrollViewer x:Name="PreviewScroll" Background="Transparent" Padding="40,24,40,8"
+                    BringIntoViewOnFocusChange="False"
+                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <!-- Centering wrapper: a ScrollViewer's ScrollContentPresenter ignores its DIRECT child's
+             HorizontalAlignment (it arranges the child at the left edge of the extent), so the
+             reading-column presets (Comfort/Narrow) rendered left-aligned with all the slack dumped
+             on the right. This stretching Panel is the scroll child and fills the viewport; the
+             MarkdownScrollViewer nested inside it honours MaxWidth + HorizontalAlignment=Center the
+             normal way. Full stays full-width (Stretch + unbounded MaxWidth). Don't flatten this back. -->
+        <Panel HorizontalAlignment="Stretch">
+          <!-- Reading zoom: Markdown.Avalonia exposes no per-element font size, so the shared editor
+               zoom (Editor.PreviewScale, 14 → 1.0) is applied as a LAYOUT scale (reflow-zoom) — the
+               content genuinely re-wraps at the larger size instead of a RenderTransform that would
+               clip horizontally. The LTC carries the reading-width centering (a ScrollViewer would
+               swallow it on the direct child); MaxWidth stays on the MarkdownScrollViewer to cap the
+               LOGICAL column width, which the LTC then scales. -->
+          <LayoutTransformControl x:Name="PreviewZoom"
+              HorizontalAlignment="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}, ConverterParameter=align}"
+              LayoutTransform="{Binding Editor.PreviewScale, FallbackValue=1.0, Converter={x:Static sh:ScaleTransformConverter.Instance}}">
+            <md:MarkdownScrollViewer x:Name="Preview"
+                                     Markdown="{Binding PreviewMarkdown}"
+                                     AssetPathRoot="{Binding AssetPathRoot}"
+                                     SelectionEnabled="True"
+                                     HorizontalAlignment="Stretch"
+                                     MaxWidth="{Binding Layout.ReadingWidth, FallbackValue=Full, Converter={x:Static sh:ReadingWidthConverter.Instance}}">
+              <!-- Inner vertical scroll off → the outer (dark) ScrollViewer scrolls; the inner still
+                   handles horizontal overflow (wide code blocks / tables). -->
+              <md:MarkdownScrollViewer.Styles>
+                <Style Selector="ScrollViewer">
+                  <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+                </Style>
+              </md:MarkdownScrollViewer.Styles>
+            </md:MarkdownScrollViewer>
+          </LayoutTransformControl>
+        </Panel>
+      </ScrollViewer>
+      <!-- Back-to-top (ported): floats over the preview once it's scrolled a screen down.
+           Visibility is driven from OnPreviewScrollChanged in code-behind. -->
+      <Button x:Name="BackToTopButton" Content="↑" FontSize="16" Width="38" Height="38"
+              CornerRadius="19" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+              Margin="0,0,26,22" IsVisible="False" Click="OnBackToTopClick"
+              Background="{DynamicResource ChromeOverlayBrush}"
+              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+              ToolTip.Tip="Наверх" AutomationProperties.Name="Наверх"/>
+    </Panel>
+    </Border>
+    </Grid>
+
+    <!-- CSV/TSV table view (ported): sticky header row outside the vertical scroller, both
+         sharing one horizontal scroller so they pan together; rows are virtualized. -->
+    <ScrollViewer IsVisible="{Binding ShowCsvTable}" Background="{DynamicResource EditorSurfaceBrush}"
+                  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                  Padding="12,8">
+      <DockPanel>
+        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding CsvTable.Columns}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:CompileBindings="False">
+              <Button Classes="csv-header" Width="{Binding Width}" Content="{Binding Header}"
+                      Command="{Binding $parent[ScrollViewer].DataContext.CsvTable.SortByCommand}"
+                      CommandParameter="{Binding}"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding CsvTable.Truncated, FallbackValue=False}"
+                   Text="Показаны первые 10 000 строк" Margin="2,6" FontSize="12"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding CsvTable.Rows}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><VirtualizingStackPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:CompileBindings="False">
+                <ItemsControl ItemsSource="{Binding Cells}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:CompileBindings="False">
+                      <Border Width="{Binding Width}" Padding="6,3"
+                              BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,1">
+                        <TextBlock Text="{Binding Text}" FontSize="12.5" TextTrimming="CharacterEllipsis"/>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+    </ScrollViewer>
+
+    <!-- PDF view (page-by-page render via PDFium): a full-area host, shown for a .pdf tab. Falls
+         back to "open externally" inside PdfView when the native engine can't render. -->
+    <pdf:PdfView IsVisible="{Binding ShowPdf}"/>
+
+    <!-- Image view (raster via Skia / .svg via SvgImage): a full-area host, shown for an image tab.
+         Falls back to "open externally" inside ImageFileView when the file can't be decoded. -->
+    <img:ImageFileView IsVisible="{Binding ShowImage}"/>
+
+    <!-- Notice overlay: binary / too-large / empty files (no editor, no preview).
+         Text-only (no SymbolIcon) so it renders without the FluentAvalonia Symbols font. -->
+    <Border IsVisible="{Binding ShowNotice}" Background="{DynamicResource EditorSurfaceBrush}">
+      <TextBlock Text="{Binding NoticeText}" TextWrapping="Wrap" TextAlignment="Center"
+                 MaxWidth="420" FontSize="15"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+    </Border>
+    </Panel>
+  </DockPanel>
+</UserControl>

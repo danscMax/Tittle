@@ -1,4 +1,4 @@
-# AUDIT_REPORT — SeriousView (глобальный аудит)
+# AUDIT_REPORT — Tittle (глобальный аудит)
 
 **Дата:** 2026-06-13 · **Scope:** весь проект (`git ls-files`) · **Режим:** READ-ONLY на исходники.
 Исправления — отдельными сессиями по волнам ниже.
@@ -9,9 +9,9 @@
 
 ### Карта проекта
 
-- **Что это:** SeriousView — нативный кросс-платформенный desktop-просмотрщик markdown/кода
-  (Avalonia 11.3.17, .NET 9, Skia, без WebView). Apache-2.0. Три проекта: `SeriousView` (UI/WinExe) →
-  `SeriousView.Core` (чистая `net9.0`-логика, без Avalonia), `SeriousView.Tests` (xUnit + Avalonia.Headless).
+- **Что это:** Tittle — нативный кросс-платформенный desktop-просмотрщик markdown/кода
+  (Avalonia 11.3.17, .NET 9, Skia, без WebView). Apache-2.0. Три проекта: `Tittle` (UI/WinExe) →
+  `Tittle.Core` (чистая `net9.0`-логика, без Avalonia), `Tittle.Tests` (xUnit + Avalonia.Headless).
 - **Масштаб:** 263 файла в git; ~27 282 LOC прод-кода (cs+axaml без тестов) + ~20 090 LOC тестов.
   197 `.cs`, 33 `.axaml`. CPM (`Directory.Packages.props`), Nullable enable, ImplicitUsings, compiled bindings.
 - **Точки входа:** `Program.Main` → `App.OnFrameworkInitializationCompleted` (DI composition root) →
@@ -75,7 +75,7 @@
 оставив политику «не падать».
 **РЕШЕНИЕ (locked, автономно):** только лог в crash.log — в `catch` (после очистки temp) вызвать
 `CrashLogger.Write(ex, "SettingsSave")`; НЕ пробрасывать, НЕ показывать UI (политика «не падать / не
-беспокоить пользователя» сохраняется). `JsonSettingsStore` (`SeriousView.Platform`) уже в UI-проекте,
+беспокоить пользователя» сохраняется). `JsonSettingsStore` (`Tittle.Platform`) уже в UI-проекте,
 `CrashLogger` доступен напрямую. **Effort:** S. **Proof:** чтение кода. **Конфликты:** нет.
 
 ### [F-11] Medium · product/UX + accessibility · `Themes/Colors/{DeepBlue,Ocean,Midnight,…}.axaml` + `EditorBehavior.cs:128-141`

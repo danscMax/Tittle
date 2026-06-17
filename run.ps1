@@ -1,5 +1,5 @@
 # ============================================================================
-# SeriousView -- quick developer run (from source, no publish step)
+# Tittle -- quick developer run (from source, no publish step)
 # ============================================================================
 # Launches the Debug build straight from source via `dotnet run`. This is the
 # fast inner-loop launcher -- it incrementally rebuilds only what changed, so
@@ -22,7 +22,7 @@ chcp 65001 | Out-Null
 $ErrorActionPreference = 'Stop'
 
 $root    = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
-$project = Join-Path $root 'src\SeriousView\SeriousView.csproj'
+$project = Join-Path $root 'src\Tittle\Tittle.csproj'
 $config  = if ($Release) { 'Release' } else { 'Debug' }
 
 $runArgs = @('--project', $project, '-c', $config)

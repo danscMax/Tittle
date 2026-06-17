@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tittle.Features.Shell"
+             xmlns:conv="using:Tittle.Shared"
+             x:Class="Tittle.Features.Viewer.OutlinePanel"
+             x:DataType="vm:MainWindowViewModel">
+  <UserControl.Styles>
+    <!-- Bookmark toggles sit quiet until hovered; a set ★ keeps full presence. -->
+    <Style Selector="Button.bookmark-toggle">
+      <Setter Property="Opacity" Value="0.35"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+    </Style>
+    <Style Selector="Button.bookmark-toggle:pointerover">
+      <Setter Property="Opacity" Value="1"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+    </Style>
+  </UserControl.Styles>
+  <!-- Collapsible left sidebar listing the active markdown document's headings (TOC).
+       Bound to the active tab's Outline; each item navigates via the tab's
+       NavigateToHeadingCommand (runtime binding through the ItemsControl DataContext,
+       as the item DataContext is a HeadingOutline). -->
+  <!-- Width is driven by the shell's OutlineColumn (user-resizable via the GridSplitter); the panel
+       stretches to fill it. -->
+  <!-- Transparent background + a 1px right divider only: the opaque sidebar surface and the decorative
+       reading glow are painted ONCE at the shell's BodyGrid level (a single continuous gradient across the
+       whole body), so the glow no longer breaks along this panel's edge. Don't reintroduce a background or
+       a per-panel glow here. -->
+  <Border Background="Transparent"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,1,0">
+    <Panel>
+    <!-- Virtualizing TOC. The ScrollViewer lives INSIDE the ItemsControl template, directly wrapping the
+         ItemsPresenter, with a VirtualizingStackPanel items host — so a heading-dense document realizes
+         only the visible rows (an ItemsControl in an EXTERNAL ScrollViewer measures unbounded and would
+         realize every Button). Slim auto-hide bar, consistent with the markdown preview. The earlier
+         "hover compression/shimmer" was FluentAvalonia's button template (now the custom outline-item). -->
+    <ItemsControl ItemsSource="{Binding SelectedTab.Outline}">
+      <ItemsControl.Template>
+        <ControlTemplate>
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Padding="6,8">
+            <ItemsPresenter/>
+          </ScrollViewer>
+        </ControlTemplate>
+      </ItemsControl.Template>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <VirtualizingStackPanel/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:CompileBindings="False">
+          <!-- The 6px marker column is FIXED so the text never shifts when the marker moves;
+               only the 3px accent bar toggles visibility (active heading scroll-spy, M10).
+               Right side (ported): an unread dot that fades once the heading has been read,
+               and a ☆/★ bookmark toggle. -->
+          <Grid ColumnDefinitions="6,*,Auto,Auto"
+                Margin="{Binding Level, Converter={x:Static conv:LevelToIndentConverter.Instance}}">
+            <Border Grid.Column="0" Classes="active-marker" Width="3" CornerRadius="1.5"
+                    Margin="0,5" HorizontalAlignment="Left"
+                    Background="{DynamicResource AccentBrush}">
+              <Border.IsVisible>
+                <MultiBinding Converter="{x:Static conv:OrdinalMatchConverter.Instance}">
+                  <Binding Path="Ordinal"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab.ActiveHeadingOrdinal"
+                           FallbackValue="-1"/>
+                </MultiBinding>
+              </Border.IsVisible>
+            </Border>
+            <Button Grid.Column="1" Classes="outline-item"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                    Background="Transparent" BorderThickness="0" Padding="8,4"
+                    FontSize="12.5"
+                    Foreground="{DynamicResource ChromeForegroundBrush}"
+                    Content="{Binding Text}"
+                    Command="{Binding $parent[ItemsControl].DataContext.SelectedTab.NavigateToHeadingCommand}"
+                    CommandParameter="{Binding}"/>
+            <Ellipse Grid.Column="2" Width="5" Height="5" VerticalAlignment="Center"
+                     Margin="0,0,4,0" Fill="{DynamicResource AccentBrush}" Opacity="0.75">
+              <Ellipse.IsVisible>
+                <MultiBinding Converter="{x:Static conv:OutlineViewStateConverter.Instance}" ConverterParameter="unread">
+                  <Binding Path="Ordinal"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab.ViewStateVersion"
+                           FallbackValue="0"/>
+                </MultiBinding>
+              </Ellipse.IsVisible>
+            </Ellipse>
+            <Button Grid.Column="3" Classes="bookmark-toggle"
+                    Background="Transparent" BorderThickness="0" Padding="2,2"
+                    FontSize="11" VerticalAlignment="Center"
+                    ToolTip.Tip="Закладка" AutomationProperties.Name="Закладка"
+                    Command="{Binding $parent[ItemsControl].DataContext.SelectedTab.ToggleBookmarkCommand}"
+                    CommandParameter="{Binding}">
+              <Button.Content>
+                <MultiBinding Converter="{x:Static conv:OutlineViewStateConverter.Instance}" ConverterParameter="glyph">
+                  <Binding Path="Ordinal"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab"/>
+                  <Binding Path="$parent[ItemsControl].DataContext.SelectedTab.ViewStateVersion"
+                           FallbackValue="0"/>
+                </MultiBinding>
+              </Button.Content>
+            </Button>
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    </Panel>
+  </Border>
+</UserControl>

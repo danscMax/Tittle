@@ -1,5 +1,5 @@
 # ============================================================================
-# SeriousView -- remove the Markdown file association (current user, no admin)
+# Tittle -- remove the Markdown file association (current user, no admin)
 # ============================================================================
 # Mirror of install-fileassoc.ps1. Removes only our own HKCU keys; an extension
 # key is deleted only when its default still points at our ProgId, so a later
@@ -17,13 +17,13 @@ chcp 65001 | Out-Null
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = 'SilentlyContinue'
 
-$progId = 'SeriousView.Markdown'
+$progId = 'Tittle.Markdown'
 
 Write-Host ''
-Write-Host '  Remove Markdown -> SeriousView association (per-user)' -ForegroundColor Cyan
+Write-Host '  Remove Markdown -> Tittle association (per-user)' -ForegroundColor Cyan
 
 Remove-Item -Path "HKCU:\SOFTWARE\Classes\$progId" -Recurse -Force
-Remove-Item -Path 'HKCU:\SOFTWARE\Classes\Applications\SeriousView.exe' -Recurse -Force
+Remove-Item -Path 'HKCU:\SOFTWARE\Classes\Applications\Tittle.exe' -Recurse -Force
 
 foreach ($ext in $Extensions) {
     $keyExt = "HKCU:\SOFTWARE\Classes\$ext"
@@ -36,14 +36,14 @@ foreach ($ext in $Extensions) {
 $sig = @'
 using System;
 using System.Runtime.InteropServices;
-public static class SeriousViewShellNotifyU {
+public static class TittleShellNotifyU {
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     public static extern void SHChangeNotify(uint id, uint flags, IntPtr a, IntPtr b);
 }
 '@
 try {
     Add-Type -TypeDefinition $sig -ErrorAction Stop
-    [SeriousViewShellNotifyU]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
+    [TittleShellNotifyU]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
 } catch {}
 
 Write-Host '  Done. Repo files are untouched.' -ForegroundColor Green

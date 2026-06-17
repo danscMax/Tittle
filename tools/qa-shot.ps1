@@ -1,6 +1,6 @@
 #Requires -Version 5
-# SeriousView QA screenshot harness (Windows dev tool, not shipped).
-# Captures the running SeriousView window via CopyFromScreen (reliable for the
+# Tittle QA screenshot harness (Windows dev tool, not shipped).
+# Captures the running Tittle window via CopyFromScreen (reliable for the
 # AvaloniaEdit GPU surface, unlike PrintWindow). Moves the window to a corner so the
 # whole window (incl. status bar) is on-screen. Optionally clicks a button by
 # AutomationId (UI Automation) and/or resizes the window first.
@@ -40,8 +40,8 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 
-$p = Get-Process SeriousView -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $p) { Write-Error "SeriousView is not running"; exit 1 }
+$p = Get-Process Tittle -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $p) { Write-Error "Tittle is not running"; exit 1 }
 $h = $p.MainWindowHandle
 
 if ($ClickId) {

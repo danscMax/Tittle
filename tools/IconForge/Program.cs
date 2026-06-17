@@ -1,11 +1,11 @@
 using SkiaSharp;
 
 // Finalize the chosen app icon: concept #22 — emerald glossy </> on a transparent background.
-// Emits seriousview.png (512, transparent) + a multi-size PNG-framed seriousview.ico into arg[0]
-// (default src/SeriousView/Assets). The .ico embeds PNG entries (Vista+), per the icon pipeline.
+// Emits tittle.png (512, transparent) + a multi-size PNG-framed tittle.ico into arg[0]
+// (default src/Tittle/Assets). The .ico embeds PNG entries (Vista+), per the icon pipeline.
 
 const int S = 512;
-var outDir = args.Length > 0 ? args[0] : Path.Combine("..", "..", "src", "SeriousView", "Assets");
+var outDir = args.Length > 0 ? args[0] : Path.Combine("..", "..", "src", "Tittle", "Assets");
 Directory.CreateDirectory(outDir);
 
 SKColor C(uint hex) => new SKColor((byte)(hex >> 16), (byte)(hex >> 8), (byte)hex);
@@ -52,8 +52,8 @@ using (var cv = new SKCanvas(master)) DrawIcon(cv);
 void SavePng(SKBitmap bmp, string file)
 { using var img = SKImage.FromBitmap(bmp); using var d = img.Encode(SKEncodedImageFormat.Png, 100); using var fs = File.OpenWrite(file); d.SaveTo(fs); }
 
-SavePng(master, Path.Combine(outDir, "seriousview.png"));
-Console.WriteLine("wrote seriousview.png (512, transparent)");
+SavePng(master, Path.Combine(outDir, "tittle.png"));
+Console.WriteLine("wrote tittle.png (512, transparent)");
 
 // multi-size PNG-framed .ico
 int[] sizes = { 16, 24, 32, 48, 64, 128, 256 };
@@ -65,7 +65,7 @@ foreach (var sz in sizes)
     using var d = img.Encode(SKEncodedImageFormat.Png, 100);
     pngs.Add(d.ToArray());
 }
-using (var fs = new FileStream(Path.Combine(outDir, "seriousview.ico"), FileMode.Create))
+using (var fs = new FileStream(Path.Combine(outDir, "tittle.ico"), FileMode.Create))
 using (var bw = new BinaryWriter(fs))
 {
     bw.Write((short)0); bw.Write((short)1); bw.Write((short)sizes.Length);   // ICONDIR
@@ -81,5 +81,5 @@ using (var bw = new BinaryWriter(fs))
     }
     foreach (var p in pngs) bw.Write(p);
 }
-Console.WriteLine($"wrote seriousview.ico ({string.Join(",", sizes)})");
+Console.WriteLine($"wrote tittle.ico ({string.Join(",", sizes)})");
 Console.WriteLine("done");

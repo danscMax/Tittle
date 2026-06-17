@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using SeriousView;
-using SeriousView.Features.Shell;
-using SeriousView.Features.Viewer;
-using SeriousView.Platform;
+using Tittle;
+using Tittle.Features.Shell;
+using Tittle.Features.Viewer;
+using Tittle.Platform;
 
 // Layer-1 render oracle: render leaf controls to PNG in every theme (the cheap, deterministic
 // both-theme visual check). Output dir is arg[0] (default: plans/avalonia-smoke/screenshots).

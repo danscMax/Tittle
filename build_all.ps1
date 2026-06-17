@@ -1,9 +1,9 @@
 # ============================================================================
-# SeriousView -- Combined Build (tests + portable for every architecture)
+# Tittle -- Combined Build (tests + portable for every architecture)
 # ============================================================================
 # One command produces the full distribution set: the test suite gates the
 # build, then build.ps1 runs once per RID into its own dist subfolder
-# (dist\win-x64\SeriousView.exe, dist\win-arm64\SeriousView.exe).
+# (dist\win-x64\Tittle.exe, dist\win-arm64\Tittle.exe).
 #
 # Usage:
 #   .\build_all.ps1                # tests + win-x64 + win-arm64
@@ -13,7 +13,7 @@
 #   .\build_all.ps1 -NoOpen        # suppress the Explorer window (CI/headless)
 #
 # Outputs:
-#   dist\<rid>\SeriousView.exe  (one per RID)
+#   dist\<rid>\Tittle.exe  (one per RID)
 #   build-manifest.json         (version, sha256 per exe, duration)
 # ============================================================================
 
@@ -54,7 +54,7 @@ function Invoke-PreFlight {
     $dotnetCmd = Get-Command dotnet -ErrorAction SilentlyContinue
     if (-not $dotnetCmd) {
         Write-Host '    [FAIL] dotnet not found on PATH.' -ForegroundColor Red
-        Show-Notification -Title 'SeriousView Build FAILED' -Body 'Pre-flight: dotnet missing.' -IsError
+        Show-Notification -Title 'Tittle Build FAILED' -Body 'Pre-flight: dotnet missing.' -IsError
         exit 1
     }
     $sdk9 = (& dotnet --list-sdks) | Where-Object { $_ -match '^9\.' } | Select-Object -First 1
@@ -62,7 +62,7 @@ function Invoke-PreFlight {
         Write-Host "    [OK] .NET SDK $($sdk9 -replace '\s.*$','') found" -ForegroundColor Green
     } else {
         Write-Host '    [FAIL] .NET 9 SDK not found (dotnet --list-sdks has no 9.x entry).' -ForegroundColor Red
-        Show-Notification -Title 'SeriousView Build FAILED' -Body 'Pre-flight: .NET 9 SDK missing.' -IsError
+        Show-Notification -Title 'Tittle Build FAILED' -Body 'Pre-flight: .NET 9 SDK missing.' -IsError
         exit 1
     }
 
@@ -88,7 +88,7 @@ $phaseCount = $Rids.Count + $(if ($SkipTests) { 0 } else { 1 })
 $phase      = 0
 
 Write-Host ''
-Write-Banner 'SeriousView -- combined build' "tests + portable single-file for: $($Rids -join ', ')"
+Write-Banner 'Tittle -- combined build' "tests + portable single-file for: $($Rids -join ', ')"
 Write-Host ''
 
 Invoke-PreFlight
@@ -99,11 +99,11 @@ if (-not $SkipTests) {
     Write-SectionBanner "$phase / $phaseCount -- Tests  (unit + Headless UI)"
     Write-Host ''
 
-    dotnet test (Join-Path $root 'SeriousView.sln') -c Release --nologo
+    dotnet test (Join-Path $root 'Tittle.sln') -c Release --nologo
     if ($LASTEXITCODE -ne 0) {
         Write-Host ''
         Write-Host '  Tests failed -- aborting (no artifacts produced).' -ForegroundColor Red
-        Show-Notification -Title 'SeriousView Build FAILED' -Body 'Tests failed. Check the terminal.' -IsError
+        Show-Notification -Title 'Tittle Build FAILED' -Body 'Tests failed. Check the terminal.' -IsError
         exit $LASTEXITCODE
     }
 }
@@ -127,7 +127,7 @@ foreach ($rid in $Rids) {
     if ($LASTEXITCODE -ne 0) {
         Write-Host ''
         Write-Host "  Portable build for $rid failed -- aborting." -ForegroundColor Red
-        Show-Notification -Title 'SeriousView Build FAILED' -Body "Portable $rid failed. Check the terminal." -IsError
+        Show-Notification -Title 'Tittle Build FAILED' -Body "Portable $rid failed. Check the terminal." -IsError
         exit $LASTEXITCODE
     }
 }
@@ -138,7 +138,7 @@ $totalTime = '{0}:{1:D2}' -f [math]::Floor($totalDur.TotalMinutes), $totalDur.Se
 
 # Version from the first produced exe (no <Version> in MSBuild props yet).
 # NB: Windows PowerShell 5.1 runs this (the .bat uses powershell.exe) -- no PS7-only syntax.
-$firstExe = Join-Path $distRoot (Join-Path $Rids[0] 'SeriousView.exe')
+$firstExe = Join-Path $distRoot (Join-Path $Rids[0] 'Tittle.exe')
 $version  = '?'
 if (Test-Path -LiteralPath $firstExe) {
     $pv = (Get-Item -LiteralPath $firstExe).VersionInfo.ProductVersion
@@ -153,7 +153,7 @@ Write-Host "  $SK_TM$bar" -ForegroundColor Green
 
 $exes = [ordered]@{}
 foreach ($rid in $Rids) {
-    $exe = Join-Path $distRoot (Join-Path $rid 'SeriousView.exe')
+    $exe = Join-Path $distRoot (Join-Path $rid 'Tittle.exe')
     if (Test-Path -LiteralPath $exe) {
         $sizeMB = '{0:0.0} MB' -f ((Get-Item -LiteralPath $exe).Length / 1MB)
         $exes[$rid] = [ordered]@{ path = $exe; sha256 = (Get-FileHashSHA256 -Path $exe); size = $sizeMB }
@@ -165,7 +165,7 @@ foreach ($rid in $Rids) {
 }
 Write-Host "  $SK_BL$bar$SK_BR" -ForegroundColor Green
 
-Show-Notification -Title 'SeriousView Ready' `
+Show-Notification -Title 'Tittle Ready' `
                   -Body  "v$version -- $($Rids -join ' + ') -- $totalTime"
 
 # Build manifest beside the script (same shape as SweetWhisper's).

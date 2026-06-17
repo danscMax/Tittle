@@ -1,0 +1,64 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="using:FluentAvalonia.Styling"
+             xmlns:pl="using:Tittle.Platform"
+             x:Class="Tittle.App"
+             RequestedThemeVariant="Dark">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Tittle/Themes/Tokens.axaml" />
+                <ResourceInclude Source="avares://Tittle/Themes/Tabs.axaml" />
+                <ResourceInclude Source="avares://Tittle/Themes/Icons.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceInclude x:Key="Light" Source="avares://Tittle/Themes/Colors/Light.axaml" />
+                <ResourceInclude x:Key="Dark" Source="avares://Tittle/Themes/Colors/Dark.axaml" />
+                <!-- Ported dark set: each variant inherits Dark, overriding only surface tokens. -->
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Midnight}"
+                                 Source="avares://Tittle/Themes/Colors/Midnight.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Ocean}"
+                                 Source="avares://Tittle/Themes/Colors/Ocean.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.DeepBlue}"
+                                 Source="avares://Tittle/Themes/Colors/DeepBlue.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Nord}"
+                                 Source="avares://Tittle/Themes/Colors/Nord.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Dracula}"
+                                 Source="avares://Tittle/Themes/Colors/Dracula.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedDark}"
+                                 Source="avares://Tittle/Themes/Colors/SolarizedDark.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedDim}"
+                                 Source="avares://Tittle/Themes/Colors/SolarizedDim.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.GruvboxDark}"
+                                 Source="avares://Tittle/Themes/Colors/GruvboxDark.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.HighContrast}"
+                                 Source="avares://Tittle/Themes/Colors/HighContrast.axaml" />
+                <!-- Light family: each inherits the Light variant. -->
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.Sepia}"
+                                 Source="avares://Tittle/Themes/Colors/Sepia.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.SolarizedLight}"
+                                 Source="avares://Tittle/Themes/Colors/SolarizedLight.axaml" />
+                <ResourceInclude x:Key="{x:Static pl:AppThemeVariants.GruvboxLight}"
+                                 Source="avares://Tittle/Themes/Colors/GruvboxLight.axaml" />
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <!-- Fluent v2 theme (replaces FluentTheme): WinUI controls + system accent. -->
+        <fa:FluentAvaloniaTheme PreferSystemTheme="False" PreferUserAccentColor="True" />
+        <!-- AvaloniaEdit control theme — required for TextEditor to render; must come AFTER. -->
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <!-- App animations (theme recolor transitions, fade-in). -->
+        <StyleInclude Source="avares://Tittle/Themes/Animations.axaml" />
+        <!-- Custom control styles (accent button, recent-item hover) — after FA to override it. -->
+        <StyleInclude Source="avares://Tittle/Themes/Controls.axaml" />
+        <!-- Markdown admonition callouts (GitHub alerts). -->
+        <StyleInclude Source="avares://Tittle/Themes/Admonitions.axaml" />
+        <!-- Block math (M11). -->
+        <StyleInclude Source="avares://Tittle/Themes/Math.axaml" />
+        <!-- Slim, theme-tinted scrollbars. -->
+        <StyleInclude Source="avares://Tittle/Themes/ScrollBars.axaml" />
+    </Application.Styles>
+</Application>

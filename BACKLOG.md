@@ -1,4 +1,4 @@
-# SeriousView — Backlog (single source of "what's next")
+# Tittle — Backlog (single source of "what's next")
 
 One ordered list. Combines **three inputs**:
 1. **The 40 improvements** (visual / functional / UX / reliability audit). Items 1–8, 10 done.
@@ -34,7 +34,7 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
 - **M7** keyboard & editor controls (items 12 13 14 15 16 19 20 29): tunnelling KeyDown dispatcher
   (Ctrl+O/W, Ctrl+Tab, Ctrl+±/0 + wheel zoom, Ctrl+L, Alt+Z, Ctrl+G); shared `EditorOptions`;
   caret position in the status bar; auto-focus editor; go-to-line input in the status bar
-- **Dev tooling**: portable single-file build (`build.ps1/.bat` → `dist/SeriousView.exe`), dev run
+- **Dev tooling**: portable single-file build (`build.ps1/.bat` → `dist/Tittle.exe`), dev run
   (`run.ps1/.bat`), per-user file association (`install/uninstall-fileassoc.ps1/.bat`), DPI-aware QA shots
 - **M7.5 shell (partial) + M8/shell ergonomics + tech-debt**: ☰ menu; status-bar preview/source toggle
   (eye/`{}`) + wrap/numbers/zoom cluster; **resizable + persisted outline sidebar** (`GridSplitter` →
@@ -259,7 +259,7 @@ Built on the M16 command-intent backbone, per the approved design.
   (their VM dispatch). ☰ Инструменты (Записать/Остановить · Воспроизвести · До конца файла) + palette + status.
 - **Persistence** (`338d009`/`a2ae741`): `MacroSerializer` (flat, source-gen JSON) with a SECURITY ALLOWLIST
   — only known editor ops deserialize, so a shared macro file can't be a code-exec vector; corrupt JSON →
-  empty. `IMacroStore` + `MacroStore` keep the library at `%AppData%/SeriousView/macros.json`; loaded at
+  empty. `IMacroStore` + `MacroStore` keep the library at `%AppData%/Tittle/macros.json`; loaded at
   startup, saved on stop (auto-named «Макрос N»); saved macros replay by name from the palette.
 
 Tests: ~40 new (engine · intent dispatch · recorder · serializer allowlist · store round-trip); 1028 green.
@@ -438,7 +438,7 @@ clipping). Fixed: muted/status text below AA 4.5:1 in SolarizedDark/Dim, Gruvbox
 (swatch↔AXAML, AA floor for all 14). The light-family swatch convention (GruvboxLight/Sepia/SolarizedLight
 mirror `SidebarSurfaceBrush`, not `EditorSurfaceBrush`, since their editor surface ≈ the background) was
 **codified + guarded** (`b3d7138`: per-field doc on `ThemeInfo` + `AllSwatches_MatchTheirAxamlSurfaces` over all 14).
-**Published 2026-06-13:** public GitHub repo **`danscMax/SeriousView`** (main-only workflow, no feature branches),
+**Published 2026-06-13:** public GitHub repo **`danscMax/Tittle`** (main-only workflow, no feature branches),
 bilingual EN/RU README with badges + 4 themed hero screenshots (`docs/screenshots/`), and a **redesigned app
 icon** (glossy emerald `</>` on transparent, `52dd193`, via `tools/IconForge`). **Released `v0.1.0` 2026-06-13**
 (`9a13668`, `<Version>` in `Directory.Build.props`): GitHub Release with self-contained single-file Windows

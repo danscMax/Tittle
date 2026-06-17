@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instant Light/Dark theme switch through `DynamicResource` design tokens.
 - Status bar bound to the active tab.
 - Central Package Management; three-project layout
-  (`SeriousView` / `SeriousView.Core` / `SeriousView.Tests`).
+  (`Tittle` / `Tittle.Core` / `Tittle.Tests`).
 - Cross-platform CI (build + test on Windows/Linux/macOS).
 - Unit + Avalonia.Headless tests for file open, tabs, and theme switching.
 

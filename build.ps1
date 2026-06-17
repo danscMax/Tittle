@@ -1,7 +1,7 @@
 # ============================================================================
-# SeriousView -- Portable single-file build (self-contained, no runtime needed)
+# Tittle -- Portable single-file build (self-contained, no runtime needed)
 # ============================================================================
-# Produces ONE SeriousView.exe in dist/ that runs on any Windows 10/11 machine
+# Produces ONE Tittle.exe in dist/ that runs on any Windows 10/11 machine
 # of the target architecture WITHOUT an installed .NET runtime. This is the
 # "portable" half of the distribution story; the installer pipeline (Velopack /
 # NSIS + auto-update) is a later milestone.
@@ -40,11 +40,11 @@ $root = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvoca
 # Get-FileHashSHA256, Show-Notification). Keep ScriptKit.ps1 identical across repos.
 . (Join-Path $root 'ScriptKit.ps1')
 
-$project = Join-Path $root 'src\SeriousView\SeriousView.csproj'
+$project = Join-Path $root 'src\Tittle\Tittle.csproj'
 $outDir  = if ([System.IO.Path]::IsPathRooted($OutDir)) { $OutDir } else { Join-Path $root $OutDir }
 $start   = Get-Date
 
-Write-Banner "SeriousView -- portable single-file" "Release  $Rid  single-file  self-contained"
+Write-Banner "Tittle -- portable single-file" "Release  $Rid  single-file  self-contained"
 
 # Fresh output every time so a stale exe can never be mistaken for a new build.
 if (Test-Path -LiteralPath $outDir) { Remove-Item -LiteralPath $outDir -Recurse -Force }
@@ -66,17 +66,17 @@ Write-Info 'Publishing (first run restores the runtime pack -- can take a minute
 dotnet publish $project @publishArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Fail 'BUILD FAILED'
-    Show-Notification -Title 'SeriousView build' -Body 'Publish failed' -IsError
+    Show-Notification -Title 'Tittle build' -Body 'Publish failed' -IsError
     exit $LASTEXITCODE
 }
 
 # Drop any stray .pdb the single-file bundler may have left behind.
 Get-ChildItem -LiteralPath $outDir -Filter *.pdb -ErrorAction SilentlyContinue | Remove-Item -Force
 
-$exe = Join-Path $outDir 'SeriousView.exe'
+$exe = Join-Path $outDir 'Tittle.exe'
 if (-not (Test-Path -LiteralPath $exe)) {
     Write-Fail "expected $exe was not produced."
-    Show-Notification -Title 'SeriousView build' -Body 'Publish produced no exe' -IsError
+    Show-Notification -Title 'Tittle build' -Body 'Publish produced no exe' -IsError
     exit 1
 }
 
@@ -86,7 +86,7 @@ $dur    = (Get-Date) - $start
 $time   = '{0}:{1:D2}' -f [math]::Floor($dur.TotalMinutes), $dur.Seconds
 
 # Anything besides the exe means the single-file packing didn't fully fold in.
-$extra = Get-ChildItem -LiteralPath $outDir -File | Where-Object { $_.Name -ne 'SeriousView.exe' }
+$extra = Get-ChildItem -LiteralPath $outDir -File | Where-Object { $_.Name -ne 'Tittle.exe' }
 
 Write-Host ''
 Write-Ok "DONE  --  $time"
@@ -99,7 +99,7 @@ if ($extra) {
 }
 Write-Host ''
 
-Show-Notification -Title 'SeriousView build' -Body "Done in $time -- $sizeMB" -IconPath $exe
+Show-Notification -Title 'Tittle build' -Body "Done in $time -- $sizeMB" -IconPath $exe
 
 if (-not $NoOpen) {
     Start-Process explorer.exe -ArgumentList "/select,`"$exe`""

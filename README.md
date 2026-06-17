@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="src/SeriousView/Assets/seriousview.png" width="104" alt="SeriousView logo" />
+<img src="src/Tittle/Assets/tittle.png" width="104" alt="Tittle logo" />
 
-# SeriousView
+# Tittle
 
 **A native, cross-platform desktop markdown &amp; code viewer — [Avalonia](https://avaloniaui.net/) + Skia, no WebView.**
 
-[![CI](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml/badge.svg)](https://github.com/danscMax/SeriousView/actions/workflows/ci.yml)
-[![Download](https://img.shields.io/github/v/release/danscMax/SeriousView?sort=semver&label=download&color=2EC8BE)](https://github.com/danscMax/SeriousView/releases/latest)
+[![CI](https://github.com/danscMax/Tittle/actions/workflows/ci.yml/badge.svg)](https://github.com/danscMax/Tittle/actions/workflows/ci.yml)
+[![Download](https://img.shields.io/github/v/release/danscMax/Tittle?sort=semver&label=download&color=2EC8BE)](https://github.com/danscMax/Tittle/releases/latest)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)
 ![Avalonia 11.3](https://img.shields.io/badge/Avalonia-11.3-883AE3)
@@ -110,34 +110,34 @@ print / save-as-PDF via the browser.
 ## Project layout
 
 ```
-src/SeriousView         UI (Avalonia, feature slices, services, themes)
-src/SeriousView.Core    pure .NET 9 library (abstractions + logic, no Avalonia)
-tests/SeriousView.Tests xUnit + Avalonia.Headless
+src/Tittle         UI (Avalonia, feature slices, services, themes)
+src/Tittle.Core    pure .NET 9 library (abstractions + logic, no Avalonia)
+tests/Tittle.Tests xUnit + Avalonia.Headless
 ```
 
 Core has **no** Avalonia dependency: UI concerns (dialogs, theming, clipboard) live behind
-interfaces in `Core` with implementations in `SeriousView`. See [`ARCHITECTURE.md`](ARCHITECTURE.md).
+interfaces in `Core` with implementations in `Tittle`. See [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Build &amp; run
 
 Requires the **.NET 9 SDK**.
 
 ```bash
-dotnet build SeriousView.sln -c Release
-dotnet run --project src/SeriousView            # or: SeriousView <path-to-file>
-dotnet test SeriousView.sln                     # unit + Headless UI tests
+dotnet build Tittle.sln -c Release
+dotnet run --project src/Tittle            # or: Tittle <path-to-file>
+dotnet test Tittle.sln                     # unit + Headless UI tests
 ```
 
-Windows portable build: `build.ps1` / `build.bat` → `dist/SeriousView.exe`;
+Windows portable build: `build.ps1` / `build.bat` → `dist/Tittle.exe`;
 combined build: `build_all.ps1` / `build_all.bat` → test gate + `dist/win-x64/` +
 `dist/win-arm64/` + `build-manifest.json`; per-user file association via
 `install-fileassoc.ps1`.
 
 ## Contributing
 
-Issues and PRs welcome. The codebase keeps a strict boundary: `SeriousView.Core`
+Issues and PRs welcome. The codebase keeps a strict boundary: `Tittle.Core`
 must not reference Avalonia; UI concerns live behind interfaces in `Core` with
-implementations in `SeriousView`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) and
+implementations in `Tittle`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) and
 [`BACKLOG.md`](BACKLOG.md).
 
 ## License

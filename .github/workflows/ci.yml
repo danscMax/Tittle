@@ -36,14 +36,14 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore SeriousView.sln
+        run: dotnet restore Tittle.sln
 
       - name: Build
-        run: dotnet build SeriousView.sln --no-restore -c Release
+        run: dotnet build Tittle.sln --no-restore -c Release
 
       # Avalonia.Headless runs without a display server — no xvfb needed.
       - name: Test
-        run: dotnet test SeriousView.sln --no-build -c Release --verbosity normal
+        run: dotnet test Tittle.sln --no-build -c Release --verbosity normal
 
   format:
     name: Format check
@@ -62,4 +62,4 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Verify formatting
-        run: dotnet format SeriousView.sln --verify-no-changes --verbosity diagnostic
+        run: dotnet format Tittle.sln --verify-no-changes --verbosity diagnostic

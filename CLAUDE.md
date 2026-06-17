@@ -1,4 +1,4 @@
-# SeriousView — project guide for Claude Code
+# Tittle — project guide for Claude Code
 
 Native cross-platform desktop markdown/code viewer (Avalonia, Skia, no WebView).
 Open-source, Apache-2.0. A deliberate rewrite of an HTML/WebView markdown viewer.
@@ -6,10 +6,10 @@ Open-source, Apache-2.0. A deliberate rewrite of an HTML/WebView markdown viewer
 ## Commands
 
 ```bash
-dotnet build SeriousView.sln -c Debug          # build
-dotnet test  SeriousView.sln                   # unit + Headless UI tests
-dotnet run --project src/SeriousView           # run (or: SeriousView <file>)
-dotnet format SeriousView.sln                  # apply formatting (CI verifies)
+dotnet build Tittle.sln -c Debug          # build
+dotnet test  Tittle.sln                   # unit + Headless UI tests
+dotnet run --project src/Tittle           # run (or: Tittle <file>)
+dotnet format Tittle.sln                  # apply formatting (CI verifies)
 ```
 
 For **visual GUI QA**, use the **`max.avalonia-smoke`** skill (the Avalonia sibling of `max.qt-smoke`).
@@ -25,14 +25,14 @@ Requires the **.NET 9 SDK**. Built and tested on Windows/Linux/macOS (see CI).
 
 ## Architecture (hold the line)
 
-- **Three projects.** `SeriousView` (UI/WinExe) → references `SeriousView.Core`
-  (pure `net9.0` library). `SeriousView.Tests` (xUnit + Avalonia.Headless).
+- **Three projects.** `Tittle` (UI/WinExe) → references `Tittle.Core`
+  (pure `net9.0` library). `Tittle.Tests` (xUnit + Avalonia.Headless).
   **See `ARCHITECTURE.md` for the full map and "where new code goes".**
 - **Core has NO Avalonia dependency.** Pure logic + ports only (`Core/Abstractions`,
   `Core/Services`, `Core/Text`) — thin, no DDD layers. UI concerns (file dialog,
-  theme, clipboard) are interfaces in `Core/Abstractions`, implemented in `SeriousView/Platform`.
-- **UI is feature-sliced.** Code lives in `SeriousView/Features/<Name>` (Shell,
-  Welcome, Viewer, …) with namespace = folder (`SeriousView.Features.<Name>`);
+  theme, clipboard) are interfaces in `Core/Abstractions`, implemented in `Tittle/Platform`.
+- **UI is feature-sliced.** Code lives in `Tittle/Features/<Name>` (Shell,
+  Welcome, Viewer, …) with namespace = folder (`Tittle.Features.<Name>`);
   cross-feature bits in `Shared/`, port implementations in `Platform/`, global
   styles in `Themes/`. View models use AvaloniaEdit's `TextDocument`; Core stays
   UI-free. CommunityToolkit.Mvvm source generators (`[ObservableProperty]`,
@@ -101,7 +101,7 @@ first render; window size/position/maximized restored with off-screen re-centrin
 inflates the `Height` getter by the title-bar height, so we measure that chrome offset once and
 compensate on save to avoid per-launch drift; session (open files + active tab) reopened at startup
 when launched with no file arg (arg > session > welcome), **no `ISessionStore` port** (the holder is
-the seam). Unhandled exceptions logged to `%AppData%/SeriousView/crash.log` (`Platform/CrashLogger`
+the seam). Unhandled exceptions logged to `%AppData%/Tittle/crash.log` (`Platform/CrashLogger`
 + pure `Core/Diagnostics/CrashLog`). Window icon (#9) done; **redesigned 2026-06-13 (`52dd193`)**: a glossy
 emerald `</>` code-bracket mark on a transparent background (replaced the original book+quill, which read as a
 generic default), wired as the exe `<ApplicationIcon>` + `Window.Icon`; multi-size PNG-framed `.ico` + 512 `.png`
@@ -284,6 +284,6 @@ formats (M18) are planned — see `BACKLOG.md` and `plans/editor-toolkit-macros/
 - Don't commit `bin/`, `obj/` (covered by `.gitignore`).
 - A feature isn't done without a test on its logic (Core unit or Headless UI).
 - **Git workflow: commit straight to `main` and push — no feature branches, no PRs.**
-  This is a solo repo (`danscMax/SeriousView`, GitHub); the global "branch off `main` for
+  This is a solo repo (`danscMax/Tittle`, GitHub); the global "branch off `main` for
   non-trivial work" rule does NOT apply here. Always work on `main` directly and
   `git push origin main` after committing.

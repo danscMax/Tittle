@@ -1,15 +1,15 @@
 # ============================================================================
-# SeriousView -- associate Markdown files with the app (current user, no admin)
+# Tittle -- associate Markdown files with the app (current user, no admin)
 # ============================================================================
 # Registers a per-user (HKCU) file association so double-clicking a .md opens it
-# in SeriousView. The open command points STRAIGHT at the native exe -- the app
+# in Tittle. The open command points STRAIGHT at the native exe -- the app
 # takes the file path as its first argument, so no .bat/.ps1 shim is needed
 # (unlike the old HTML viewer, which had to inject into a template + launch a
 # browser). Re-run this after moving the repo or switching -Target.
 # Mirror: uninstall-fileassoc.ps1.
 #
 #   .\install-fileassoc.ps1                          # -> Debug build (dev version)
-#   .\install-fileassoc.ps1 -Target Portable         # -> dist\SeriousView.exe
+#   .\install-fileassoc.ps1 -Target Portable         # -> dist\Tittle.exe
 #   .\install-fileassoc.ps1 -Extensions .md,.markdown,.mdown
 # ============================================================================
 
@@ -24,9 +24,9 @@ $ErrorActionPreference = 'Stop'
 
 $root = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
 $exe  = if ($Target -eq 'Portable') {
-    Join-Path $root 'dist\SeriousView.exe'
+    Join-Path $root 'dist\Tittle.exe'
 } else {
-    Join-Path $root 'src\SeriousView\bin\Debug\net9.0\SeriousView.exe'
+    Join-Path $root 'src\Tittle\bin\Debug\net9.0\Tittle.exe'
 }
 
 if (-not (Test-Path -LiteralPath $exe)) {
@@ -40,11 +40,11 @@ if (-not (Test-Path -LiteralPath $exe)) {
     exit 1
 }
 
-$progId = 'SeriousView.Markdown'
+$progId = 'Tittle.Markdown'
 $cmd    = "`"$exe`" `"%1`""   # native exe + the clicked file as argv[0]
 
 Write-Host ''
-Write-Host "  Associate Markdown -> SeriousView  ($Target)" -ForegroundColor Cyan
+Write-Host "  Associate Markdown -> Tittle  ($Target)" -ForegroundColor Cyan
 Write-Host "  exe:  $exe" -ForegroundColor DarkGray
 Write-Host "  ext:  $($Extensions -join ', ')" -ForegroundColor DarkGray
 Write-Host ''
@@ -66,9 +66,9 @@ foreach ($ext in $Extensions) {
 }
 
 # 3. Register the app for the "Open with" dialog (friendly name + supported types).
-$appKey = "HKCU:\SOFTWARE\Classes\Applications\SeriousView.exe"
+$appKey = "HKCU:\SOFTWARE\Classes\Applications\Tittle.exe"
 New-Item -Path $appKey -Force | Out-Null
-Set-ItemProperty -Path $appKey -Name 'FriendlyAppName' -Value 'SeriousView'
+Set-ItemProperty -Path $appKey -Name 'FriendlyAppName' -Value 'Tittle'
 New-Item -Path "$appKey\DefaultIcon" -Force | Out-Null
 Set-ItemProperty -Path "$appKey\DefaultIcon" -Name '(Default)' -Value "$exe,0"
 New-Item -Path "$appKey\shell\open\command" -Force | Out-Null
@@ -93,22 +93,22 @@ foreach ($ext in $Extensions) { if (-not (Clear-UserChoice $ext)) { $allCleared 
 $sig = @'
 using System;
 using System.Runtime.InteropServices;
-public static class SeriousViewShellNotify {
+public static class TittleShellNotify {
     [DllImport("shell32.dll", CharSet = CharSet.Auto)]
     public static extern void SHChangeNotify(uint id, uint flags, IntPtr a, IntPtr b);
 }
 '@
 try {
     Add-Type -TypeDefinition $sig -ErrorAction Stop
-    [SeriousViewShellNotify]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
+    [TittleShellNotify]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
 } catch {}
 
-Write-Host "  Done -- double-click a $($Extensions -join '/') file to open it in SeriousView." -ForegroundColor Green
+Write-Host "  Done -- double-click a $($Extensions -join '/') file to open it in Tittle." -ForegroundColor Green
 if (-not $allCleared) {
     Write-Host ''
     Write-Host '  Could not clear a UserChoice (Windows ACL). If double-click still opens' -ForegroundColor Yellow
     Write-Host '  the old app, set it once: right-click a .md -> Open with -> Choose another' -ForegroundColor Yellow
-    Write-Host '  app -> SeriousView -> Always.' -ForegroundColor Yellow
+    Write-Host '  app -> Tittle -> Always.' -ForegroundColor Yellow
 }
 Write-Host '  Note: the file/app icon is the default .NET one until a brand .ico lands (#9).' -ForegroundColor DarkGray
 Write-Host ''

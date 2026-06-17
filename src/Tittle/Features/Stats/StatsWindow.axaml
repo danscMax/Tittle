@@ -1,0 +1,49 @@
+<shared:ModalWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:text="using:Tittle.Core.Text"
+        xmlns:shared="using:Tittle.Shared"
+        x:Class="Tittle.Features.Stats.StatsWindow"
+        x:DataType="text:TextStats"
+        Title="Статистика"
+        Width="340" SizeToContent="Height" CanResize="False"
+        ShowInTaskbar="False" SystemDecorations="None"
+        TransparencyLevelHint="Transparent" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+  <!-- Document statistics popover (ported stats panel): the same standalone-window shape as
+       LayoutSettingsWindow. Esc or Закрыть dismisses it. -->
+  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
+          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
+          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="20">
+    <StackPanel Spacing="10">
+      <TextBlock Text="Статистика документа" FontSize="16" FontWeight="SemiBold"
+                 Foreground="{DynamicResource ChromeForegroundBrush}"/>
+
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" >
+        <Grid.Styles>
+          <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,3"/>
+            <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+          </Style>
+          <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+          </Style>
+        </Grid.Styles>
+        <TextBlock Grid.Row="0" Classes="label" Text="Слова"/>
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Words}"/>
+        <TextBlock Grid.Row="1" Classes="label" Text="Символы"/>
+        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Chars}"/>
+        <TextBlock Grid.Row="2" Classes="label" Text="Символы без пробелов"/>
+        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CharsNoSpaces}"/>
+        <TextBlock Grid.Row="3" Classes="label" Text="Предложения"/>
+        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Sentences}"/>
+        <TextBlock Grid.Row="4" Classes="label" Text="Время чтения, мин"/>
+        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ReadingMinutes}"/>
+        <TextBlock Grid.Row="5" Classes="label" Text="Читабельность (Flesch-RU)"/>
+        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding FleschRu}"/>
+      </Grid>
+
+      <Button Content="Закрыть" HorizontalAlignment="Right" Click="OnCloseClick"/>
+    </StackPanel>
+  </Border>
+</shared:ModalWindow>
