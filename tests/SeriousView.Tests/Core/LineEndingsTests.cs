@@ -34,4 +34,14 @@ public class LineEndingsTests
         Assert.Equal(input, result);
         Assert.Same(input, result);
     }
+
+    [Theory]
+    [InlineData("a\nb", Eol.CrLf, "a\r\nb")]
+    [InlineData("a\r\nb", Eol.Lf, "a\nb")]
+    [InlineData("a\nb", Eol.Cr, "a\rb")]
+    [InlineData("a\rb", Eol.CrLf, "a\r\nb")]
+    [InlineData("a\r\nb\nc", Eol.CrLf, "a\r\nb\r\nc")] // mixed → uniform
+    [InlineData("no breaks", Eol.CrLf, "no breaks")]
+    public void ConvertTo_RewritesEveryLineEndingToTarget(string input, Eol eol, string expected)
+        => Assert.Equal(expected, LineEndings.ConvertTo(input, eol));
 }

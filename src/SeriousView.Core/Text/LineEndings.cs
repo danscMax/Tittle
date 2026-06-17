@@ -1,5 +1,13 @@
 namespace SeriousView.Core.Text;
 
+/// <summary>A target line-ending style for <see cref="LineEndings.ConvertTo"/>.</summary>
+public enum Eol
+{
+    Lf,
+    CrLf,
+    Cr,
+}
+
 /// <summary>Line-ending detection and normalization (UI-free, testable). Normalizing to LF keeps
 /// downstream line counting / parsing correct for CRLF and old-Mac CR-only files.</summary>
 public static class LineEndings
@@ -37,4 +45,18 @@ public static class LineEndings
         => text.IndexOf('\r') < 0
             ? text
             : text.Replace("\r\n", "\n").Replace('\r', '\n');
+
+    /// <summary>Rewrite every line ending to a single target style — normalize to LF first (so mixed
+    /// input becomes uniform), then expand to the target. The <see cref="Eol.Lf"/> case is the
+    /// normalization itself.</summary>
+    public static string ConvertTo(string text, Eol eol)
+    {
+        var lf = NormalizeToLf(text);
+        return eol switch
+        {
+            Eol.CrLf => lf.Replace("\n", "\r\n"),
+            Eol.Cr => lf.Replace('\n', '\r'),
+            _ => lf,
+        };
+    }
 }
