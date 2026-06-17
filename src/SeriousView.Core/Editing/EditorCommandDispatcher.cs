@@ -16,7 +16,18 @@ public static class EditorCommandDispatcher
             case TransformLinesIntent t:
                 ApplyLineOp(actions, t.Op);
                 break;
+            case ConvertEolIntent c:
+                ApplyConvertEol(actions, c.Target);
+                break;
         }
+    }
+
+    private static void ApplyConvertEol(IEditorActions actions, Eol target)
+    {
+        var text = actions.Text;
+        var converted = LineEndings.ConvertTo(text, target);
+        if (!string.Equals(converted, text, StringComparison.Ordinal))
+            actions.Replace(0, text.Length, converted);
     }
 
     private static void ApplyLineOp(IEditorActions actions, LineOp op)

@@ -895,6 +895,15 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             EditorCommandDispatcher.Apply(actions, new TransformLinesIntent(op));
     }
 
+    /// <summary>Convert the document's line endings (LF / CRLF / CR) through the backbone. The label
+    /// refreshes after the next save+reload re-detects the EOL. No-op without an editor.</summary>
+    [RelayCommand]
+    private void ApplyEol(Eol target)
+    {
+        if (EditorActions is { } actions)
+            EditorCommandDispatcher.Apply(actions, new ConvertEolIntent(target));
+    }
+
     /// <summary>Bumped on every visited/bookmark mutation so the TOC multi-bindings recompute.</summary>
     [ObservableProperty]
     private int _viewStateVersion;

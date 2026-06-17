@@ -6,6 +6,7 @@
         xmlns:conv="using:SeriousView.Shared"
         xmlns:core="using:SeriousView.Core.Abstractions"
         xmlns:editing="using:SeriousView.Core.Editing"
+        xmlns:text="using:SeriousView.Core.Text"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:wnd="using:FluentAvalonia.UI.Windowing"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -181,6 +182,15 @@
                         CommandParameter="{x:Static editing:LineOp.Duplicate}"/>
               <MenuItem Header="Объединить строки" Command="{Binding SelectedTab.ApplyLineOpCommand}"
                         CommandParameter="{x:Static editing:LineOp.Join}"/>
+              <Separator/>
+              <MenuItem Header="Конец строк">
+                <MenuItem Header="LF (Unix)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.Lf}"/>
+                <MenuItem Header="CRLF (Windows)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.CrLf}"/>
+                <MenuItem Header="CR (Mac classic)" Command="{Binding SelectedTab.ApplyEolCommand}"
+                          CommandParameter="{x:Static text:Eol.Cr}"/>
+              </MenuItem>
             </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">

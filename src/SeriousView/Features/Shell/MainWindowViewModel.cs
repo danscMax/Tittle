@@ -784,6 +784,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             items.Add(new PaletteItem("Строки: переместить вниз", lineOp, "Alt+↓", LineOp.MoveDown));
             items.Add(new PaletteItem("Строки: дублировать", lineOp, "Ctrl+D", LineOp.Duplicate));
             items.Add(new PaletteItem("Строки: объединить", lineOp, parameter: LineOp.Join));
+            var eol = editorTab.ApplyEolCommand;
+            items.Add(new PaletteItem("Конец строк: LF (Unix)", eol, parameter: Eol.Lf));
+            items.Add(new PaletteItem("Конец строк: CRLF (Windows)", eol, parameter: Eol.CrLf));
+            items.Add(new PaletteItem("Конец строк: CR (Mac)", eol, parameter: Eol.Cr));
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)

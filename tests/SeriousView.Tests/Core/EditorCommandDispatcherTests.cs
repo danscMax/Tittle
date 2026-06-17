@@ -1,4 +1,5 @@
 using SeriousView.Core.Editing;
+using SeriousView.Core.Text;
 using Xunit;
 
 namespace SeriousView.Tests.Core;
@@ -46,6 +47,17 @@ public class EditorCommandDispatcherTests
     public void Join_SelectedLines()
         // select all three lines → joined into one
         => Assert.Equal("a b c", Apply("a\nb\nc", LineOp.Join, selStart: 0, selLength: 5));
+
+    [Theory]
+    [InlineData(Eol.CrLf, "a\r\nb\r\nc")]
+    [InlineData(Eol.Cr, "a\rb\rc")]
+    [InlineData(Eol.Lf, "a\nb\nc")]
+    public void ConvertEol_RewritesLineEndings(Eol target, string expected)
+    {
+        var editor = new FakeEditorActions("a\nb\nc");
+        EditorCommandDispatcher.Apply(editor, new ConvertEolIntent(target));
+        Assert.Equal(expected, editor.Text);
+    }
 
     [Fact]
     public void NoEffectiveChange_DoesNotCallReplace()

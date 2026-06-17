@@ -1,3 +1,5 @@
+using SeriousView.Core.Text;
+
 namespace SeriousView.Core.Editing;
 
 /// <summary>Marker for an editor command-intent — a semantic editor operation the dispatcher applies
@@ -27,3 +29,7 @@ public enum LineOp
 
 /// <summary>Apply a <see cref="LineOp"/> to the editor's selection (or whole document).</summary>
 public sealed record TransformLinesIntent(LineOp Op) : IEditorIntent;
+
+/// <summary>Convert the whole document's line endings to a target style (LF / CRLF / CR). Recordable —
+/// it is a text transform; the editor buffer holds the result and a save writes it.</summary>
+public sealed record ConvertEolIntent(Eol Target) : IEditorIntent;
