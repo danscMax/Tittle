@@ -238,12 +238,34 @@ Tests: 47+ new (Core unit + VM); full suite 991 green. **Deferred with reason** 
 - **Status-bar click** to convert (Notepad++ idiom) — the status is one bound string; menu/palette used instead.
   A status-bar restructure is the follow-up.
 
-## M17 — Macros (record / replay) · planned
+## ★ M17 — Macros (record / replay / persist) · **core DONE (2026-06-17)**
 
-Per the approved design: full macros on the backbone — record at **full fidelity** (typing + navigation +
-commands, the 3-source tap), replay once / N times / until-no-match (EOF), save named macros (`macros.json`),
-assign shortcuts, a management dialog. Security: editor-only intent allowlist (a saved macro can't be a
-code-exec vector). The recorder/player consume the `EditorCommandDispatcher` seam.
+Built on the M16 command-intent backbone, per the approved design.
+- **Engine + model** (`15d7edd`): `Macro` (steps + RepeatMode Once/Times/UntilNoMatch) + pure
+  `MacroReplayEngine` (re-dispatch via a progress-returning delegate; until-no-match ends when a find hits
+  EOF; hard-cap guard against a non-advancing macro).
+- **Recordable intent vocabulary** (`315fbd0`): the dispatcher returns a progress bool and handles
+  InsertText / DeleteText / MoveCaret (pure text+offset math — Left/Right/Up/Down/Line/Word/Doc) / FindNext
+  (next match at/after caret, non-wrapping → false at EOF) / ReplaceSelection. End-to-end find→replace-
+  until-EOF tested ("a a a" → "b b b").
+- **Recorder + replay UI** (`47d6180`): `MacroRecorder` 3-source tap — typing (TextEntered → InsertText,
+  coalesced), navigation/deletion keys (the central key tunnel → MoveCaret/DeleteText), line/EOL commands
+  (their VM dispatch). ☰ Инструменты (Записать/Остановить · Воспроизвести · До конца файла) + palette + status.
+- **Persistence** (`338d009`/`a2ae741`): `MacroSerializer` (flat, source-gen JSON) with a SECURITY ALLOWLIST
+  — only known editor ops deserialize, so a shared macro file can't be a code-exec vector; corrupt JSON →
+  empty. `IMacroStore` + `MacroStore` keep the library at `%AppData%/SeriousView/macros.json`; loaded at
+  startup, saved on stop (auto-named «Макрос N»); saved macros replay by name from the palette.
+
+Tests: ~40 new (engine · intent dispatch · recorder · serializer allowlist · store round-trip); 1028 green.
+
+**Deferred follow-ups** (the core record / replay / persist works without them):
+- **Management dialog** (rename / delete saved macros) — they are auto-named «Макрос N» and replayable; a
+  rename/delete UI is the next step.
+- **Assign keyboard shortcuts** to a saved macro (the central key tunnel would consult a user keymap).
+- **«Run N times» input** (the engine supports `RepeatMode.Times`; only once / until-EOF are surfaced).
+- **Auto-record the find-bar** (Ctrl+F / Ctrl+H) as FindNext/ReplaceSelection — those intents exist and
+  replay (the until-EOF transform is proven in tests), but the interactive find-bar flow isn't tapped yet.
+- **Enter / Tab key recording** — captured only if AvaloniaEdit raises TextEntered for them (unverified).
 
 ## M18 — More file formats · planned
 
