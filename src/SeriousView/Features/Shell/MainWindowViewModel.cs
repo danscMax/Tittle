@@ -190,7 +190,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         try
         {
-            await AtomicFile.WriteAllTextAsync(target, text);
+            await AtomicFile.WriteAllBytesAsync(target, SaveEncoding.GetBytes(text, tab.SaveEncodingName));
             tab.IsEdited = false;
             StatusText = $"Сохранено: {Path.GetFileName(target)}";
             if (tab.FilePath is null)
@@ -788,6 +788,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
             items.Add(new PaletteItem("Конец строк: LF (Unix)", eol, parameter: Eol.Lf));
             items.Add(new PaletteItem("Конец строк: CRLF (Windows)", eol, parameter: Eol.CrLf));
             items.Add(new PaletteItem("Конец строк: CR (Mac)", eol, parameter: Eol.Cr));
+            var enc = editorTab.SetSaveEncodingCommand;
+            items.Add(new PaletteItem("Кодировка: UTF-8", enc, parameter: SaveEncoding.Utf8));
+            items.Add(new PaletteItem("Кодировка: UTF-8 BOM", enc, parameter: SaveEncoding.Utf8Bom));
+            items.Add(new PaletteItem("Кодировка: UTF-16 LE", enc, parameter: SaveEncoding.Utf16Le));
+            items.Add(new PaletteItem("Кодировка: UTF-16 BE", enc, parameter: SaveEncoding.Utf16Be));
+            items.Add(new PaletteItem("Кодировка: Windows-1251", enc, parameter: SaveEncoding.Windows1251));
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)

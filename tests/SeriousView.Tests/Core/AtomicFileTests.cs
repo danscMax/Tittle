@@ -66,4 +66,25 @@ public class AtomicFileTests
             dir.Delete(recursive: true);
         }
     }
+
+    [Fact]
+    public async Task WriteAllBytesAsync_RoundTrips_AndOverwritesAtomically()
+    {
+        var dir = Directory.CreateTempSubdirectory("sv-atomic");
+        try
+        {
+            var path = Path.Combine(dir.FullName, "bin.dat");
+            File.WriteAllText(path, "old content that is longer");
+            var bytes = new byte[] { 0xEF, 0xBB, 0xBF, 0x41 }; // a UTF-8 BOM + 'A'
+
+            await AtomicFile.WriteAllBytesAsync(path, bytes);
+
+            Assert.Equal(bytes, File.ReadAllBytes(path)); // fully replaced with the exact bytes
+            Assert.False(File.Exists(path + ".tmp"));
+        }
+        finally
+        {
+            dir.Delete(recursive: true);
+        }
+    }
 }

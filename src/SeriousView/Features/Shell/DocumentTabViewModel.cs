@@ -904,6 +904,15 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
             EditorCommandDispatcher.Apply(actions, new ConvertEolIntent(target));
     }
 
+    /// <summary>Target encoding for saving this tab (Ctrl+S). Defaults to UTF-8 (no BOM), matching the
+    /// prior save policy; the Кодировка menu/palette picks another. The status label refreshes after the
+    /// next save+reload re-detects the written encoding.</summary>
+    [ObservableProperty]
+    private string _saveEncodingName = SaveEncoding.Utf8;
+
+    [RelayCommand]
+    private void SetSaveEncoding(string name) => SaveEncodingName = name;
+
     /// <summary>Bumped on every visited/bookmark mutation so the TOC multi-bindings recompute.</summary>
     [ObservableProperty]
     private int _viewStateVersion;

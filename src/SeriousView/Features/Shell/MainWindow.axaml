@@ -191,6 +191,13 @@
                 <MenuItem Header="CR (Mac classic)" Command="{Binding SelectedTab.ApplyEolCommand}"
                           CommandParameter="{x:Static text:Eol.Cr}"/>
               </MenuItem>
+              <MenuItem Header="Кодировка (сохранять как)">
+                <MenuItem Header="UTF-8" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-8"/>
+                <MenuItem Header="UTF-8 с BOM" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-8 BOM"/>
+                <MenuItem Header="UTF-16 LE" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-16 LE"/>
+                <MenuItem Header="UTF-16 BE" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="UTF-16 BE"/>
+                <MenuItem Header="Windows-1251" Command="{Binding SelectedTab.SetSaveEncodingCommand}" CommandParameter="Windows-1251"/>
+              </MenuItem>
             </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">

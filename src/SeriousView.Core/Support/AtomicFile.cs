@@ -39,6 +39,26 @@ public static class AtomicFile
         }
     }
 
+    /// <summary>Atomically write raw <paramref name="bytes"/> — used by document save when a non-UTF-8
+    /// encoding or a BOM is chosen (the text path stays UTF-8-no-BOM for everything else).</summary>
+    public static async Task WriteAllBytesAsync(string path, byte[] bytes)
+    {
+        var temp = path + ".tmp";
+        try
+        {
+            await File.WriteAllBytesAsync(temp, bytes).ConfigureAwait(false);
+            if (File.Exists(path))
+                File.Replace(temp, path, null);
+            else
+                File.Move(temp, path);
+        }
+        catch
+        {
+            TryDelete(temp);
+            throw;
+        }
+    }
+
     private static void TryDelete(string path)
     {
         try
