@@ -165,6 +165,7 @@ public partial class MainWindow : AppWindow
             (true, false, false, Key.L) => vm.ToggleLineNumbersCommand,
             (true, false, false, Key.G) => vm.OpenGoToLineCommand,
             (true, false, false, Key.F) => vm.OpenSearchCommand,
+            (true, false, false, Key.H) => vm.SelectedTab?.OpenReplaceCommand, // find + replace (CanExecute gates)
             // The physical "\|" key reports as Key.OemPipe on Windows (VK_OEM_5); OemBackslash is the
             // separate VK_OEM_102 "<>" key. Accept both so Ctrl+\ works across layouts.
             (true, false, false, Key.OemPipe or Key.OemBackslash) => vm.SelectedTab?.ToggleSplitCommand, // split (markdown; CanExecute gates)

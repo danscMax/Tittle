@@ -151,6 +151,9 @@
               <MenuItem Header="Закрыть вкладку" InputGesture="Ctrl+W" Command="{Binding CloseActiveTabCommand}"/>
             </MenuItem>
             <MenuItem Header="Правка">
+              <MenuItem Header="Найти…" InputGesture="Ctrl+F" Command="{Binding SelectedTab.OpenSearchCommand}"/>
+              <MenuItem Header="Заменить…" InputGesture="Ctrl+H" Command="{Binding SelectedTab.OpenReplaceCommand}"/>
+              <Separator/>
               <MenuItem Header="Сортировать строки (А→Я)" Command="{Binding SelectedTab.ApplyLineOpCommand}"
                         CommandParameter="{x:Static editing:LineOp.SortAscending}"/>
               <MenuItem Header="Сортировать строки (Я→А)" Command="{Binding SelectedTab.ApplyLineOpCommand}"

@@ -771,6 +771,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         if (SelectedTab is { EditorActions: not null } editorTab)
         {
+            items.Add(new PaletteItem("Заменить…", editorTab.OpenReplaceCommand, "Ctrl+H"));
             var lineOp = editorTab.ApplyLineOpCommand;
             items.Add(new PaletteItem("Строки: сортировать (А→Я)", lineOp, parameter: LineOp.SortAscending));
             items.Add(new PaletteItem("Строки: сортировать (Я→А)", lineOp, parameter: LineOp.SortDescending));

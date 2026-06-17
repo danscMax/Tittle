@@ -217,7 +217,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     // Re-run the search and jump to the first match — incremental, as the user types or flips a toggle.
     private void RecomputeSearch()
     {
-        var outcome = TextSearch.FindAll(DocumentText, SearchQuery, SearchCaseSensitive, SearchRegex);
+        // Scan the LIVE editor text when an editor is attached (so find reflects unsaved edits and
+        // post-replace content); fall back to the loaded DocumentText in headless unit fixtures.
+        var text = EditorActions?.Text ?? DocumentText;
+        var outcome = TextSearch.FindAll(text, SearchQuery, SearchCaseSensitive, SearchRegex);
         _searchMatches = outcome.Matches;
         SearchInvalidRegex = SearchRegex && !outcome.PatternValid;
         SearchMatchCount = _searchMatches.Count;
@@ -228,12 +231,19 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// <summary>Open the find bar. For a markdown tab in Preview, switch to Source first (find operates
     /// over the source text, so matches must be visible there); a notice tab has nothing to search.</summary>
     [RelayCommand]
-    private void OpenSearch()
+    private void OpenSearch() => OpenFindBar(replaceMode: false);
+
+    /// <summary>Open the find bar with the replace row (Ctrl+H).</summary>
+    [RelayCommand]
+    private void OpenReplace() => OpenFindBar(replaceMode: true);
+
+    private void OpenFindBar(bool replaceMode)
     {
         if (ShowNotice)
             return;
         if (IsMarkdown && ViewMode == DocumentViewMode.Preview)
             ViewMode = DocumentViewMode.Source;
+        IsReplaceMode = replaceMode;
         IsSearchOpen = true;
         RecomputeSearch();
     }
@@ -275,6 +285,58 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
 
     [RelayCommand]
     private void ToggleSearchRegex() => SearchRegex = !SearchRegex;
+
+    // --- Replace (Ctrl+H). Operates on the LIVE editor text via EditorActions; matches re-scan after. ---
+
+    /// <summary>Whether the find bar shows the replace row (Ctrl+H opens it; Ctrl+F is find-only).</summary>
+    [ObservableProperty]
+    private bool _isReplaceMode;
+
+    [ObservableProperty]
+    private string _replaceText = "";
+
+    /// <summary>Replace the current match (regex group-substitution honoured), then advance to the next.
+    /// With no current match selected yet, it just steps to the first one.</summary>
+    [RelayCommand]
+    private void ReplaceCurrent()
+    {
+        if (EditorActions is not { } actions || SearchQuery.Length == 0)
+            return;
+
+        FlushPendingSearch();
+        if (_searchMatches.Count == 0 || SearchCurrentIndex < 0 || SearchCurrentIndex >= _searchMatches.Count)
+        {
+            StepSearch(forward: true); // select the first/next match; the following press replaces it
+            return;
+        }
+
+        var match = _searchMatches[SearchCurrentIndex];
+        var matchedText = actions.Text.Substring(match.Offset, match.Length);
+        var replacement = SearchRegex
+            ? TextSearch.ReplaceAll(matchedText, SearchQuery, ReplaceText, SearchCaseSensitive, regex: true).NewText
+            : ReplaceText;
+
+        actions.Replace(match.Offset, match.Length, replacement);
+        RecomputeSearch();          // the edit shifts offsets → re-scan the live text
+        StepSearch(forward: true);  // advance to the next match
+    }
+
+    /// <summary>Replace every match in the document in one undo step, then re-scan.</summary>
+    [RelayCommand]
+    private void ReplaceAll()
+    {
+        if (EditorActions is not { } actions || SearchQuery.Length == 0)
+            return;
+
+        var live = actions.Text;
+        var result = TextSearch.ReplaceAll(live, SearchQuery, ReplaceText, SearchCaseSensitive, SearchRegex);
+        SearchInvalidRegex = SearchRegex && !result.PatternValid;
+        if (result.Count == 0)
+            return;
+
+        actions.Replace(0, live.Length, result.NewText);
+        RecomputeSearch();
+    }
 
     /// <summary>Document text, bound one-way into the editor. Named DocumentText (not
     /// Content) to avoid colliding with TabViewItem.Content when bound inside a TabView.</summary>

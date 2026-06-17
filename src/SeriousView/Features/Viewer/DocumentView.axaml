@@ -77,6 +77,7 @@
     <Border DockPanel.Dock="Top" IsVisible="{Binding IsSearchOpen}"
             Background="{DynamicResource ChromeBackgroundBrush}"
             BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
+      <StackPanel Spacing="5">
       <DockPanel LastChildFill="True">
         <Button DockPanel.Dock="Right" Classes="findbtn" Content="&#x2715;" ToolTip.Tip="Закрыть (Esc)"
                 AutomationProperties.Name="Закрыть поиск" Command="{Binding CloseSearchCommand}"/>
@@ -98,6 +99,16 @@
                  Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
       </DockPanel>
+      <DockPanel LastChildFill="True" IsVisible="{Binding IsReplaceMode}">
+        <Button DockPanel.Dock="Right" Content="Все" ToolTip.Tip="Заменить всё" Margin="4,0,0,0" Padding="9,3"
+                AutomationProperties.Name="Заменить всё" Command="{Binding ReplaceAllCommand}"/>
+        <Button DockPanel.Dock="Right" Content="Заменить" ToolTip.Tip="Заменить совпадение и далее" Padding="9,3"
+                AutomationProperties.Name="Заменить" Command="{Binding ReplaceCurrentCommand}"/>
+        <TextBox x:Name="ReplaceBox" Watermark="Заменить на" AutomationProperties.Name="Заменить на"
+                 Text="{Binding ReplaceText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Height="28" Padding="7,2" FontSize="13" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+      </DockPanel>
+      </StackPanel>
     </Border>
 
     <!-- Breadcrumbs (M10): ancestor chain of the active heading — a docked chrome strip (never
