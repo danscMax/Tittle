@@ -53,6 +53,7 @@ Thumbs.db
 
 # ---- Misc ----
 *.log
+desktop.ini
 
 # ---- audit working artifacts (raw ground-truth + proof scripts) ----
 audit-artifacts/
