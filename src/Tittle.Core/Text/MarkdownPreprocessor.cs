@@ -76,6 +76,11 @@ public static partial class MarkdownPreprocessor
         regions = MarkdownCodeRegions.Scan(lines);
         ConvertTaskListsInPlace(lines, regions);
 
+        // Last: a code fence with NO language gets a guessed one written in (``` → ```json), so the
+        // preview's TextMate highlighter can colour it. Runs on the settled line list; touches only
+        // bare fences, never one that already names a language (incl. diagram fences).
+        ConvertBareCodeFencesInPlace(lines);
+
         return string.Join("\n", lines);
     }
 
@@ -298,6 +303,53 @@ public static partial class MarkdownPreprocessor
     private static void ConvertBareUrlsInPlace(List<string> lines, MarkdownCodeRegions regions)
         => RewriteInlineLines(lines, regions, ':', line => MarkdownCodeRegions.ReplaceOutsideCode(
             line, BareUrl(), WrapBareUrl, LinkDestination(), AutoLink()));
+
+    // Code-language autodetect (1.3): walk fenced blocks; for one whose opener carries NO language,
+    // guess it from the body and write it into the opener (``` → ```json). FenceOpen matches both the
+    // opener and a (language-less) closer, so a close is the next fence of the same char and >= length.
+    private static void ConvertBareCodeFencesInPlace(List<string> lines)
+    {
+        var i = 0;
+        while (i < lines.Count)
+        {
+            var open = FenceOpen().Match(lines[i]);
+            if (!open.Success)
+            {
+                i++;
+                continue;
+            }
+
+            var run = open.Groups["fence"].Value;
+            var fenceChar = run[0];
+            var hasLanguage = open.Groups["lang"].Value.Length > 0;
+
+            // Scan forward to the matching close (a bare fence of the same char, length >= the opener).
+            var bodyStart = i + 1;
+            var end = bodyStart;
+            while (end < lines.Count)
+            {
+                var maybeClose = FenceOpen().Match(lines[end]);
+                if (maybeClose.Success
+                    && maybeClose.Groups["lang"].Value.Length == 0
+                    && maybeClose.Groups["fence"].Value[0] == fenceChar
+                    && maybeClose.Groups["fence"].Value.Length >= run.Length)
+                    break;
+                end++;
+            }
+
+            if (!hasLanguage && end > bodyStart)
+            {
+                var language = CodeLanguageGuess.Guess(lines.GetRange(bodyStart, end - bodyStart));
+                if (language is not null)
+                {
+                    var indent = lines[i][..lines[i].IndexOf(fenceChar)];
+                    lines[i] = $"{indent}{run}{language}";
+                }
+            }
+
+            i = end + 1; // past the closer (or past EOF for an unclosed block)
+        }
+    }
 
     private static string WrapBareUrl(Match m)
     {

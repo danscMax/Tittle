@@ -591,4 +591,45 @@ public class MarkdownPreprocessorTests
     public void Transform_BareUrl_CyrillicAround_DoesNotBreak()
         => Assert.Contains("[https://example.com](https://example.com)",
             MarkdownPreprocessor.Transform("Источник https://example.com здесь."));
+
+    // --- Code-language autodetect (1.3) ---
+
+    [Fact]
+    public void Transform_BareFence_JsonBody_GetsJsonLanguage()
+    {
+        var result = MarkdownPreprocessor.Transform("```\n{ \"name\": \"x\", \"n\": 1 }\n```");
+        Assert.Contains("```json", result);
+    }
+
+    [Fact]
+    public void Transform_BareFence_PythonBody_GetsPythonLanguage()
+    {
+        var result = MarkdownPreprocessor.Transform("```\ndef f(x):\n    return x\n```");
+        Assert.Contains("```python", result);
+    }
+
+    [Fact]
+    public void Transform_FenceWithLanguage_IsNotRewritten()
+    {
+        var result = MarkdownPreprocessor.Transform("```js\n{ \"a\": 1 }\n```");
+        Assert.Contains("```js", result);
+        Assert.DoesNotContain("```json", result);
+    }
+
+    [Fact]
+    public void Transform_BareFence_AmbiguousBody_StaysBare()
+    {
+        var result = MarkdownPreprocessor.Transform("```\nhello world\nplain text\n```");
+        Assert.DoesNotContain("```json", result);
+        Assert.DoesNotContain("```python", result);
+        Assert.Contains("```\nhello world", result);
+    }
+
+    [Fact]
+    public void Transform_PlainTextWithBraces_NotInFence_IsNotTreatedAsCode()
+    {
+        // No fence → the autodetect pass never runs on it.
+        var result = MarkdownPreprocessor.Transform("A line { \"a\": 1 } in prose.");
+        Assert.DoesNotContain("```", result);
+    }
 }
