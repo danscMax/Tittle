@@ -330,6 +330,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         Layout.ReadingMode = layout.ReadingMode;
         Layout.OutlineWidth = layout.OutlineWidth;
         Layout.ReadingWidth = layout.ReadingWidth;
+        Layout.ReadingDensity = layout.ReadingDensity;
         Layout.SplitOrientation = layout.SplitOrientation;
         Layout.SplitRatio = layout.SplitRatio;
 

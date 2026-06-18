@@ -88,8 +88,14 @@ public partial class DocumentView
         var tables = new List<Grid>();
         var headings = new List<Control>();
         var taskGlyphs = new List<ColorTextBlock.Avalonia.CTextBlock>();
+        // Reading density (configurable line spacing): applied here in code because the preview's
+        // CTextBlocks have no VM DataContext to bind to, and a style can't carry the live setting.
+        var lineSpacing = LineSpacingFor(_vm?.Layout?.ReadingDensity ?? Tittle.Core.Settings.ReadingDensity.Normal);
         foreach (var visual in Preview.GetVisualDescendants())
         {
+            if (visual is ColorTextBlock.Avalonia.CTextBlock textBlock)
+                textBlock.LineSpacing = lineSpacing;
+
             switch (visual)
             {
                 case AvaloniaEdit.TextEditor editor:
@@ -116,6 +122,15 @@ public partial class DocumentView
         _previewHeadingTops = ComputePreviewHeadingTops(headings);
         RecomputeActiveHeading(); // marker/breadcrumbs correct against the fresh cache (guards internally)
     }
+
+    // Extra pixels between wrapped lines per reading-density preset (ColorTextBlock.LineSpacing, 0 = the
+    // font's natural leading). Tuned against the ~14-15px preview font.
+    private static double LineSpacingFor(Tittle.Core.Settings.ReadingDensity density) => density switch
+    {
+        Tittle.Core.Settings.ReadingDensity.Compact => 0,
+        Tittle.Core.Settings.ReadingDensity.Relaxed => 9,
+        _ => 4,
+    };
 
     /// <summary>If a debounced reflow is pending, run it now — so an explicit navigation (TOC jump,
     /// mode-toggle sync) reads a fresh heading-Y cache instead of stale mid-drag positions.</summary>

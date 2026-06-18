@@ -48,6 +48,8 @@ public partial class DocumentView
             ApplySplitLayout();
         else if (e.PropertyName == nameof(LayoutOptions.SplitRatio) && !_ratioFromDrag)
             ApplySplitLayout(); // external ratio change (import/settings) → re-apply; a drag echo is skipped
+        else if (e.PropertyName == nameof(LayoutOptions.ReadingDensity))
+            SchedulePreviewReflow(); // re-applies the preview line spacing
     }
 
     /// <summary>(Re)build the split grid: track lengths for source/splitter/preview, the orientation

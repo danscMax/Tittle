@@ -53,6 +53,19 @@ public enum ReadingWidth
     Narrow,
 }
 
+/// <summary>Text density (line spacing) of the markdown preview — how airy the prose reads.</summary>
+public enum ReadingDensity
+{
+    /// <summary>Tight line spacing — more text on screen.</summary>
+    Compact,
+
+    /// <summary>The default — comfortable spacing.</summary>
+    Normal,
+
+    /// <summary>Roomy, airy line spacing — easiest to scan.</summary>
+    Relaxed,
+}
+
 /// <summary>Orientation of the split view (source + preview shown together).</summary>
 public enum SplitOrientation
 {
@@ -97,6 +110,9 @@ public sealed record LayoutSettings
 
     /// <summary>Reading-column preset for the preview. Default: comfortable centered column.</summary>
     public ReadingWidth ReadingWidth { get; init; } = ReadingWidth.Comfort;
+
+    /// <summary>Text density (line spacing) of the preview. Default: comfortable.</summary>
+    public ReadingDensity ReadingDensity { get; init; } = ReadingDensity.Normal;
 
     /// <summary>Orientation of the split view (source + preview together). Default: horizontal.</summary>
     public SplitOrientation SplitOrientation { get; init; } = SplitOrientation.Horizontal;

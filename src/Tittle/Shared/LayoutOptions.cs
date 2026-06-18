@@ -34,6 +34,9 @@ public partial class LayoutOptions : ObservableObject
     private ReadingWidth _readingWidth = ReadingWidth.Comfort;
 
     [ObservableProperty]
+    private ReadingDensity _readingDensity = ReadingDensity.Normal;
+
+    [ObservableProperty]
     private SplitOrientation _splitOrientation = SplitOrientation.Horizontal;
 
     /// <summary>Source-pane fraction of the split view. Shared by the splitter (view) and persistence.</summary>
@@ -82,6 +85,7 @@ public partial class LayoutOptions : ObservableObject
         ReadingMode = ReadingMode,
         OutlineWidth = OutlineWidth,
         ReadingWidth = ReadingWidth,
+        ReadingDensity = ReadingDensity,
         SplitOrientation = SplitOrientation,
         SplitRatio = SplitRatio,
     };
@@ -99,6 +103,7 @@ public partial class LayoutOptions : ObservableObject
             ReadingMode = s.ReadingMode,
             OutlineWidth = s.OutlineWidth,
             ReadingWidth = s.ReadingWidth,
+            ReadingDensity = s.ReadingDensity,
             SplitOrientation = s.SplitOrientation,
             SplitRatio = s.SplitRatio,
         };

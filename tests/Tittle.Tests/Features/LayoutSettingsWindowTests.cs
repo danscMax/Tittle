@@ -22,9 +22,10 @@ public class LayoutSettingsWindowTests
         var window = new LayoutSettingsWindow { DataContext = layout };
 
         var radios = window.GetLogicalDescendants().OfType<RadioButton>().ToList();
-        Assert.Equal(8, radios.Count); // 3 toolbar modes + 3 reading widths + 2 split orientations
-        // Exactly one selected per group (Contextual + Full + Horizontal).
-        Assert.Equal(3, radios.Count(r => r.IsChecked == true));
+        // 3 toolbar modes + 3 reading widths + 3 reading densities + 2 split orientations.
+        Assert.Equal(11, radios.Count);
+        // Exactly one selected per group (Contextual + Comfort + Normal + Horizontal).
+        Assert.Equal(4, radios.Count(r => r.IsChecked == true));
 
         // Selecting "Выключена" writes ToolbarMode.Off back through the two-way enum converter.
         var off = radios.First(r => (r.Content as string)!.Contains("Выключена"));

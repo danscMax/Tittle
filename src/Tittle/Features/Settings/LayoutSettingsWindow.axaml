@@ -57,6 +57,20 @@
       </StackPanel>
 
       <StackPanel Spacing="6">
+        <TextBlock Text="Разреженность текста" FontSize="12.5"
+                   Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
+        <RadioButton GroupName="ReadingDensity" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Плотно"
+                     IsChecked="{Binding ReadingDensity, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Compact}"/>
+        <RadioButton GroupName="ReadingDensity" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Обычно"
+                     IsChecked="{Binding ReadingDensity, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Normal}"/>
+        <RadioButton GroupName="ReadingDensity" Foreground="{DynamicResource ChromeForegroundBrush}"
+                     Content="Просторно"
+                     IsChecked="{Binding ReadingDensity, Mode=TwoWay, Converter={x:Static shared:EnumRadioConverter.Instance}, ConverterParameter=Relaxed}"/>
+      </StackPanel>
+
+      <StackPanel Spacing="6">
         <TextBlock Text="Ориентация разделённого вида" FontSize="12.5"
                    Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>
         <RadioButton GroupName="SplitOrientation" Foreground="{DynamicResource ChromeForegroundBrush}"
