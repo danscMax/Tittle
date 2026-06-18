@@ -8,6 +8,9 @@ charset = utf-8
 indent_style = space
 trim_trailing_whitespace = true
 insert_final_newline = true
+# Match .gitattributes (eol=lf) so `dotnet format` agrees on Windows too — without this it
+# defaults to CRLF on Windows and reports false WHITESPACE diffs on every LF line (CI/Linux is LF).
+end_of_line = lf
 
 [*.{cs,csproj,props,targets}]
 indent_size = 4
