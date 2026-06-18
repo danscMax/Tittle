@@ -121,19 +121,20 @@ public class MarkdownPreprocessorTests
     // --- Task lists ---
 
     [Theory]
-    [InlineData("- [x] done", "- ☑ done")]
-    [InlineData("- [X] done", "- ☑ done")]
-    [InlineData("- [ ] todo", "- ☐ todo")]
+    // The `-`/`+` markers are normalised to `*` (filled-bullet pass) before the task glyph is applied.
+    [InlineData("- [x] done", "* ☑ done")]
+    [InlineData("- [X] done", "* ☑ done")]
+    [InlineData("- [ ] todo", "* ☐ todo")]
     [InlineData("* [x] star", "* ☑ star")]
-    [InlineData("+ [ ] plus", "+ ☐ plus")]
-    [InlineData("  - [x] indented", "  - ☑ indented")]
+    [InlineData("+ [ ] plus", "* ☐ plus")]
+    [InlineData("  - [x] indented", "  * ☑ indented")]
     public void Transform_TaskItem_BecomesGlyph(string input, string expected)
         => Assert.Equal(expected, MarkdownPreprocessor.Transform(input));
 
     [Theory]
-    [InlineData("- regular item")]
+    [InlineData("* regular item")]
     [InlineData("text [x] not a task")]
-    [InlineData("- [z] not a checkbox")]
+    [InlineData("* [z] not a checkbox")]
     public void Transform_NonTaskLine_Unchanged(string input)
         => Assert.Equal(input, MarkdownPreprocessor.Transform(input));
 
@@ -366,8 +367,8 @@ public class MarkdownPreprocessorTests
     {
         var result = MarkdownPreprocessor.Transform("- [x] real\n\n```\n- [x] keep\n- [ ] also\n```");
 
-        Assert.StartsWith("- ☑ real", result); // the real item converts (list marker kept)
-        Assert.Contains("- [x] keep", result);
+        Assert.StartsWith("* ☑ real", result); // real item converts (marker normalised to *, then glyph)
+        Assert.Contains("- [x] keep", result); // fenced: neither marker-normalised nor task-converted
         Assert.Contains("- [ ] also", result);
     }
 
@@ -631,5 +632,32 @@ public class MarkdownPreprocessorTests
         // No fence → the autodetect pass never runs on it.
         var result = MarkdownPreprocessor.Transform("A line { \"a\": 1 } in prose.");
         Assert.DoesNotContain("```", result);
+    }
+
+    // --- Unordered list marker normalization (filled bullets) ---
+
+    [Theory]
+    [InlineData("- item", "* item")]
+    [InlineData("+ item", "* item")]
+    [InlineData("  - nested", "  * nested")]
+    [InlineData("    + deep", "    * deep")]
+    public void Transform_DashOrPlusBullet_BecomesStar(string md, string expected)
+        => Assert.Equal(expected, MarkdownPreprocessor.Transform(md));
+
+    [Theory]
+    [InlineData("* already a star")]
+    [InlineData("---")]
+    [InlineData("- - -")]
+    [InlineData("***")]
+    [InlineData("A dash - in prose stays.")]
+    [InlineData("word-with-hyphens")]
+    public void Transform_NotABullet_IsUnchanged(string md)
+        => Assert.Equal(md, MarkdownPreprocessor.Transform(md));
+
+    [Fact]
+    public void Transform_DashBulletInFencedCode_IsUnchanged()
+    {
+        var md = "```\n- not a bullet\n```";
+        Assert.Contains("- not a bullet", MarkdownPreprocessor.Transform(md));
     }
 }

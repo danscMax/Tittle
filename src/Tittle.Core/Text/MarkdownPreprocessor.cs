@@ -67,6 +67,10 @@ public static partial class MarkdownPreprocessor
         // VS Code). Before emoji so the emoji pass's AutoLink mask protects the freshly-wrapped URLs.
         ConvertBareUrlsInPlace(lines, regions);
         ConvertEmojiInPlace(lines, regions);
+        // Normalise unordered list markers `-`/`+` to `*` so every bullet renders as a filled • (Disc)
+        // instead of a hollow ○ (Circle) / ▪ (Box) — like VS Code. Display-only; before task lists so
+        // `- [x]` items normalise too (their `[-*+]` regex accepts the `*`).
+        NormalizeListMarkersInPlace(lines, regions);
 
         // The legacy passes are fence-guarded too; footnotes/admonitions REBUILD the line list,
         // so the fence bitmap is rescanned after each of them (Scan is one cheap O(n) pass).
@@ -303,6 +307,19 @@ public static partial class MarkdownPreprocessor
     private static void ConvertBareUrlsInPlace(List<string> lines, MarkdownCodeRegions regions)
         => RewriteInlineLines(lines, regions, ':', line => MarkdownCodeRegions.ReplaceOutsideCode(
             line, BareUrl(), WrapBareUrl, LinkDestination(), AutoLink()));
+
+    // Unordered list marker `-`/`+` → `*` (display-only). Only the leading marker char of a list line
+    // (line-start + indent, then the marker, then a space) is touched; a `-`/`*`/`_` thematic break
+    // (incl. spaced `- - -`) and fenced code are skipped, and mid-line dashes never match.
+    private static void NormalizeListMarkersInPlace(List<string> lines, MarkdownCodeRegions regions)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (regions.IsFencedLine(i) || ThematicBreak().IsMatch(lines[i]))
+                continue;
+            lines[i] = UnorderedListMarker().Replace(lines[i], "*", 1);
+        }
+    }
 
     // Code-language autodetect (1.3): walk fenced blocks; for one whose opener carries NO language,
     // guess it from the body and write it into the opener (``` → ```json). FenceOpen matches both the
@@ -661,6 +678,15 @@ public static partial class MarkdownPreprocessor
     // parens is the accepted trade-off. Trailing sentence punctuation is trimmed in WrapBareUrl.
     [GeneratedRegex(@"https?://[^\s<>""'()]+")]
     private static partial Regex BareUrl();
+
+    // The leading unordered-list marker (`-` or `+`) only: at the first non-space position, followed by
+    // a space (so mid-line dashes and emphasis `*` never match). .NET allows the variable lookbehind.
+    [GeneratedRegex(@"(?<=^[ \t]*)[-+](?=[ \t])")]
+    private static partial Regex UnorderedListMarker();
+
+    // A thematic break: 3+ of the same `-`/`*`/`_`, optionally space-separated, on their own line.
+    [GeneratedRegex(@"^[ \t]*([-*_])([ \t]*\1){2,}[ \t]*$")]
+    private static partial Regex ThematicBreak();
 
     // An emoji shortcode token: :name: with letters/digits/underscore/plus/minus.
     [GeneratedRegex(@":([a-z0-9_+\-]+):")]
