@@ -327,7 +327,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         Layout.ViewTogglePlacement = layout.ViewTogglePlacement;
         Layout.ShowOmnibar = layout.ShowOmnibar;
         Layout.ShowRail = layout.ShowRail;
-        Layout.ReadingMode = layout.ReadingMode;
         Layout.OutlineWidth = layout.OutlineWidth;
         Layout.ReadingWidth = layout.ReadingWidth;
         Layout.ReadingDensity = layout.ReadingDensity;
@@ -499,10 +498,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
 
     [RelayCommand]
     private void ToggleOutline() => IsOutlineVisible = !IsOutlineVisible;
-
-    /// <summary>Toggle the focused reading column + side decor in the markdown preview.</summary>
-    [RelayCommand]
-    private void ToggleReadingMode() => Layout.ReadingMode = !Layout.ReadingMode;
 
     /// <summary>Editor display options shared by every tab's source editor (font zoom, wrap,
     /// line numbers). Bound by <c>DocumentView</c>; persisted whenever it changes.</summary>
@@ -906,7 +901,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             new("Следующая вкладка", SelectNextTabCommand, "Ctrl+Tab"),
             new("Предыдущая вкладка", SelectPreviousTabCommand, "Ctrl+Shift+Tab"),
             new("Оглавление", ToggleOutlineCommand),
-            new("Декоративный фон", ToggleReadingModeCommand),
             new("Статистика документа", ShowStatsCommand),
             new("Найти…", OpenSearchCommand, "Ctrl+F"),
             new("Перейти к строке…", OpenGoToLineCommand, "Ctrl+G"),

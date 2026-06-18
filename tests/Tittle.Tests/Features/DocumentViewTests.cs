@@ -78,20 +78,6 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
-    public void DocumentView_ReadingModeOn_RendersWithoutThrowing()
-    {
-        var vm = DocumentTabViewModel.FromFile(Sample, "/docs/readme.md");
-        vm.Layout = new LayoutOptions { ReadingMode = true }; // centered column + decor + width/padding converters
-        var window = new Window { Content = new DocumentView { DataContext = vm } };
-
-        window.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(vm.ShowPreview);
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void DocumentView_CodeFile_ShowsSourceNotPreview()
     {
         var vm = DocumentTabViewModel.FromFile("var x = 1;", "/src/a.cs");

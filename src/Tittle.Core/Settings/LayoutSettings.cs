@@ -100,10 +100,6 @@ public sealed record LayoutSettings
     /// <summary>Show the left tool rail. Default: off.</summary>
     public bool ShowRail { get; init; }
 
-    /// <summary>Decorative accent background behind the markdown preview and the outline sidebar.
-    /// Default: on. (Field name kept as ReadingMode for the persisted JSON shape.)</summary>
-    public bool ReadingMode { get; init; } = true;
-
     /// <summary>Width of the outline/TOC sidebar in pixels (user-resizable via a splitter).
     /// Default: 240.</summary>
     public double OutlineWidth { get; init; } = 240;

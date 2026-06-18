@@ -28,9 +28,6 @@ public partial class LayoutOptions : ObservableObject
     private bool _showRail;
 
     [ObservableProperty]
-    private bool _readingMode = true;
-
-    [ObservableProperty]
     private ReadingWidth _readingWidth = ReadingWidth.Comfort;
 
     [ObservableProperty]
@@ -82,7 +79,6 @@ public partial class LayoutOptions : ObservableObject
         ViewTogglePlacement = ViewTogglePlacement,
         ShowOmnibar = ShowOmnibar,
         ShowRail = ShowRail,
-        ReadingMode = ReadingMode,
         OutlineWidth = OutlineWidth,
         ReadingWidth = ReadingWidth,
         ReadingDensity = ReadingDensity,
@@ -100,7 +96,6 @@ public partial class LayoutOptions : ObservableObject
             ViewTogglePlacement = s.ViewTogglePlacement,
             ShowOmnibar = s.ShowOmnibar,
             ShowRail = s.ShowRail,
-            ReadingMode = s.ReadingMode,
             OutlineWidth = s.OutlineWidth,
             ReadingWidth = s.ReadingWidth,
             ReadingDensity = s.ReadingDensity,

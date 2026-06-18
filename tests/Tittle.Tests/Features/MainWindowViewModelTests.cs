@@ -1309,20 +1309,6 @@ public class MainWindowViewModelTests
     }
 
     [AvaloniaFact]
-    public void ToggleReadingMode_Flips_AndPersists()
-    {
-        var holder = Holder();
-        var vm = CreateVm(settings: holder);
-
-        Assert.True(vm.Layout.ReadingMode); // on by default
-
-        vm.ToggleReadingModeCommand.Execute(null);
-
-        Assert.False(vm.Layout.ReadingMode);
-        Assert.False(holder.Current.Layout!.ReadingMode); // persisted via Layout.PropertyChanged
-    }
-
-    [AvaloniaFact]
     public void SelectNextTab_CyclesForward_WithWrap()
     {
         var vm = CreateVm();

@@ -16,7 +16,6 @@ public class LayoutOptionsTests
         Assert.Equal(ViewTogglePlacement.Tabs, o.ViewTogglePlacement);
         Assert.True(o.ShowOmnibar);
         Assert.False(o.ShowRail);
-        Assert.True(o.ReadingMode);   // reading column on by default (etalon)
         Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
         Assert.Equal(ReadingWidth.Comfort, o.ReadingWidth); // comfortable centered column by default
         Assert.Equal(SplitOrientation.Horizontal, o.SplitOrientation); // side-by-side by default
@@ -33,7 +32,6 @@ public class LayoutOptionsTests
             ViewTogglePlacement = ViewTogglePlacement.StatusBar,
             ShowOmnibar = false,
             ShowRail = true,
-            ReadingMode = false,
             OutlineWidth = 320,
             ReadingWidth = ReadingWidth.Narrow,
             SplitOrientation = SplitOrientation.Vertical,

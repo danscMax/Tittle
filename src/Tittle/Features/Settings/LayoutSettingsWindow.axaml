@@ -24,9 +24,6 @@
       <CheckBox IsChecked="{Binding ShowOmnibar, Mode=TwoWay}"
                 Foreground="{DynamicResource ChromeForegroundBrush}"
                 Content="Омнибар (путь · открыть · палитра)"/>
-      <CheckBox IsChecked="{Binding ReadingMode, Mode=TwoWay}"
-                Foreground="{DynamicResource ChromeForegroundBrush}"
-                Content="Декоративный фон предпросмотра"/>
 
       <StackPanel Spacing="6">
         <TextBlock Text="Панель инструментов" FontSize="12.5"

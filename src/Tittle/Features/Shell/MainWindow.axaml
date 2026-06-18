@@ -244,9 +244,6 @@
                         IsChecked="{Binding Editor.WordWrap, Mode=TwoWay}"/>
               <MenuItem Header="Номера строк" InputGesture="Ctrl+L" ToggleType="CheckBox"
                         IsChecked="{Binding Editor.ShowLineNumbers, Mode=TwoWay}"/>
-              <MenuItem Header="Декоративный фон" ToggleType="CheckBox"
-                        IsChecked="{Binding Layout.ReadingMode, Mode=TwoWay}"
-                        IsEnabled="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"/>
               <Separator/>
               <MenuItem Header="Перейти к строке…" InputGesture="Ctrl+G" Command="{Binding OpenGoToLineCommand}"/>
               <Separator/>
@@ -304,12 +301,6 @@
                 IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"
                 Command="{Binding ToggleOutlineCommand}" Padding="8,3">
           <PathIcon Data="{StaticResource IconSidebar}" Width="16" Height="16"/>
-        </Button>
-        <!-- Decorative-background toggle — markdown preview only (meaningless in source view). -->
-        <Button AutomationProperties.AutomationId="ReadingModeButton" ToolTip.Tip="Декоративный фон"
-                IsVisible="{Binding SelectedTab.ShowPreview, FallbackValue=False}"
-                Command="{Binding ToggleReadingModeCommand}" Padding="8,3">
-          <PathIcon Data="{StaticResource IconDocument}" Width="16" Height="16"/>
         </Button>
       </StackPanel>
 
@@ -568,34 +559,15 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
 
-      <!-- Body surfaces are layered HERE, at the grid level, so the decorative reading glow is a SINGLE
-           continuous gradient across the whole body instead of being painted twice (once per panel) — the
-           old approach resolved its percentage-based radial centres against each panel's own (very
-           different) width, so the gradients didn't line up and broke along the sidebar's right edge,
-           worst at the bottom where ReaderGlowB is centred. The panels above (OutlinePanel / preview) are
-           transparent so these layers show through:
-             1. full-body opaque base (editor surface)
-             2. opaque sidebar surface over col 0 (the sidebar is now non-transparent)
-             3. ONE hit-test-invisible glow spanning the whole body, under the content, above the surfaces.
-           Order matters: later children paint on top. -->
+      <!-- Body surfaces: a flat opaque base across the whole body (editor surface) and an opaque
+           sidebar surface over col 0. Flat by design — there is NO decorative reading glow: a radial
+           gradient over the reading column read as a "smudge" inconsistent with the flat sidebar and
+           chrome, and it bled through the transparent splitter column (col 1) as a lit seam at the
+           sidebar edge. The welcome screen keeps its own glow (WelcomeView.axaml). Order: later
+           children paint on top. -->
       <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource EditorSurfaceBrush}"/>
       <Border Grid.Column="0" Background="{DynamicResource SidebarSurfaceBrush}"
               IsVisible="{Binding IsOutlinePaneVisible}"/>
-      <Panel Grid.Column="0" Grid.ColumnSpan="3" IsHitTestVisible="False">
-        <!-- Shown only with a document open AND the decorative background on; the welcome screen
-             paints its own glow, so gating on HasTabs avoids doubling it up. -->
-        <Panel.IsVisible>
-          <MultiBinding Converter="{x:Static conv:AllTrueConverter.Instance}">
-            <Binding Path="HasTabs"/>
-            <Binding Path="Layout.ReadingMode" FallbackValue="False"/>
-          </MultiBinding>
-        </Panel.IsVisible>
-        <!-- Single-hue body glow: only the blue ReaderGlowA. The cyan ReaderGlowB was removed here
-             because the two radials overlapped into a blue→green/grey-green cast that read as "dirty"
-             over the reading column. The welcome screen still paints BOTH (its own glow Borders), so
-             the ReaderGlowB token stays. -->
-        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"/>
-      </Panel>
 
       <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
       <GridSplitter Grid.Column="1" AutomationProperties.AutomationId="OutlineSplitter"
