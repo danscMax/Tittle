@@ -32,9 +32,18 @@ public static class PreviewTableSorter
                      .ToList())
         {
             table.Classes.Add(AttachedClass);
+
+            // Restyle (the user disliked the library's pale-grey header): tint the header and calm the
+            // grid lines via our tokens. The library's table styles sit in a closer scope than our
+            // app/UserControl styles, so a Setter can't win — set it as a local resource binding, which
+            // beats styles AND still follows the theme (the observable refires on theme change).
+            foreach (var cell in table.Children.OfType<Border>())
+                cell.Bind(Border.BorderBrushProperty, cell.GetResourceObservable("TableBorderBrush"));
+
             foreach (var header in table.Children.OfType<Border>()
                          .Where(b => b.Classes.Contains("TableHeader")))
             {
+                header.Bind(Border.BackgroundProperty, header.GetResourceObservable("TableHeaderBgBrush"));
                 var column = Grid.GetColumn(header);
                 header.Cursor = new Cursor(StandardCursorType.Hand);
                 ToolTip.SetTip(header, "Сортировать по столбцу");

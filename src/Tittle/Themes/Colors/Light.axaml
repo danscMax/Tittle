@@ -39,6 +39,12 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#1F5AE8" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
+    <!-- Preview tables (override Markdown.Avalonia's pale grey header): a faint accent-tinted header,
+         a barely-there zebra alt row, and a subtle grid line. Custom light themes inherit these. -->
+    <SolidColorBrush x:Key="TableHeaderBgBrush" Color="#E7EEFB" />
+    <SolidColorBrush x:Key="TableRowAltBgBrush" Color="#F4F6FB" />
+    <SolidColorBrush x:Key="TableBorderBrush" Color="#D5D9E2" />
+
     <!-- In-document search: amber wash behind every match (current one is outlined in the accent). -->
     <SolidColorBrush x:Key="SearchMatchBrush" Color="#F5B301" Opacity="0.42" />
 

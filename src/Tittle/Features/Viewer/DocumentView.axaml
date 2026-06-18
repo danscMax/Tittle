@@ -40,6 +40,9 @@
     <Style Selector=".CodeBlock:pointerover Button.code-copy">
       <Setter Property="Opacity" Value="0.9"/>
     </Style>
+    <!-- Preview table header/border restyle is applied in code (PreviewTableSorter) as a local resource
+         binding: the library's table styles sit in a closer scope and beat an app/UserControl style, so
+         a Setter here wouldn't win. The TableHeaderBgBrush/TableBorderBrush tokens live in Light/Dark. -->
     <!-- Line-number gutter: AvaloniaEdit packs the numbers hard against the code with no breathing
          room, so they visually merge with the text. The LineNumberMargin is added to TextArea.LeftMargins
          in code (not the template), so style it by type — a right margin opens a gutter gap; a left
