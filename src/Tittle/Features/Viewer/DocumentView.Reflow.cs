@@ -337,10 +337,11 @@ public partial class DocumentView
             Padding = new Thickness(7, 3),
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
-            Margin = new Thickness(0, 6, 22, 0), // clear of the editor's scrollbar lane
-            Opacity = 0.55,
+            Margin = new Thickness(0, 4, 22, 0), // clear of the editor's scrollbar lane
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
+            // Opacity is style-driven: hidden until the block is hovered, when the language badge
+            // fades out and this fades in (they share the top-right corner — see DocumentView.axaml).
         };
         button.Classes.Add("code-copy");
         ToolTip.SetTip(button, "Скопировать код");

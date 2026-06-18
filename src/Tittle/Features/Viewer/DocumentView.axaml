@@ -20,6 +20,26 @@
     <Style Selector="ctxt|CTextBlock">
       <Setter Property="FontFamily" Value="fonts:Inter#Inter"/>
     </Style>
+    <!-- Code-block top-right corner: the SyntaxHigh language badge and our copy button shared it and
+         overlapped. Swap them on hover (VS Code-style) — the badge fades out, the copy button fades in —
+         so they're never visible at once. Both carry a short fade for polish. -->
+    <Style Selector="Label.LangInfo">
+      <Setter Property="Transitions">
+        <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.12"/></Transitions>
+      </Setter>
+    </Style>
+    <Style Selector=".CodeBlock:pointerover Label.LangInfo">
+      <Setter Property="Opacity" Value="0"/>
+    </Style>
+    <Style Selector="Button.code-copy">
+      <Setter Property="Opacity" Value="0"/>
+      <Setter Property="Transitions">
+        <Transitions><DoubleTransition Property="Opacity" Duration="0:0:0.12"/></Transitions>
+      </Setter>
+    </Style>
+    <Style Selector=".CodeBlock:pointerover Button.code-copy">
+      <Setter Property="Opacity" Value="0.9"/>
+    </Style>
     <!-- Line-number gutter: AvaloniaEdit packs the numbers hard against the code with no breathing
          room, so they visually merge with the text. The LineNumberMargin is added to TextArea.LeftMargins
          in code (not the template), so style it by type — a right margin opens a gutter gap; a left
