@@ -20,6 +20,7 @@ Directory.CreateDirectory(outDir);
 
 AppBuilder.Configure<App>()
     .UseSkia()
+    .WithBundledInterFont() // the preview style references fonts:Inter#Inter — register it here too
     .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
     .SetupWithoutStarting();
 

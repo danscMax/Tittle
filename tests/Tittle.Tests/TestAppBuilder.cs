@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Skia;
 using Tittle;
+using Tittle.Platform;
 using Tittle.Tests;
 
 [assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
@@ -17,5 +19,11 @@ public static class TestAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UseHeadless(new AvaloniaHeadlessPlatformOptions());
+            // Real font loading: the preview now styles its runs with the bundled fonts:Inter#Inter
+            // collection (Avalonia #18875 bold/italic fix). A headless platform with no Skia can't
+            // rasterise real fonts, so the preview text throws "Could not create glyphTypeface". Skia +
+            // UseHeadlessDrawing=false (same as tools/HeadlessRender) loads the embedded faces for real.
+            .UseSkia()
+            .WithBundledInterFont()
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }

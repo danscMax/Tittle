@@ -60,5 +60,12 @@
         <StyleInclude Source="avares://Tittle/Themes/Math.axaml" />
         <!-- Slim, theme-tinted scrollbars. -->
         <StyleInclude Source="avares://Tittle/Themes/ScrollBars.axaml" />
+        <!-- Pin the bundled STATIC Inter (registered as the fonts:Inter collection, see Program.cs /
+             InterFontCollection) as the explicit family on every window, so chrome resolves both weight
+             and italic. The Markdown.Avalonia preview runs get it via their own explicit CTextBlock
+             style (DocumentView.axaml) — the FontManager default resolves weight but not style. -->
+        <Style Selector="TopLevel">
+            <Setter Property="FontFamily" Value="fonts:Inter#Inter" />
+        </Style>
     </Application.Styles>
 </Application>

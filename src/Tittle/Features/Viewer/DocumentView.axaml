@@ -3,6 +3,7 @@
              xmlns:ae="using:AvaloniaEdit"
              xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:ctxt="using:ColorTextBlock.Avalonia"
              xmlns:vm="using:Tittle.Features.Shell"
              xmlns:viewer="using:Tittle.Features.Viewer"
              xmlns:pdf="using:Tittle.Features.Viewer.Pdf"
@@ -11,6 +12,14 @@
              x:Class="Tittle.Features.Viewer.DocumentView"
              x:DataType="vm:DocumentTabViewModel">
   <UserControl.Styles>
+    <!-- Pin the bundled static Inter (fonts:Inter collection, see Program.cs/InterFontCollection) as an
+         EXPLICIT family on the preview's text blocks. The FontManager default resolves weight (bold) but
+         not style, so inline *italic* renders upright unless the family is named explicitly; the prose
+         runs inherit it from CTextBlock, while inline `code` keeps its own monospace (CCode is closer).
+         MarkdownScrollViewer exposes no FontFamily, so the style targets the rendered CTextBlock. -->
+    <Style Selector="ctxt|CTextBlock">
+      <Setter Property="FontFamily" Value="fonts:Inter#Inter"/>
+    </Style>
     <!-- Line-number gutter: AvaloniaEdit packs the numbers hard against the code with no breathing
          room, so they visually merge with the text. The LineNumberMargin is added to TextArea.LeftMargins
          in code (not the template), so style it by type — a right margin opens a gutter gap; a left

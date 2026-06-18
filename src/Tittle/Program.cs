@@ -100,6 +100,11 @@ internal static class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .WithInterFont()
+            // Bold/italic font fix — replaces .WithInterFont(). Avalonia 11.3.x has an open regression
+            // (#18875) that mis-resolves the weight of VARIABLE fonts, so FontWeight=Bold renders at
+            // normal weight everywhere — and Avalonia.Fonts.Inter ships Inter as a variable font. We
+            // register STATIC per-weight/style Inter faces and pin "Inter" as the default (see
+            // Platform/InterFontCollection). The SAME call runs in the test + render harnesses.
+            .WithBundledInterFont()
             .LogToTrace();
 }
