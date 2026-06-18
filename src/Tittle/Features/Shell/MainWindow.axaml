@@ -590,8 +590,11 @@
             <Binding Path="Layout.ReadingMode" FallbackValue="False"/>
           </MultiBinding>
         </Panel.IsVisible>
+        <!-- Single-hue body glow: only the blue ReaderGlowA. The cyan ReaderGlowB was removed here
+             because the two radials overlapped into a blue→green/grey-green cast that read as "dirty"
+             over the reading column. The welcome screen still paints BOTH (its own glow Borders), so
+             the ReaderGlowB token stays. -->
         <Border Opacity="0.3" Background="{DynamicResource ReaderGlowABrush}"/>
-        <Border Opacity="0.3" Background="{DynamicResource ReaderGlowBBrush}"/>
       </Panel>
 
       <controls:OutlinePanel Grid.Column="0" IsVisible="{Binding IsOutlinePaneVisible}"/>
