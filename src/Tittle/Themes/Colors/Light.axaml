@@ -45,6 +45,10 @@
     <SolidColorBrush x:Key="TableRowAltBgBrush" Color="#F4F6FB" />
     <SolidColorBrush x:Key="TableBorderBrush" Color="#D5D9E2" />
 
+    <!-- Inline `code` pill: a faint grey chip over the white editor surface (GitHub/VS-Code look).
+         Custom light themes inherit it. -->
+    <SolidColorBrush x:Key="InlineCodeBgBrush" Color="#EDEDF2" />
+
     <!-- In-document search: amber wash behind every match (current one is outlined in the accent). -->
     <SolidColorBrush x:Key="SearchMatchBrush" Color="#F5B301" Opacity="0.42" />
 

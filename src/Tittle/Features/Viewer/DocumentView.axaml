@@ -3,6 +3,7 @@
              xmlns:ae="using:AvaloniaEdit"
              xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
+             xmlns:mac="using:Markdown.Avalonia.Controls"
              xmlns:ctxt="using:ColorTextBlock.Avalonia"
              xmlns:vm="using:Tittle.Features.Shell"
              xmlns:viewer="using:Tittle.Features.Viewer"
@@ -88,6 +89,49 @@
     </Style>
     <Style Selector="ItemsControl#BreadcrumbsList ContentPresenter:nth-child(1) TextBlock.crumb-sep">
       <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <!-- Preview reading-fidelity polish (GitHub/VS-Code look). All reuse existing theme tokens; the
+         library's own defaults are overridden from here (proven to win for CTextBlock above). If a
+         selector is beaten by a deeper library style, the fallback is a code pass (see PreviewTableSorter). -->
+    <!-- Inline `code` chip: a faint pill over the reading surface. CCode keeps its own monospace. -->
+    <Style Selector="ctxt|CCode">
+      <Setter Property="Background" Value="{DynamicResource InlineCodeBgBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource TableBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="3"/>
+      <Setter Property="Padding" Value="4,1"/>
+    </Style>
+    <!-- Plain blockquote `>` (NOT a GitHub-alert admonition): a neutral left stripe + faint tint,
+         mirroring Border.admonition in Themes/Admonitions.axaml but in muted chrome tones. -->
+    <Style Selector="Border.Blockquote">
+      <Setter Property="BorderBrush" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+      <Setter Property="BorderThickness" Value="4,0,0,0"/>
+      <Setter Property="Background" Value="{DynamicResource InlineCodeBgBrush}"/>
+      <Setter Property="CornerRadius" Value="0,4,4,0"/>
+      <Setter Property="Padding" Value="12,8"/>
+      <Setter Property="Margin" Value="0,8"/>
+    </Style>
+    <!-- Horizontal rule (thematic break): a themed hairline, same token as H1/H2 dividers + table grid. -->
+    <Style Selector="mac|Rule">
+      <Setter Property="Height" Value="2"/>
+      <Setter Property="Background" Value="{DynamicResource TableBorderBrush}"/>
+      <Setter Property="Margin" Value="0,14"/>
+    </Style>
+    <!-- H3–H6 rhythm: SemiBold with top breathing room; H4–H6 muted slightly so the hierarchy reads
+         (H1/H2 already get a divider rule from PreviewHeadingDivider). Sizes left to the library. -->
+    <Style Selector="ctxt|CTextBlock.Heading3">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Margin" Value="0,10,0,2"/>
+    </Style>
+    <Style Selector="ctxt|CTextBlock.Heading4">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Margin" Value="0,8,0,2"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
+    </Style>
+    <Style Selector="ctxt|CTextBlock.Heading5, ctxt|CTextBlock.Heading6">
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Margin" Value="0,6,0,2"/>
+      <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundMutedBrush}"/>
     </Style>
     <!-- CSV table header cells: flat, bold, sticky above the row scroller. -->
     <Style Selector="Button.csv-header">
