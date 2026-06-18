@@ -63,6 +63,9 @@ public static partial class MarkdownPreprocessor
 
         ConvertWikiLinksInPlace(lines, regions, Memoize(wikiLinkResolver));
         ConvertUnderscoreEmphasisInPlace(lines, regions);
+        // Bare http/https URLs → <url> autolinks so the viewer renders them as clickable links (like
+        // VS Code). Before emoji so the emoji pass's AutoLink mask protects the freshly-wrapped URLs.
+        ConvertBareUrlsInPlace(lines, regions);
         ConvertEmojiInPlace(lines, regions);
 
         // The legacy passes are fence-guarded too; footnotes/admonitions REBUILD the line list,
@@ -286,6 +289,26 @@ public static partial class MarkdownPreprocessor
         => RewriteInlineLines(lines, regions, '_', line => MarkdownCodeRegions.ReplaceOutsideCode(
             line, UnderscoreEmphasis(), m => $"*{m.Groups[1].Value}*",
             LinkDestination(), AutoLink()));
+
+    // Bare http/https URLs → [url](url) markdown links (the viewer renders these as clickable links;
+    // angle <url> autolinks render literally in Markdown.Avalonia). Trigger ':' (every URL has a scheme
+    // colon); the shared frame skips fenced/overlong lines and [ref]: link-reference definitions. The
+    // LinkDestination + AutoLink masks keep URLs inside an existing [text](url) or <autolink> untouched;
+    // inline `code` is masked by ReplaceOutsideCode itself. Trailing sentence punctuation stays as prose.
+    private static void ConvertBareUrlsInPlace(List<string> lines, MarkdownCodeRegions regions)
+        => RewriteInlineLines(lines, regions, ':', line => MarkdownCodeRegions.ReplaceOutsideCode(
+            line, BareUrl(), WrapBareUrl, LinkDestination(), AutoLink()));
+
+    private static string WrapBareUrl(Match m)
+    {
+        var url = m.Value;
+        var cut = url.Length;
+        // Don't swallow trailing sentence punctuation that belongs to the prose, not the URL.
+        while (cut > 0 && ".,;:!?".IndexOf(url[cut - 1]) >= 0)
+            cut--;
+        var link = url[..cut];
+        return $"[{link}]({link}){url[cut..]}";
+    }
 
     // Shared per-line frame for the inline rewrite passes (underscore italics, emoji): skip fenced,
     // overlong and link-reference-definition lines and lines without the trigger char, then rewrite
@@ -580,6 +603,12 @@ public static partial class MarkdownPreprocessor
     // Mask: an autolink "<scheme:…>".
     [GeneratedRegex(@"<[a-zA-Z][a-zA-Z0-9+.\-]*:[^<>\s]*>")]
     private static partial Regex AutoLink();
+
+    // A bare http/https URL run. Stops at whitespace, angle/quote chars and parens — parens are
+    // excluded so a "(see http://x)" prose paren is never swallowed; the rare URL with literal
+    // parens is the accepted trade-off. Trailing sentence punctuation is trimmed in WrapBareUrl.
+    [GeneratedRegex(@"https?://[^\s<>""'()]+")]
+    private static partial Regex BareUrl();
 
     // An emoji shortcode token: :name: with letters/digits/underscore/plus/minus.
     [GeneratedRegex(@":([a-z0-9_+\-]+):")]

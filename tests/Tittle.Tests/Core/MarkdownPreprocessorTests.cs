@@ -531,4 +531,64 @@ public class MarkdownPreprocessorTests
         }
         return count;
     }
+
+    // --- Bare-URL autolinks (1.2) ---
+
+    [Theory]
+    [InlineData("See http://example.com here.", "[http://example.com](http://example.com)")]
+    [InlineData("See https://example.com/path?q=1 here.",
+        "[https://example.com/path?q=1](https://example.com/path?q=1)")]
+    public void Transform_BareUrl_BecomesMarkdownLink(string md, string expected)
+        => Assert.Contains(expected, MarkdownPreprocessor.Transform(md));
+
+    [Fact]
+    public void Transform_BareUrl_TrailingPunctuation_StaysOutsideTheLink()
+    {
+        var result = MarkdownPreprocessor.Transform("Visit https://example.com/page, ok.");
+        Assert.Contains("[https://example.com/page](https://example.com/page),", result);
+        Assert.DoesNotContain("/page,)", result);
+    }
+
+    [Fact]
+    public void Transform_BareUrl_InInlineCode_IsLeftAlone()
+    {
+        var result = MarkdownPreprocessor.Transform("Run `curl http://example.com` now.");
+        Assert.Contains("`curl http://example.com`", result);
+        Assert.DoesNotContain("](http", result);
+    }
+
+    [Fact]
+    public void Transform_BareUrl_InFencedCode_IsLeftAlone()
+    {
+        var result = MarkdownPreprocessor.Transform("```\nhttp://example.com\n```");
+        Assert.DoesNotContain("](http", result);
+    }
+
+    [Fact]
+    public void Transform_UrlInsideMarkdownLink_IsNotDoubleWrapped()
+    {
+        var result = MarkdownPreprocessor.Transform("A [link](https://example.com) text.");
+        Assert.Contains("[link](https://example.com)", result);
+        Assert.DoesNotContain("[https://example.com]", result);
+    }
+
+    [Fact]
+    public void Transform_ExistingAutolink_IsNotWrapped()
+    {
+        var result = MarkdownPreprocessor.Transform("Here <https://example.com> stays.");
+        Assert.Contains("<https://example.com>", result);
+        Assert.DoesNotContain("](http", result);
+    }
+
+    [Fact]
+    public void Transform_LinkReferenceDefinition_IsNotWrapped()
+    {
+        var result = MarkdownPreprocessor.Transform("[ref]: https://example.com");
+        Assert.DoesNotContain("](https://example.com)", result);
+    }
+
+    [Fact]
+    public void Transform_BareUrl_CyrillicAround_DoesNotBreak()
+        => Assert.Contains("[https://example.com](https://example.com)",
+            MarkdownPreprocessor.Transform("Источник https://example.com здесь."));
 }
