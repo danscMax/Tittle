@@ -293,8 +293,16 @@ source editor's TextMate to the embedded preview editors (grammar resolved from 
 stashes in `editor.Tag`, by id/alias; SyntaxHigh's built-in cleared; theme-following via `ReapplyGrammar`) +
 **language autodetect** for bare fences (pure `Core/Text/CodeLanguageGuess` → a final
 `ConvertBareCodeFencesInPlace` pass writes the guessed lang into the opener). See project memory
-`avalonia-113-variable-font-bold` + `preview-code-highlighting-textmate`. **Still open (the user's VS-Code
-list): visual restyle** — filled bullets, roomier spacing, H1/H2 divider lines, prettier table header.
+`avalonia-113-variable-font-bold` + `preview-code-highlighting-textmate`.
+**Preview visual restyle DONE (2026-06-18)**: (a) the code-block copy button no longer overlaps the
+SyntaxHigh language badge (they swap on hover); (b) **filled bullets** — `MarkdownPreprocessor.Normalize-
+ListMarkersInPlace` rewrites `-`/`+` list markers to `*` so every bullet renders as `•` (Disc) not the
+hollow `○`; (c) **nicer table header** — the library's pale grey is tinted via `TableHeaderBgBrush`/
+`TableBorderBrush` tokens, applied in code (`PreviewTableSorter`, local resource bindings — the library's
+table styles beat an app/UserControl Setter); (d) **configurable text density** — `ReadingDensity` preset
+(Плотно/Обычно/Просторно in Настройки ▸ Раскладка) drives `CTextBlock.LineSpacing`, applied in the reflow.
+**Deferred (low value, hard): H1/H2 divider lines** — `CTextBlock` exposes no border, so a divider needs a
+fiddly Border insert into the content StackPanel after each heading.
 
 ## Conventions
 
