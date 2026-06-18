@@ -76,8 +76,9 @@ public static class PreviewSectionCollapser
     }
 
     // Only the document's own panel — admonition bodies render through the same engine and
-    // carry the same class, but their headings are out of the outline contract.
-    private static IEnumerable<StackPanel> TopLevelPanels(Visual root)
+    // carry the same class, but their headings are out of the outline contract. Internal so
+    // PreviewHeadingDivider shares the exact same "document panel" definition (DRY).
+    internal static IEnumerable<StackPanel> TopLevelPanels(Visual root)
         => root.GetVisualDescendants().OfType<StackPanel>()
             .Where(p => p.Classes.Contains("Markdown_Avalonia_MarkdownViewer")
                         && !p.GetVisualAncestors().OfType<StackPanel>()

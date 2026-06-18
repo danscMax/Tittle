@@ -63,8 +63,14 @@ public class PreviewSectionCollapserTests
         Assert.True(headings[0].IsVisible);
         Assert.True(headings[1].IsVisible);
         Assert.True(headings[2].IsVisible);
-        // Exactly one hidden child — B's paragraph.
-        Assert.Equal(1, panel.Children.Count(c => !c.IsVisible));
+        // B's own section: its paragraph plus the H2 rule the reflow pass inserts right after B
+        // (PreviewHeadingDivider) — both live below B and fold away with it. No OTHER section moves.
+        Assert.Equal(2, panel.Children.Count(c => !c.IsVisible));
+        Assert.False(panel.Children.OfType<Control>()
+            .First(c => c.Classes.Contains("heading-divider")
+                        && panel.Children.IndexOf(c) > panel.Children.IndexOf(headings[1])
+                        && panel.Children.IndexOf(c) < panel.Children.IndexOf(headings[2]))
+            .IsVisible);
         window.Close();
     }
 }

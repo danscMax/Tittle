@@ -117,6 +117,7 @@ public partial class DocumentView
         FixupEmbeddedCodeEditors(editors);
         PreviewTableSorter.AttachAll(tables); // ported click-to-sort, idempotent
         PreviewSectionCollapser.AttachAll(Preview); // ported collapsible sections (top-level, idempotent)
+        PreviewHeadingDivider.AttachAll(Preview); // GitHub-style rule under H1/H2 (idempotent)
         // Warm the heading-Y cache from the SAME pass, AFTER the code-editor heights are pinned
         // (pinning shifts heading positions) — same ordering the lazy path had.
         _previewHeadingTops = ComputePreviewHeadingTops(headings);
