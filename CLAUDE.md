@@ -277,6 +277,25 @@ Column/block editing is AvaloniaEdit-built-in (Alt+drag). Deferred-with-reason: 
 column-select (Alt+Shift+arrows), reinterpret-as-encoding, status-bar-click conversion. Macros (M17) + more
 formats (M18) are planned — see `BACKLOG.md` and `plans/editor-toolkit-macros/`.
 
+**Preview-fidelity pass DONE (2026-06-18)** — closing the VS-Code gap the user flagged on real docs. (1)
+**Bold/italic render fix**: Avalonia 11.3.x has an OPEN regression (#18875) that mis-resolves the weight of
+VARIABLE fonts, so `FontWeight=Bold` rendered at normal weight everywhere — and `Avalonia.Fonts.Inter`
+(`.WithInterFont()`) ships Inter as a variable font. Replaced it with bundled **STATIC** Inter faces
+(`Assets/Fonts/*`, OFL) registered as the `fonts:Inter` collection (`Platform/InterFontCollection.cs` +
+shared `WithBundledInterFont()`, used by the app, the test harness — now on Skia — and `tools/HeadlessRender`),
+pinned as the default; the preview's runs name it explicitly via a `ctxt|CTextBlock` style (the FontManager
+default resolves weight but not style, so inline italic needs the explicit family). Revert to `.WithInterFont()`
+once #18875 ships fixed. (2) **Bare-URL autolinks**: `MarkdownPreprocessor.ConvertBareUrlsInPlace` wraps bare
+http/https runs in `[url](url)` (angle `<url>` autolinks render literally in Markdown.Avalonia); masks keep
+URLs in code / existing links / `[ref]:` defs untouched. (3) **Real TextMate highlighting for preview code
+blocks**: SyntaxHigh renders fenced code near-monochrome, so `EditorBehavior.ApplyPreviewGrammar` attaches the
+source editor's TextMate to the embedded preview editors (grammar resolved from the fence language SyntaxHigh
+stashes in `editor.Tag`, by id/alias; SyntaxHigh's built-in cleared; theme-following via `ReapplyGrammar`) +
+**language autodetect** for bare fences (pure `Core/Text/CodeLanguageGuess` → a final
+`ConvertBareCodeFencesInPlace` pass writes the guessed lang into the opener). See project memory
+`avalonia-113-variable-font-bold` + `preview-code-highlighting-textmate`. **Still open (the user's VS-Code
+list): visual restyle** — filled bullets, roomier spacing, H1/H2 divider lines, prettier table header.
+
 ## Conventions
 
 - Comments in English. Fix root causes, not symptoms.

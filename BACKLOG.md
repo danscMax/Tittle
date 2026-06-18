@@ -444,10 +444,15 @@ icon** (glossy emerald `</>` on transparent, `52dd193`, via `tools/IconForge`). 
 (`9a13668`, `<Version>` in `Directory.Build.props`): GitHub Release with self-contained single-file Windows
 binaries (win-x64 + win-arm64, `build_all.ps1`); README has a download badge. **Since then (2026-06-13):**
 additional file formats (XML/NDJSON/TOML text, **PDF viewer**, **image viewer** raster+SVG) and **M12
-diagrams via Kroki (opt-in)** — all DONE. **Genuinely open now**: **(a) release CI workflow** — build +
-attach Linux/macOS (and Windows) binaries automatically on a `v*` tag (the v0.1.0 release ships Windows
-only; CI proves Linux/mac build green); **(b) a v0.2.0 release** cutting all the new formats+diagrams.
-**(c) HTML-export of diagrams DONE** (Kroki GET-URL `<img>` in the self-contained export).
+diagrams via Kroki (opt-in)** — all DONE. **Preview-fidelity pass DONE (2026-06-18)**: bold/italic render
+fix (static Inter, Avalonia #18875), bare-URL autolinks, real TextMate highlighting for preview code blocks
++ language autodetect (see CLAUDE.md). **Genuinely open now**: **(a) release CI workflow** — build + attach
+Linux/macOS (and Windows) binaries automatically on a `v*` tag (the v0.1.0 release ships Windows only; CI
+proves Linux/mac build green); **(b) a v0.2.0 release** — ⚠️ the **published** GitHub release is still
+**"SeriousView v0.1.0"** (pre-rename, 2026-06-13); v0.2.0 should cut all since: the **Tittle rename**, the
+new formats+diagrams, and the preview-fidelity pass. **(c) Visual restyle** of the preview (filled bullets,
+roomier spacing, H1/H2 divider lines, prettier table header) — the rest of the user's VS-Code comparison.
+**(d) HTML-export of diagrams DONE** (Kroki GET-URL `<img>` in the self-contained export).
 The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason
 + `BuildRevealStartInfo` seam · `bb18c0a` ExpandUnit sign-parse), and the **2026-06-13 global audit is DONE**
