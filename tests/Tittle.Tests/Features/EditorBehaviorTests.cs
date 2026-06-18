@@ -59,4 +59,25 @@ public class EditorBehaviorTests
             EditorBehavior.InstallTextMate = original;
         }
     }
+
+    // Preview code blocks: ApplyPreviewGrammar installs TextMate from the fence language (editor.Tag)
+    // and clears SyntaxHigh's built-in highlighting so only TextMate colours.
+    [AvaloniaFact]
+    public void ApplyPreviewGrammar_KnownLanguage_InstallsTextMateAndClearsBuiltin()
+    {
+        var editor = new TextEditor { Tag = "python" };
+        EditorBehavior.ApplyPreviewGrammar(editor);
+        Assert.True(EditorBehavior.HasState(editor), "expected a TextMate install for a known language");
+        Assert.Null(editor.SyntaxHighlighting);
+    }
+
+    [AvaloniaFact]
+    public void ApplyPreviewGrammar_EmptyLanguage_DoesNothing()
+    {
+        var editor = new TextEditor { Tag = null };
+        EditorBehavior.ApplyPreviewGrammar(editor);
+        editor.Tag = "   ";
+        EditorBehavior.ApplyPreviewGrammar(editor);
+        Assert.False(EditorBehavior.HasState(editor), "no language → no TextMate install");
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Styling;
@@ -137,7 +138,6 @@ public static class EditorBehavior
         // AvaloniaEdit.TextMate's SetTheme refreshes token colours but leaves the editor's
         // own background/foreground on the theme it was first installed with. Reinstall so the
         // new theme applies fully (editor surface follows Light+/Dark+ with the app theme).
-        var grammar = GetGrammarExtension(editor);
         var registry = GetRegistry(PickTheme(editor));
 
         // Build the fresh installation BEFORE touching the registered state, so a throw here
@@ -164,7 +164,31 @@ public static class EditorBehavior
 
         var fresh = new EditorState(registry, freshInstallation);
         States.Add(editor, fresh);
-        ApplyGrammar(fresh, grammar);
+        ReapplyGrammar(editor, fresh);
+    }
+
+    // Re-apply the grammar after a theme reinstall. Source editors carry it on GrammarExtension; preview
+    // code-block editors carry the fence language on Tag (ApplyPreviewGrammar) — handle both, else a
+    // theme switch would strip a preview block's highlighting until the next reflow.
+    private static void ReapplyGrammar(TextEditor editor, EditorState state)
+    {
+        var extension = GetGrammarExtension(editor);
+        if (!string.IsNullOrEmpty(extension))
+        {
+            ApplyGrammar(state, extension);
+            return;
+        }
+
+        if (editor.Tag is string fenceLanguage && !string.IsNullOrWhiteSpace(fenceLanguage))
+        {
+            editor.SyntaxHighlighting = null;
+            var scope = ResolveScopeByLanguage(state.Registry, fenceLanguage);
+            if (scope is not null)
+            {
+                try { state.Installation.SetGrammar(scope); }
+                catch { /* grammar load failed — leave plain */ }
+            }
+        }
     }
 
     // Seam over TextEditor.InstallTextMate so tests can force the theme-switch reinstall to throw
@@ -205,6 +229,40 @@ public static class EditorBehavior
         {
             // No grammar for this extension — leave as plain text.
         }
+    }
+
+    /// <summary>Installs the same rich TextMate highlighting on a Markdown.Avalonia preview code-block
+    /// editor, resolving the grammar from the fence LANGUAGE NAME (e.g. "python", "cs", "json") that
+    /// SyntaxHigh stashes in <see cref="AvaloniaObject"/> <c>Tag</c>. SyntaxHigh's own near-monochrome
+    /// highlighting (set via its provider on <c>editor.SyntaxHighlighting</c>) is cleared so only the
+    /// VS-Code-grade TextMate colours show. Idempotent (re-run each reflow); reuses the per-editor
+    /// install/teardown/theme lifecycle above.</summary>
+    internal static void ApplyPreviewGrammar(TextEditor editor)
+    {
+        if (TextMateDisabled || GetSuppressHighlight(editor)
+            || editor.Tag is not string fenceLanguage || string.IsNullOrWhiteSpace(fenceLanguage))
+            return;
+
+        // Grammar resolution + clearing SyntaxHigh's built-in lives in ReapplyGrammar (which reads the
+        // fence language off editor.Tag), so a theme switch and a reflow take the exact same path.
+        ReapplyGrammar(editor, EnsureInstalled(editor));
+    }
+
+    // Map a fence language token (name or alias) to a TextMate scope. RegistryOptions only resolves by
+    // file extension, so match the token against each language's Id/Aliases instead.
+    private static string? ResolveScopeByLanguage(RegistryOptions registry, string fenceLanguage)
+    {
+        var key = fenceLanguage.Trim();
+        foreach (var language in registry.GetAvailableLanguages())
+        {
+            if (string.Equals(language.Id, key, StringComparison.OrdinalIgnoreCase)
+                || (language.Aliases?.Any(a => string.Equals(a, key, StringComparison.OrdinalIgnoreCase)) ?? false))
+            {
+                try { return registry.GetScopeByLanguageId(language.Id); }
+                catch { return null; }
+            }
+        }
+        return null;
     }
 
     private sealed record EditorState(RegistryOptions Registry, TextMate.Installation Installation);

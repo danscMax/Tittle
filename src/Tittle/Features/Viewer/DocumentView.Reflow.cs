@@ -270,6 +270,10 @@ public partial class DocumentView
         foreach (var editor in editors)
         {
             EnsureCodeCopyButton(editor);
+            // Rich TextMate highlighting for preview code blocks (SyntaxHigh's built-in is near-monochrome).
+            // The fence language SyntaxHigh stashed in editor.Tag drives the grammar; install BEFORE the
+            // height-pin below so the line metrics reflect the highlighted render.
+            EditorBehavior.ApplyPreviewGrammar(editor);
             if (editor.Document is not { LineCount: > 0 } doc)
                 continue;
 
