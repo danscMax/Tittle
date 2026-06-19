@@ -11,15 +11,24 @@
 #   PublishSingleFile                collapse managed assemblies into one .exe
 #   IncludeNativeLibrariesForSelf... fold Avalonia/Skia native .dll into the .exe
 #                                    (without this they sit loose next to it)
-#   EnableCompressionInSingleFile    shrink the bundle (~30-40%), tiny cold-start cost
+#   PublishReadyToRun                AOT-precompile the IL so the UI stack isn't JIT'd
+#                                    on the UI thread at first render (default ON)
 #   DebugType/DebugSymbols=none      keep .pdb out of the shipped file
 # Trimming is intentionally OFF: Avalonia resolves XAML via reflection, so the
 # linker would strip types it can't see and break the app at runtime.
 #
+# Cold start is the priority over file size (a viewer is launched repeatedly).
+# Measured on win-x64 (median of 6, after warmup): the shipped default
+# (R2R on, no compression) reaches input-idle in ~740ms vs ~1470ms for the old
+# compressed/no-R2R bundle — 2x faster. Cost: ~171MB vs ~53MB. Two factors:
+# removing single-file compression saves the per-launch decompress (~440ms), R2R
+# removes first-render JIT (~290ms). Use -Compress to trade size back for speed.
+#
 # Usage:
-#   .\build.ps1                 # Release, win-x64, compressed single-file
+#   .\build.ps1                 # Release, win-x64, R2R, uncompressed (fast start)
 #   .\build.ps1 -Rid win-arm64  # build for ARM64 instead
-#   .\build.ps1 -ReadyToRun     # AOT-precompile for faster cold start (bigger file)
+#   .\build.ps1 -NoReadyToRun   # skip R2R (smaller, slower first render)
+#   .\build.ps1 -Compress       # re-enable single-file compression (smaller, slower start)
 #   .\build.ps1 -NoOpen         # don't open Explorer when finished
 #   .\build.ps1 -OutDir dist\win-x64   # alternate output dir (build_all puts each RID
 #                                       in its own subfolder so phases don't clobber)
@@ -27,7 +36,8 @@
 
 param(
     [string]$Rid = 'win-x64',
-    [switch]$ReadyToRun,
+    [switch]$NoReadyToRun,   # opt OUT of R2R (R2R is on by default for faster cold start)
+    [switch]$Compress,       # opt IN to single-file compression (smaller file, slower start)
     [switch]$NoOpen,
     [string]$OutDir = 'dist'
 )
@@ -56,11 +66,11 @@ $publishArgs = @(
     '-o', $outDir,
     '-p:PublishSingleFile=true',
     '-p:IncludeNativeLibrariesForSelfExtract=true',
-    '-p:EnableCompressionInSingleFile=true',
+    "-p:EnableCompressionInSingleFile=$($Compress.IsPresent.ToString().ToLower())",
+    "-p:PublishReadyToRun=$((-not $NoReadyToRun).ToString().ToLower())",
     '-p:DebugType=none',
     '-p:DebugSymbols=false'
 )
-if ($ReadyToRun) { $publishArgs += '-p:PublishReadyToRun=true' }
 
 Write-Info 'Publishing (first run restores the runtime pack -- can take a minute)...'
 dotnet publish $project @publishArgs

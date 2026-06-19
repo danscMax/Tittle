@@ -8,7 +8,8 @@
 # Usage:
 #   .\build_all.ps1                # tests + win-x64 + win-arm64
 #   .\build_all.ps1 -SkipTests     # skip the test gate (CI already ran it)
-#   .\build_all.ps1 -ReadyToRun    # AOT-precompile both exes (faster cold start)
+#   .\build_all.ps1 -NoReadyToRun  # skip R2R on both exes (smaller, slower start)
+#   .\build_all.ps1 -Compress      # re-enable single-file compression (smaller, slower)
 #   .\build_all.ps1 -Rids win-x64  # build a subset of architectures
 #   .\build_all.ps1 -NoOpen        # suppress the Explorer window (CI/headless)
 #
@@ -19,7 +20,8 @@
 
 param(
     [switch]$SkipTests,
-    [switch]$ReadyToRun,
+    [switch]$NoReadyToRun,   # R2R is on by default (faster cold start); this opts out
+    [switch]$Compress,       # opt in to single-file compression (smaller file, slower start)
     [switch]$NoOpen,
     [string[]]$Rids = @('win-x64', 'win-arm64')
 )
@@ -123,7 +125,7 @@ foreach ($rid in $Rids) {
     # Named parameters, not array splatting: under Windows PowerShell 5.1 the
     # splatted "-Rid" bound POSITIONALLY into $Rid and broke the publish.
     & (Join-Path $root 'build.ps1') -Rid $rid -OutDir (Join-Path 'dist' $rid) `
-        -NoOpen -ReadyToRun:$ReadyToRun
+        -NoOpen -NoReadyToRun:$NoReadyToRun -Compress:$Compress
     if ($LASTEXITCODE -ne 0) {
         Write-Host ''
         Write-Host "  Portable build for $rid failed -- aborting." -ForegroundColor Red
@@ -174,7 +176,7 @@ $manifest = [ordered]@{
     date             = (Get-Date -Format 'o')
     rids             = $Rids
     tests            = -not $SkipTests
-    ready_to_run     = [bool]$ReadyToRun
+    ready_to_run     = -not $NoReadyToRun
     duration_seconds = [math]::Round($totalDur.TotalSeconds)
     artifacts        = $exes
 }
