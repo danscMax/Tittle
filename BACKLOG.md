@@ -51,6 +51,15 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
   (`c5d688f` — new feature, NOT from the original viewer: pure `Core/Support/DonationDirectory` +
   `Features/Donate/DonateWindow`, reached from the ☰ menu) · two shell fixes (`b5d356a` caption-button
   column reserve, `fc8a5ae` tab-title width clamp + thin tab-strip scrollbar).
+- **UI dedup audit #2 + consolidation (2026-06-19, `c9dad4d`…`6de48dc`)** — second dedup pass focused on the
+  AXAML layer the first audit skipped (report in `plans/dedup-audit/`). Findings F1–F8 verified by grep, then
+  consolidated in 3 waves: **F4a** wrap/numbers cluster → shared `EditorToggleCluster`; **F5** 6 flat-button
+  classes → one `Button.flat` base; **F2/F3/F6/F7** the 7 modal windows' transparent-chrome + card surface +
+  default text colour + close-handler → `ModalWindow` ctor + `Border.modalcard` (Lightbox uses theme tokens,
+  CommandPalette now inherits ModalWindow); **F1/F8** the command palette generates themes from
+  `ThemeCatalog.All` (all 15 reachable, was a hardcoded 6) and encodings from `SaveEncoding.Names` (reinterpret
+  5, was 2), and the dead theme-cycle is wired (Ctrl+Shift+T). The ☰ menu stays a curated subset by decision
+  (flyout-popup items can't bind up to the VM). 1109 tests green; modals visually verified.
 
 ---
 
@@ -83,7 +92,7 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 | Content padding ✅ | preview/source padded + readable column; decorative reading-mode background toggle. |
 | Draggable title-bar ✅ | empty title-strip zone now drags the window (hit-test-invisible chrome fill). |
 | **Single-instance (#11b) ✅** | file-open forwards to the running window as a new tab (per-user Mutex + named pipe, fail-open). **`CurrentUserOnly`-hardened + concurrency/race fixes** in the tech-debt audit (`c9bb766`). Also fixes the settings.json save race. |
-| Window icon (#9) / brand | Drop the redundant brand text; add a real window/app icon (needs a brand asset). **Still open.** |
+| Window icon (#9) / brand ✅ | DONE — brand wordmark dropped (omnibar replaced it); glossy emerald `</>` mark wired as the exe `<ApplicationIcon>` + `Window.Icon` (`Assets/tittle.png/.ico`, redesigned `52dd193` 2026-06-13). |
 
 ---
 
