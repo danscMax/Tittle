@@ -13,7 +13,7 @@
   <Border Classes="modalcard" Padding="18">
     <DockPanel LastChildFill="True">
       <TextBlock DockPanel.Dock="Top" Text="Управление макросами" FontSize="16" FontWeight="SemiBold"
-                 Foreground="{DynamicResource ChromeForegroundBrush}" Margin="0,0,0,4"/>
+                 Margin="0,0,0,4"/>
       <TextBlock DockPanel.Dock="Top" Margin="0,0,0,12" FontSize="12" TextWrapping="Wrap"
                  Foreground="{DynamicResource ChromeForegroundMutedBrush}"
                  Text="Первые 9 макросов запускаются с Ctrl+Shift+1…9. Кнопкой «⌨ задать» можно назначить своё сочетание (Ctrl/Alt + …)."/>

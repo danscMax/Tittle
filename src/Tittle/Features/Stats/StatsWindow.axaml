@@ -10,8 +10,7 @@
        Chrome = ModalWindow + Border.modalcard. -->
   <Border Classes="modalcard" Padding="20">
     <StackPanel Spacing="10">
-      <TextBlock Text="Статистика документа" FontSize="16" FontWeight="SemiBold"
-                 Foreground="{DynamicResource ChromeForegroundBrush}"/>
+      <TextBlock Text="Статистика документа" FontSize="16" FontWeight="SemiBold"/>
 
       <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" >
         <Grid.Styles>

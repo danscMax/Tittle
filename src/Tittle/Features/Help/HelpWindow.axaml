@@ -7,8 +7,7 @@
   <!-- Shortcuts reference (ported help modal). Esc / Закрыть dismisses. Chrome = ModalWindow + Border.modalcard. -->
   <Border Classes="modalcard" Padding="22">
     <StackPanel Spacing="12">
-      <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"
-                 Foreground="{DynamicResource ChromeForegroundBrush}"/>
+      <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"/>
 
       <ItemsControl x:Name="ShortcutList">
         <ItemsControl.Styles>
