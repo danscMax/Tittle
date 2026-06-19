@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tittle.Features.Shell"
+             x:Class="Tittle.Features.Shell.EditorToggleCluster"
+             x:DataType="vm:MainWindowViewModel">
+  <!-- Wrap + line-numbers toggles. The contextual toolbar and the status-bar fallback both host this
+       same pair (mutually exclusive via ToolbarVisibilityConverter), so it lives once here instead of
+       being copy-pasted into MainWindow twice. Classes="statusbtn" resolves from MainWindow's styles
+       (this control is always hosted inside MainWindow's visual tree). -->
+  <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+    <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
+            AutomationProperties.Name="Перенос строк" Classes="statusbtn">
+      <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
+    </Button>
+    <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
+            AutomationProperties.Name="Номера строк" Classes="statusbtn">
+      <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
+    </Button>
+  </StackPanel>
+</UserControl>

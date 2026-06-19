@@ -53,9 +53,8 @@
       <Setter Property="Margin" Value="6,0,12,0"/>
     </Style>
     <!-- Find-bar controls: flat compact nav/close buttons; the regex toggle reddens on an invalid pattern. -->
+    <!-- Background/BorderThickness come from the shared Button.flat base in Themes/Controls.axaml. -->
     <Style Selector="Button.findbtn">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="MinWidth" Value="0"/>
       <Setter Property="Padding" Value="7,2"/>
       <Setter Property="FontSize" Value="14"/>
@@ -76,8 +75,6 @@
     <!-- Breadcrumb segments: flat muted buttons that light up on hover; the separator before
          the FIRST crumb is hidden (nth-child on the items' presenters). -->
     <Style Selector="Button.crumb">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="MinWidth" Value="0"/>
       <Setter Property="Padding" Value="5,2"/>
       <Setter Property="FontSize" Value="12"/>

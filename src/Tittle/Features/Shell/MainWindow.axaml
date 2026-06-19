@@ -22,9 +22,8 @@
         DragDrop.AllowDrop="True">
   <wnd:AppWindow.Styles>
     <!-- Compact flat buttons for the editor controls that now live in the status bar (wrap/numbers/zoom). -->
+    <!-- Background/BorderThickness come from the shared Button.flat base in Themes/Controls.axaml. -->
     <Style Selector="Button.statusbtn">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="MinWidth" Value="0"/>
       <Setter Property="Padding" Value="6,1"/>
       <Setter Property="FontSize" Value="11.5"/>
@@ -41,8 +40,6 @@
       <Setter Property="ClipToBounds" Value="True"/>
     </Style>
     <Style Selector="Button.segment">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="CornerRadius" Value="0"/>
       <Setter Property="MinWidth" Value="0"/>
       <Setter Property="Padding" Value="9,2"/>
@@ -387,14 +384,7 @@
           <PathIcon Data="{StaticResource IconSearch}" Width="15" Height="15"/>
         </Button>
         <Border Width="1" Margin="6,2" Background="{DynamicResource StatusBarForegroundBrush}" Opacity="0.3"/>
-        <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                AutomationProperties.Name="Перенос строк" Classes="statusbtn">
-          <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
-        </Button>
-        <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                AutomationProperties.Name="Номера строк" Classes="statusbtn">
-          <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
-        </Button>
+        <vm:EditorToggleCluster/>
         <Button Command="{Binding SelectedTab.TogglePrettyPrintCommand}" ToolTip.Tip="Форматировать (JSON / XML / NDJSON)"
                 AutomationProperties.Name="Форматировать" Content="{}" Classes="statusbtn"
                 IsVisible="{Binding SelectedTab.IsPrettyPrintable, FallbackValue=False}"/>
@@ -479,14 +469,7 @@
               <Binding Path="HasTabs"/>
             </MultiBinding>
           </StackPanel.IsVisible>
-          <Button Command="{Binding ToggleWordWrapCommand}" ToolTip.Tip="Перенос строк (Alt+Z)"
-                  AutomationProperties.Name="Перенос строк" Classes="statusbtn">
-            <PathIcon Data="{StaticResource IconWrap}" Width="15" Height="15"/>
-          </Button>
-          <Button Command="{Binding ToggleLineNumbersCommand}" ToolTip.Tip="Номера строк (Ctrl+L)"
-                  AutomationProperties.Name="Номера строк" Classes="statusbtn">
-            <PathIcon Data="{StaticResource IconLineNumbers}" Width="15" Height="15"/>
-          </Button>
+          <vm:EditorToggleCluster/>
         </StackPanel>
         <!-- Table/source toggle for delimited files (ported csv-as-table) — in the status bar,
              which stays visible in both views (the contextual toolbar hides with the editor). -->

@@ -1,6 +1,15 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+  <!-- Flat-button base: the shared transparent/borderless skin behind every chrome icon/text button
+       (statusbtn, segment, findbtn, crumb, chrome-menu, link). Each of those classes keeps only its
+       own padding/font/foreground; this grouped selector holds what they all share, so the base lives
+       once instead of being repeated in four files. -->
+  <Style Selector="Button.statusbtn, Button.segment, Button.findbtn, Button.crumb, Button.chrome-menu, Button.link">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+  </Style>
+
   <!-- Premium accent button. FluentAvalonia's built-in `accent` class paints from the generic
        system-accent resources; we drive the primary CTA from the app's own accent tokens instead.
        The background lives on the template's ContentPresenter, so state colours are set through
@@ -100,8 +109,6 @@
   <!-- Hamburger (☰) menu trigger in the title bar: flat and chrome-coloured, with FluentAvalonia's
        built-in pointerover/pressed states (transparent base lets the title strip show through). -->
   <Style Selector="Button.chrome-menu">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
     <Setter Property="Padding" Value="9,4" />
   </Style>
