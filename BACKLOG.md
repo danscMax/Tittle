@@ -450,9 +450,11 @@ fix (static Inter, Avalonia #18875), bare-URL autolinks, real TextMate highlight
 Linux/macOS (and Windows) binaries automatically on a `v*` tag (the v0.1.0 release ships Windows only; CI
 proves Linux/mac build green); **(b) a v0.2.0 release** — ⚠️ the **published** GitHub release is still
 **"SeriousView v0.1.0"** (pre-rename, 2026-06-13); v0.2.0 should cut all since: the **Tittle rename**, the
-new formats+diagrams, and the preview-fidelity pass. **(c) Visual restyle** of the preview — DONE 2026-06-18
-(copy-button/badge overlap fix, filled • bullets, tinted table header, configurable text density). Deferred:
-H1/H2 divider lines (CTextBlock has no border — needs a Border insert into the content StackPanel).
+new formats+diagrams, the preview-fidelity + visual-restyle passes, and the **build perf/size tuning**
+(2026-06-19: 2× faster cold start + 121 MB partial-trimmed — `22d4d58`/`c187b6c`). `<Version>` in
+`Directory.Build.props` is still `0.1.0` → bump on release. **(c) Visual restyle** of the preview — DONE
+2026-06-18 (copy-button/badge overlap fix, filled • bullets, tinted table header, configurable text density);
+**H1/H2 divider lines also DONE** (`ebcb54e`, GitHub-style rule via a Border insert).
 **(d) HTML-export of diagrams DONE** (Kroki GET-URL `<img>` in the self-contained export).
 The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason

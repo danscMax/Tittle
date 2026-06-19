@@ -301,8 +301,20 @@ hollow `○`; (c) **nicer table header** — the library's pale grey is tinted v
 `TableBorderBrush` tokens, applied in code (`PreviewTableSorter`, local resource bindings — the library's
 table styles beat an app/UserControl Setter); (d) **configurable text density** — `ReadingDensity` preset
 (Плотно/Обычно/Просторно in Настройки ▸ Раскладка) drives `CTextBlock.LineSpacing`, applied in the reflow.
-**Deferred (low value, hard): H1/H2 divider lines** — `CTextBlock` exposes no border, so a divider needs a
-fiddly Border insert into the content StackPanel after each heading.
+**H1/H2 divider lines DONE** (`ebcb54e`): GitHub-style rule under H1/H2 (a Border inserted into the content
+StackPanel after each such heading during the reflow — `CTextBlock` has no border of its own).
+
+**Build performance & size tuning DONE (2026-06-19)** — the distributed `build.ps1`/`build_all.ps1` config,
+not app code (the app's own `Tittle.dll` is ~3.4 MB; the weight is the self-contained .NET runtime + Skia/
+PDFium + render libs). Three measured levers, shipped as the new defaults: **(1)** R2R on + single-file
+compression off (`22d4d58`) → cold start to input-idle ~1470 ms → **~740 ms (2×)**; **(2)** partial trimming
+(`TrimMode=partial`, `c187b6c`) → **171 MB → 121 MB (−29%)** with zero feature risk — partial trims only
+`IsTrimmable` assemblies (the .NET runtime + Avalonia) and keeps our code + reflection-heavy viewer libs
+(Markdown.Avalonia/CSharpMath/FluentAvalonia) whole, so the `x:CompileBindings="False"` reflection bindings
+and settings JSON never break (full trim deliberately avoided — +17 MB more for binding rewrites + risk).
+Escape hatches: `-NoReadyToRun`, `-NoTrim`, `-Compress`. **Startup profiled to the Avalonia floor**: the
+~740 ms is spread across framework init (~292 ms/39%), first Skia frame (~184 ms/24%), MainWindow XAML
+inflation (~148 ms/20%) — no cheap hotspot remains. See project memory `tittle-build-size-startup`.
 
 ## Conventions
 
