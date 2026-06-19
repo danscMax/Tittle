@@ -39,6 +39,10 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#1F5AE8" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
+    <!-- Active document tab: a crisp white LIFT over the greyish tab strip (not a dark box). Marked
+         further by the accent underline + strong text. -->
+    <SolidColorBrush x:Key="TabActiveBgBrush" Color="#FFFFFF" />
+
     <!-- Preview tables (override Markdown.Avalonia's pale grey header): a faint accent-tinted header,
          a barely-there zebra alt row, and a subtle grid line. Custom light themes inherit these. -->
     <SolidColorBrush x:Key="TableHeaderBgBrush" Color="#E7EEFB" />

@@ -67,7 +67,11 @@
       <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
     </Style>
     <Style Selector="^:selected /template/ Border#PART_Bg">
-      <Setter Property="Background" Value="{DynamicResource EditorSurfaceBrush}" />
+      <!-- A gentle lift (TabActiveBgBrush), rounded top, no right divider — reads as a raised active
+           tab instead of the old near-black EditorSurface box. -->
+      <Setter Property="Background" Value="{DynamicResource TabActiveBgBrush}" />
+      <Setter Property="CornerRadius" Value="6,6,0,0" />
+      <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style Selector="^:selected /template/ Border#PART_Accent">
       <Setter Property="IsVisible" Value="True" />

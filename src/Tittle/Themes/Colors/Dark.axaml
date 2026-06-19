@@ -43,6 +43,10 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#74A0FF" />
     <SolidColorBrush x:Key="AccentForegroundBrush" Color="#FFFFFF" />
 
+    <!-- Active document tab: a gentle LIFT over the tab strip (not the near-black editor surface, which
+         read as an ugly black box). Marked further by the accent underline + bright text. -->
+    <SolidColorBrush x:Key="TabActiveBgBrush" Color="#2E2E3C" />
+
     <!-- Preview tables (override Markdown.Avalonia's pale grey header): a faint accent-tinted header,
          a barely-there zebra alt row, and a subtle grid line. Custom dark themes inherit these. -->
     <SolidColorBrush x:Key="TableHeaderBgBrush" Color="#232C40" />

@@ -24,6 +24,10 @@
     <SolidColorBrush x:Key="AccentBrush" Color="#7AA2F7" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#9AB8FF" />
 
+    <!-- Active document tab: a gentle navy LIFT over the tab strip (not the near-black editor surface,
+         which read as an ugly black box). Marked further by the accent underline + bright text. -->
+    <SolidColorBrush x:Key="TabActiveBgBrush" Color="#243456" />
+
     <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#121728" />
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="#98A4D2" />
 
