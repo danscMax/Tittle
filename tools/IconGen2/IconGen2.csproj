@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Sandbox icon generator v2 — OUT of the .sln. Renders a FRESH batch of app-icon concepts
+       (typographic-mark theme: the name "tittle" = the dot over an i/j) to plans/icons-v2.
+       Does not touch the finalized icon. CPM opted out (pins SkiaSharp itself). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+  </ItemGroup>
+
+</Project>
