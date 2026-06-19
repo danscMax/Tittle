@@ -1,0 +1,80 @@
+name: Release
+
+# Cut a release by pushing a version tag:  git tag v0.2.0 && git push origin v0.2.0
+# Each RID is published on a matching runner (R2R is per-architecture), then all
+# binaries are attached to one GitHub Release with auto-generated notes.
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: write   # create the release + upload assets
+
+jobs:
+  build:
+    name: Publish ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64,   ext: ".exe" }
+          - { os: windows-latest, rid: win-arm64, ext: ".exe" }
+          - { os: ubuntu-latest,  rid: linux-x64,  ext: ""     }
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5  # SDK band comes from global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # Same flags as build.ps1's shipped default: self-contained single-file, R2R on,
+      # compression off (fast cold start), partial trimming (TrimMode=partial lives in the
+      # csproj). win-arm64 R2R cross-compiles fine from the x64 Windows runner (crossgen2).
+      - name: Publish
+        shell: bash
+        run: |
+          dotnet publish src/Tittle/Tittle.csproj -c Release -r ${{ matrix.rid }} \
+            --self-contained true -o publish \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            -p:EnableCompressionInSingleFile=false \
+            -p:PublishReadyToRun=true \
+            -p:PublishTrimmed=true \
+            -p:DebugType=none -p:DebugSymbols=false
+
+      - name: Stage artifact
+        shell: bash
+        run: |
+          mkdir -p out
+          cp "publish/Tittle${{ matrix.ext }}" "out/Tittle-${{ github.ref_name }}-${{ matrix.rid }}${{ matrix.ext }}"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rid }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
