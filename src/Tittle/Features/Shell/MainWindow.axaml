@@ -409,6 +409,17 @@
                 Message="{Binding ErrorBarMessage}"
                 AutomationProperties.Name="Ошибка открытия файла"/>
 
+    <!-- Update-ready InfoBar (Velopack): a downloaded update is staged; Перезапустить applies it and
+         restarts. Persistent (no auto-dismiss) so the user can act when they like. -->
+    <ui:InfoBar DockPanel.Dock="Top" Severity="Success" IsClosable="True"
+                IsOpen="{Binding IsUpdateBannerOpen, Mode=TwoWay}"
+                Message="{Binding UpdateBannerMessage}"
+                AutomationProperties.Name="Доступно обновление">
+      <ui:InfoBar.ActionButton>
+        <Button Content="Перезапустить" Command="{Binding RestartToUpdateCommand}"/>
+      </ui:InfoBar.ActionButton>
+    </ui:InfoBar>
+
     <!-- Segmented status bar: left = messages (idle / read errors), right = active-tab metrics
          (lines · chars · language), divided by a thin separator. -->
     <Border DockPanel.Dock="Bottom" Classes="chrome" MinHeight="30"

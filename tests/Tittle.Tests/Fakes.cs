@@ -141,6 +141,32 @@ internal sealed class FakeShellService : IShellService
     public void OpenWithDefaultApp(string filePath) => Opened.Add(filePath);
 }
 
+internal sealed class FakeUpdateService : IUpdateService
+{
+    public FakeUpdateService(bool isSupported = true, string? availableVersion = null)
+    {
+        IsSupported = isSupported;
+        AvailableVersion = availableVersion;
+    }
+
+    public bool IsSupported { get; }
+
+    /// <summary>Version returned by <see cref="CheckAndDownloadAsync"/> (null = up to date).</summary>
+    public string? AvailableVersion { get; set; }
+
+    public int CheckCalls { get; private set; }
+
+    public int ApplyCalls { get; private set; }
+
+    public Task<string?> CheckAndDownloadAsync(CancellationToken ct = default)
+    {
+        CheckCalls++;
+        return Task.FromResult(AvailableVersion);
+    }
+
+    public void ApplyAndRestart() => ApplyCalls++;
+}
+
 internal sealed class FakeRecentFilesStore : IRecentFilesStore
 {
     private readonly List<string> _items = new();

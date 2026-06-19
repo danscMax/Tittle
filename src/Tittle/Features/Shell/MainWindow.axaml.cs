@@ -301,6 +301,17 @@ public partial class MainWindow : AppWindow
     private void OnDonateRequested()
         => new Features.Donate.DonateWindow().ShowDialog(this);
 
+    // Update ready → user clicked Перезапустить. Persist window placement + session FIRST (Velopack's
+    // ApplyUpdatesAndRestart exits the process without firing OnClosing), then apply. SaveOnClose is
+    // idempotent and disposes the VM, but the update service is a DI singleton holding the pending
+    // download, so ApplyUpdateAndRestart still works after.
+    private void OnRestartToUpdate()
+    {
+        var vm = DataContext as MainWindowViewModel;
+        SaveOnClose();
+        vm?.ApplyUpdateAndRestart();
+    }
+
     private void OnMacroManagerRequested()
     {
         if (DataContext is MainWindowViewModel vm)
@@ -472,6 +483,7 @@ public partial class MainWindow : AppWindow
         viewModel.HelpRequested += OnHelpRequested;
         viewModel.DonateRequested += OnDonateRequested;
         viewModel.MacroManagerRequested += OnMacroManagerRequested;
+        viewModel.RestartToUpdateRequested += OnRestartToUpdate;
         // The tab strip lays out horizontally; translate a vertical wheel into sideways scroll so
         // overflowing tabs are reachable by the wheel (Avalonia doesn't flip the wheel axis itself).
         TabStrip.PointerWheelChanged += OnTabStripWheel;
@@ -708,6 +720,7 @@ public partial class MainWindow : AppWindow
             vm.HelpRequested -= OnHelpRequested;
             vm.DonateRequested -= OnDonateRequested;
             vm.MacroManagerRequested -= OnMacroManagerRequested;
+            vm.RestartToUpdateRequested -= OnRestartToUpdate;
         }
 
         // Detach every VM subscription and stop its timer now the window is going away. Dispose()

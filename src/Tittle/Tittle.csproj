@@ -45,6 +45,8 @@
     <PackageReference Include="PDFtoImage" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <!-- Installer + delta auto-update (Velopack). Inert for the portable single-file build. -->
+    <PackageReference Include="Velopack" />
     <!-- DevTools (F12) only in Debug builds -->
     <PackageReference Include="Avalonia.Diagnostics" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>

@@ -30,7 +30,8 @@ public class MainWindowViewModelTests
         string? dialogPath = null, string content = "a\nb\nc", string[]? args = null,
         IFileReader? fileReader = null, IAppSettingsService? settings = null,
         IClipboardService? clipboard = null, IShellService? shell = null,
-        IDocumentWatcher? watcher = null, ViewStateStore? viewState = null, string? savePath = null)
+        IDocumentWatcher? watcher = null, ViewStateStore? viewState = null, string? savePath = null,
+        IUpdateService? updateService = null)
         => new(
             new FakeFileDialogService(dialogPath) { SavePath = savePath },
             fileReader ?? new FakeFileReader(content),
@@ -41,7 +42,8 @@ public class MainWindowViewModelTests
             shell ?? new FakeShellService(),
             args ?? Array.Empty<string>(),
             watcher,
-            viewState);
+            viewState,
+            updateService: updateService);
 
     [AvaloniaFact]
     public void Startup_WithoutArgs_ShowsWelcome_NoTabs()
@@ -1910,5 +1912,66 @@ public class MainWindowViewModelTests
         Assert.Null(tab.FilePath);
         Assert.True(tab.IsHeadingVisited(0));      // "everything visited" → no dots
         Assert.False(tab.IsHeadingBookmarked(0));
+    }
+
+    // ── Self-update banner (Velopack) ────────────────────────────────────────────────────────────
+
+    [AvaloniaFact]
+    public async Task StartupUpdateCheck_WhenUpdateAvailable_OpensBannerWithVersion()
+    {
+        var update = new FakeUpdateService(isSupported: true, availableVersion: "0.2.1");
+        var vm = CreateVm(updateService: update);
+
+        await vm.StartupUpdateCheckAsync();
+
+        Assert.True(vm.IsUpdateBannerOpen);
+        Assert.Contains("0.2.1", vm.UpdateBannerMessage);
+        Assert.Equal(1, update.CheckCalls);
+    }
+
+    [AvaloniaFact]
+    public async Task StartupUpdateCheck_WhenUpToDate_LeavesBannerClosed()
+    {
+        var update = new FakeUpdateService(isSupported: true, availableVersion: null);
+        var vm = CreateVm(updateService: update);
+
+        await vm.StartupUpdateCheckAsync();
+
+        Assert.False(vm.IsUpdateBannerOpen);
+        Assert.Equal(1, update.CheckCalls);
+    }
+
+    [AvaloniaFact]
+    public async Task StartupUpdateCheck_WhenUnsupported_SkipsCheckEntirely()
+    {
+        var update = new FakeUpdateService(isSupported: false, availableVersion: "9.9.9");
+        var vm = CreateVm(updateService: update);
+
+        await vm.StartupUpdateCheckAsync();
+
+        Assert.False(vm.IsUpdateBannerOpen);
+        Assert.Equal(0, update.CheckCalls); // portable build never reaches the network
+    }
+
+    [AvaloniaFact]
+    public void RestartToUpdate_RaisesRequest_AndApplyHitsTheService()
+    {
+        var update = new FakeUpdateService(isSupported: true, availableVersion: "0.2.1");
+        var vm = CreateVm(updateService: update);
+        // The window subscribes to RestartToUpdateRequested and (after saving state) calls
+        // ApplyUpdateAndRestart — model that here without a real window.
+        vm.RestartToUpdateRequested += () => vm.ApplyUpdateAndRestart();
+
+        vm.RestartToUpdateCommand.Execute(null);
+
+        Assert.Equal(1, update.ApplyCalls);
+    }
+
+    [AvaloniaFact]
+    public void Palette_AlwaysOffersCheckForUpdates()
+    {
+        var vm = CreateVm();
+
+        Assert.Contains(vm.BuildPaletteItems(), i => i.Title == "Проверить обновления");
     }
 }

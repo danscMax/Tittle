@@ -32,6 +32,11 @@ public partial class App : Application
             // Single-instance: route file opens forwarded from secondary launches into this window.
             WireSingleInstance(Program.Gate, desktop);
 
+            // Background self-update check (Velopack). Fired after the window is created so it never
+            // delays first paint; the VM guards on IsSupported (no-op for the portable build) and
+            // swallows offline errors, surfacing only a "restart to update" banner when one is ready.
+            _ = Services.GetRequiredService<MainWindowViewModel>().StartupUpdateCheckAsync();
+
             // Deterministic watcher teardown on the normal close path (M14 live-reload).
             desktop.ShutdownRequested += (_, _) => Services.GetService<IDocumentWatcher>()?.Dispose();
 
@@ -111,6 +116,7 @@ public partial class App : Application
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IShellService, ShellService>();
+        services.AddSingleton<IUpdateService, VelopackUpdateService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<IAppSettingsService, AppSettingsService>();
         services.AddSingleton<IThemeService, ThemeService>();

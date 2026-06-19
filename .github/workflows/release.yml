@@ -78,3 +78,61 @@ jobs:
           files: dist/*
           generate_release_notes: true
           fail_on_unmatched_files: true
+
+  # Velopack installer + delta auto-update channel (win-x64 only). Publishes the app as a FOLDER (NOT
+  # single-file — single-file would make every delta the whole 121MB), packs with vpk, and attaches
+  # Setup.exe / RELEASES-win-x64 / full+delta .nupkg to the SAME release the `release` job just made.
+  # arm64 + linux stay on the portable single-file artifacts above.
+  velopack:
+    name: Velopack win-x64 installer
+    needs: release        # the GitHub Release must exist before `vpk upload --merge` can attach to it
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+
+      - name: Cache NuGet
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # Folder publish (R2R + partial trim like the portable build, but WITHOUT PublishSingleFile) so
+      # deltas only carry the changed files (mainly Tittle.dll ~3.4MB).
+      - name: Publish (folder, not single-file)
+        shell: bash
+        run: |
+          dotnet publish src/Tittle/Tittle.csproj -c Release -r win-x64 \
+            --self-contained true -o publish-velo \
+            -p:PublishReadyToRun=true \
+            -p:PublishTrimmed=true \
+            -p:DebugType=none -p:DebugSymbols=false
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version 1.2.0
+
+      # Pull the previous channel release so vpk can compute a delta against it. Tolerate failure: the
+      # FIRST Velopack release has no prior base (the delta then just doesn't exist; full package ships).
+      - name: Download prior release (delta base)
+        shell: bash
+        continue-on-error: true
+        run: vpk download github --repoUrl https://github.com/danscMax/Tittle --channel win-x64 --token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pack
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"   # v0.2.0 -> 0.2.0 (vpk wants SemVer with no leading 'v')
+          vpk pack --packId Tittle --packVersion "$VER" --packDir publish-velo \
+            --mainExe Tittle.exe --packTitle Tittle --icon src/Tittle/Assets/tittle.ico \
+            --channel win-x64
+
+      - name: Upload to the GitHub Release
+        shell: bash
+        run: |
+          vpk upload github --repoUrl https://github.com/danscMax/Tittle --channel win-x64 \
+            --token ${{ secrets.GITHUB_TOKEN }} --merge --tag "$GITHUB_REF_NAME" --releaseName "$GITHUB_REF_NAME"

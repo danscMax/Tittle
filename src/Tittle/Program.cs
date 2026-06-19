@@ -1,5 +1,6 @@
 using Avalonia;
 using Tittle.Platform;
+using Velopack;
 
 namespace Tittle;
 
@@ -44,6 +45,11 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Velopack MUST run first: on an install/update/uninstall hook it does its work and exits the
+        // process immediately — before the single-instance gate or Avalonia ever start. For a portable
+        // (non-Velopack) launch this is a silent no-op, so the single-file build is unaffected.
+        VelopackApp.Build().Run();
+
         // Carry settings/session/recents/macros over from the pre-rename install, before anything
         // touches the (new) data dir.
         MigrateLegacyDataDir();

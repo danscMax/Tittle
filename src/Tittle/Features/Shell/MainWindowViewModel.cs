@@ -33,6 +33,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
     private readonly IAppSettingsService _settings;
     private readonly IClipboardService _clipboard;
     private readonly IShellService _shell;
+    private readonly IUpdateService? _updateService; // Velopack self-update; null in tests / unsupported
     private readonly DocumentExportService _export; // HTML export / print / rich-text copy collaborator
     private readonly DispatcherTimer _editorSaveTimer; // coalesces editor-option writes (zoom bursts)
     private bool _editorDirty;
@@ -488,6 +489,71 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         IsErrorBarOpen = false;
     }
 
+    // ── Self-update (Velopack) ───────────────────────────────────────────────────────────────────
+    // A downloaded-and-ready update surfaces as a "Success" InfoBar with a Перезапустить button. The
+    // download runs in the background on startup; applying restarts the process (Velopack), so the
+    // window persists state via SaveOnClose first — routed through RestartToUpdateRequested.
+
+    /// <summary>Message in the update InfoBar (e.g. "Обновление 0.2.1 готово").</summary>
+    [ObservableProperty]
+    private string? _updateBannerMessage;
+
+    /// <summary>Whether the update InfoBar is shown. Two-way: the InfoBar's ✕ writes false.</summary>
+    [ObservableProperty]
+    private bool _isUpdateBannerOpen;
+
+    /// <summary>Raised when the user clicks Перезапустить — the window saves state then applies the
+    /// update (which exits the process). The service is a DI singleton, so it outlives the VM.</summary>
+    internal event Action? RestartToUpdateRequested;
+
+    /// <summary>Background update check fired once at startup (from <c>App</c>). Guards on support and
+    /// swallows all failures — a missing update or no network simply leaves the banner closed.</summary>
+    internal async Task StartupUpdateCheckAsync()
+    {
+        if (_updateService is null || !_updateService.IsSupported)
+            return;
+
+        var version = await _updateService.CheckAndDownloadAsync().ConfigureAwait(true);
+        if (version is not null)
+        {
+            UpdateBannerMessage = $"Обновление {version} готово.";
+            IsUpdateBannerOpen = true;
+        }
+    }
+
+    /// <summary>Manual "Проверить обновления" (palette). Same path as the startup check, but reports the
+    /// up-to-date / unsupported outcome in the status bar so the action always gives feedback.</summary>
+    [RelayCommand]
+    private async Task CheckForUpdates()
+    {
+        if (_updateService is null || !_updateService.IsSupported)
+        {
+            StatusText = "Автообновление доступно только в установленной версии.";
+            return;
+        }
+
+        StatusText = "Проверка обновлений…";
+        var version = await _updateService.CheckAndDownloadAsync();
+        if (version is not null)
+        {
+            UpdateBannerMessage = $"Обновление {version} готово.";
+            IsUpdateBannerOpen = true;
+        }
+        else
+        {
+            StatusText = "Установлена последняя версия.";
+        }
+    }
+
+    /// <summary>Перезапустить to apply the downloaded update. Defers the actual save+restart to the
+    /// window (it owns window-placement/session persistence) via <see cref="RestartToUpdateRequested"/>.</summary>
+    [RelayCommand]
+    private void RestartToUpdate() => RestartToUpdateRequested?.Invoke();
+
+    /// <summary>Apply the staged update and restart. Called by the window AFTER it has persisted state.
+    /// The Velopack call exits this process. Safe on a disposed VM — the service holds the pending info.</summary>
+    internal void ApplyUpdateAndRestart() => _updateService?.ApplyAndRestart();
+
     /// <summary>Whether the user has the outline pane turned on (per-window, persists across tabs).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsOutlinePaneVisible))]
@@ -586,7 +652,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         IFileDialogService fileDialog, IFileReader fileReader, IThemeService theme,
         IRecentFilesStore recent, IAppSettingsService settings, IClipboardService clipboard,
         IShellService shell, string[] args, IDocumentWatcher? documentWatcher = null,
-        ViewStateStore? viewState = null, IMacroStore? macroStore = null)
+        ViewStateStore? viewState = null, IMacroStore? macroStore = null,
+        IUpdateService? updateService = null)
     {
         _fileDialog = fileDialog;
         _fileReader = fileReader;
@@ -595,6 +662,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         _settings = settings;
         _clipboard = clipboard;
         _shell = shell;
+        _updateService = updateService;
         _export = new DocumentExportService(theme, shell, clipboard);
         _watcher = documentWatcher;
         _viewState = viewState;
@@ -919,6 +987,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             new("Настройки: экспорт…", ExportSettingsCommand),
             new("Настройки: импорт…", ImportSettingsCommand),
             new("Справка: горячие клавиши", ShowHelpCommand, "F1"),
+            new("Проверить обновления", CheckForUpdatesCommand),
             new("Поддержать автора…", ShowDonateCommand),
         };
 
