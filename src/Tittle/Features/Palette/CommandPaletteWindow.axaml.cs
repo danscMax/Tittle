@@ -3,12 +3,15 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Tittle.Shared;
 
 namespace Tittle.Features.Palette;
 
 /// <summary>Top-level Ctrl+K command-palette window. Auto-focuses the query box, navigates with ↑/↓,
-/// runs on Enter (or double-click), and closes on Esc / click-away (Deactivated) / after a command runs.</summary>
-public partial class CommandPaletteWindow : Window
+/// runs on Enter (or double-click), and closes on Esc / click-away (Deactivated) / after a command runs.
+/// Inherits the transparent-chrome shell from <see cref="ModalWindow"/>; keeps its own tunnel key handling
+/// (↑/↓/Enter, and Esc — which sets Handled, so the base Esc-close doesn't double-fire).</summary>
+public partial class CommandPaletteWindow : ModalWindow
 {
     public CommandPaletteWindow()
     {

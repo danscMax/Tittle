@@ -3,14 +3,9 @@
         xmlns:shared="using:Tittle.Shared"
         x:Class="Tittle.Features.Help.HelpWindow"
         Title="Справка"
-        Width="430" SizeToContent="Height" CanResize="False"
-        ShowInTaskbar="False" SystemDecorations="None"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
-  <!-- Shortcuts reference (ported help modal). Esc / Закрыть dismisses. -->
-  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
-          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
-          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="22">
+        Width="430" SizeToContent="Height" CanResize="False">
+  <!-- Shortcuts reference (ported help modal). Esc / Закрыть dismisses. Chrome = ModalWindow + Border.modalcard. -->
+  <Border Classes="modalcard" Padding="22">
     <StackPanel Spacing="12">
       <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"
                  Foreground="{DynamicResource ChromeForegroundBrush}"/>

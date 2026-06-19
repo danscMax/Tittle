@@ -1,20 +1,18 @@
-<Window xmlns="https://github.com/avaloniaui"
+<shared:ModalWindow xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:palette="using:Tittle.Features.Palette"
+        xmlns:shared="using:Tittle.Shared"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="420"
         x:Class="Tittle.Features.Palette.CommandPaletteWindow"
         x:DataType="palette:CommandPaletteViewModel"
         Title="Команды"
-        Width="620" SizeToContent="Height" MaxHeight="480" CanResize="False"
-        ShowInTaskbar="False" SystemDecorations="None"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
+        Width="620" SizeToContent="Height" MaxHeight="480" CanResize="False">
   <!-- A separate top-level window (NOT a Popup/overlay): an overlay over AvaloniaEdit's GPU surface
        won't repaint — see project memory. The card is drawn inside a transparent window so its rounded
        corners + drop shadow show. -->
-  <Window.Styles>
+  <shared:ModalWindow.Styles>
     <Style Selector="TextBlock.run">
       <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
     </Style>
@@ -22,13 +20,11 @@
       <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
-  </Window.Styles>
+  </shared:ModalWindow.Styles>
 
-  <!-- Solid surface: a standalone top-level window has no Mica backdrop, so the semi-transparent
-       ChromeOverlayBrush would show the desktop through it. EditorSurfaceBrush is opaque. -->
-  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
-          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
-          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="6">
+  <!-- Chrome = ModalWindow + Border.modalcard (opaque EditorSurfaceBrush: a standalone top-level window
+       has no Mica backdrop, so a semi-transparent backing would show the desktop through it). -->
+  <Border Classes="modalcard" Padding="6">
     <DockPanel>
       <TextBox x:Name="QueryBox" DockPanel.Dock="Top" Text="{Binding Query, Mode=TwoWay}"
                AutomationProperties.Name="Поиск команды"
@@ -62,4 +58,4 @@
       </ListBox>
     </DockPanel>
   </Border>
-</Window>
+</shared:ModalWindow>

@@ -3,16 +3,16 @@
         xmlns:shared="using:Tittle.Shared"
         x:Class="Tittle.Features.Viewer.ImageLightboxWindow"
         Title="Просмотр изображения"
-        ShowInTaskbar="False" SystemDecorations="None" CanResize="False"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
+        CanResize="False">
   <!-- Image lightbox (ported): a top-level window, NOT an overlay — anything floated over
-       AvaloniaEdit's GPU surface won't repaint (see project memory / the command palette). -->
-  <Border Background="#E6101016" CornerRadius="10" Margin="14"
+       AvaloniaEdit's GPU surface won't repaint (see project memory / the command palette). Chrome window
+       shape from ModalWindow; the backdrop is a deliberately dark scrim (token, not modalcard) so the
+       image pops in both themes. -->
+  <Border Background="{DynamicResource LightboxScrimBrush}" CornerRadius="10" Margin="14"
           BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1">
     <DockPanel>
       <TextBlock DockPanel.Dock="Bottom" Text="Клик или Esc — закрыть" FontSize="11.5"
-                 Foreground="#9A9AA8" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                 Foreground="{DynamicResource LightboxHintBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
       <Image x:Name="ImageView" Stretch="Uniform" StretchDirection="DownOnly" Margin="24"/>
     </DockPanel>
   </Border>

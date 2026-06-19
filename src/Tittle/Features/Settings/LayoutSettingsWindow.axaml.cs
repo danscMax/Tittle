@@ -1,11 +1,10 @@
-using Avalonia.Interactivity;
 using Tittle.Shared;
 
 namespace Tittle.Features.Settings;
 
 /// <summary>Layout customization window (☰ ▸ Раскладка). Bound to the shared LayoutOptions, so every
 /// toggle persists and re-renders the chrome live. Stays open while the user watches the changes; closes
-/// on Esc (from <see cref="ModalWindow"/>) or the Готово button.</summary>
+/// on Esc and the Готово button (both from <see cref="ModalWindow"/>).</summary>
 public partial class LayoutSettingsWindow : ModalWindow
 {
     /// <summary>The shared diagram (Kroki) options — bound to the «Диаграммы» section, set when the
@@ -21,6 +20,4 @@ public partial class LayoutSettingsWindow : ModalWindow
             DiagramSection.DataContext = Diagrams;
         };
     }
-
-    private void OnDone(object? sender, RoutedEventArgs e) => Close();
 }

@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Tittle.Shared;
 
 namespace Tittle.Features.Help;
@@ -37,6 +36,4 @@ public partial class HelpWindow : ModalWindow
             ShortcutList.Items.Add(row);
         }
     }
-
-    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 }

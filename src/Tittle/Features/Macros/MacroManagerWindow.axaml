@@ -8,13 +8,9 @@
         x:Class="Tittle.Features.Macros.MacroManagerWindow"
         x:DataType="macros:MacroManagerViewModel"
         Title="Макросы"
-        Width="680" Height="440" MinWidth="580" MinHeight="240"
-        ShowInTaskbar="False" SystemDecorations="None"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
-  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
-          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
-          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="18">
+        Width="680" Height="440" MinWidth="580" MinHeight="240">
+  <!-- Chrome = ModalWindow + Border.modalcard. -->
+  <Border Classes="modalcard" Padding="18">
     <DockPanel LastChildFill="True">
       <TextBlock DockPanel.Dock="Top" Text="Управление макросами" FontSize="16" FontWeight="SemiBold"
                  Foreground="{DynamicResource ChromeForegroundBrush}" Margin="0,0,0,4"/>
@@ -22,7 +18,7 @@
                  Foreground="{DynamicResource ChromeForegroundMutedBrush}"
                  Text="Первые 9 макросов запускаются с Ctrl+Shift+1…9. Кнопкой «⌨ задать» можно назначить своё сочетание (Ctrl/Alt + …)."/>
       <Button DockPanel.Dock="Bottom" Content="Готово" HorizontalAlignment="Right" Classes="accent"
-              Margin="0,12,0,0" AutomationProperties.Name="Закрыть" Click="OnDone"/>
+              Margin="0,12,0,0" AutomationProperties.Name="Закрыть" Click="OnCloseClick"/>
       <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding IsEmpty}"
                  Text="Пока нет записанных макросов. ☰ Инструменты ▸ Записать макрос."
                  TextWrapping="Wrap" Foreground="{DynamicResource ChromeForegroundMutedBrush}"/>

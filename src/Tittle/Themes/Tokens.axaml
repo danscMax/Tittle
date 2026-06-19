@@ -17,6 +17,12 @@
     <!-- Elevation (offsetX offsetY blur spread color) -->
     <BoxShadows x:Key="ChromeShadow">0 2 14 0 #45000000</BoxShadows>
 
+    <!-- Image-lightbox backdrop: deliberately a dark scrim in BOTH themes so the image pops (an
+         editor-surface backing would go light in light mode). Theme-agnostic → lives here, not in the
+         per-theme colour files. -->
+    <SolidColorBrush x:Key="LightboxScrimBrush" Color="#E6101016"/>
+    <SolidColorBrush x:Key="LightboxHintBrush" Color="#9A9AA8"/>
+
     <!-- Animation durations -->
     <sys:TimeSpan x:Key="DurFast">0:0:0.12</sys:TimeSpan>
     <sys:TimeSpan x:Key="DurBase">0:0:0.20</sys:TimeSpan>

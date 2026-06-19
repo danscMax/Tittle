@@ -128,6 +128,4 @@ public partial class DonateWindow : ModalWindow
         if (DonationDirectory.Methods.FirstOrDefault(m => m.Kind == DonationKind.Link) is { } link)
             OpenUrl(link.Target);
     }
-
-    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
 }

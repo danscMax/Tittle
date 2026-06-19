@@ -19,8 +19,6 @@ public partial class MacroManagerWindow : ModalWindow
         AddHandler(KeyDownEvent, OnCaptureKeyDown, RoutingStrategies.Tunnel);
     }
 
-    private void OnDone(object? sender, RoutedEventArgs e) => Close();
-
     // While a row is capturing a shortcut, the next non-modifier key with a Ctrl/Alt modifier becomes its
     // gesture; Esc cancels. The key is consumed so it can't type into the name box or close the dialog.
     private void OnCaptureKeyDown(object? sender, KeyEventArgs e)

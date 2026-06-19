@@ -1,6 +1,31 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+  <!-- Modal card: the rounded, shadowed surface every standalone modal (ModalWindow + the command
+       palette) draws its content on. Holds the shared chrome (the transparent window shape lives in
+       ModalWindow's ctor); each window keeps only its own Padding. TextElement.Foreground sets the
+       default text colour once via inheritance — muted labels and the accent button still override it
+       (their own Foreground wins over the inherited default), so no per-control Foreground is needed. -->
+  <Style Selector="Border.modalcard">
+    <Setter Property="Background" Value="{DynamicResource EditorSurfaceBrush}"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource ChromeBorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BoxShadow" Value="{DynamicResource ChromeShadow}"/>
+    <Setter Property="Margin" Value="14"/>
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+  </Style>
+  <!-- CheckBox/RadioButton resolve their label colour from their own Foreground property (the Fluent
+       theme default wins over an inherited TextElement.Foreground), so set it explicitly for the ones
+       inside a modal card. Scoped to those two controls only — the accent button keeps its own
+       Foreground, and muted section labels override with an inline brush. -->
+  <Style Selector="Border.modalcard CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+  </Style>
+  <Style Selector="Border.modalcard RadioButton">
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}"/>
+  </Style>
+
   <!-- Flat-button base: the shared transparent/borderless skin behind every chrome icon/text button
        (statusbtn, segment, findbtn, crumb, chrome-menu, link). Each of those classes keeps only its
        own padding/font/foreground; this grouped selector holds what they all share, so the base lives

@@ -5,15 +5,10 @@
         x:Class="Tittle.Features.Stats.StatsWindow"
         x:DataType="text:TextStats"
         Title="Статистика"
-        Width="340" SizeToContent="Height" CanResize="False"
-        ShowInTaskbar="False" SystemDecorations="None"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
-  <!-- Document statistics popover (ported stats panel): the same standalone-window shape as
-       LayoutSettingsWindow. Esc or Закрыть dismisses it. -->
-  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="10"
-          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
-          BoxShadow="{DynamicResource ChromeShadow}" Margin="14" Padding="20">
+        Width="340" SizeToContent="Height" CanResize="False">
+  <!-- Document statistics popover (ported stats panel). Esc or Закрыть dismisses it.
+       Chrome = ModalWindow + Border.modalcard. -->
+  <Border Classes="modalcard" Padding="20">
     <StackPanel Spacing="10">
       <TextBlock Text="Статистика документа" FontSize="16" FontWeight="SemiBold"
                  Foreground="{DynamicResource ChromeForegroundBrush}"/>

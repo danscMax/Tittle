@@ -3,17 +3,12 @@
         xmlns:shared="using:Tittle.Shared"
         x:Class="Tittle.Features.Donate.DonateWindow"
         Title="Поддержать автора"
-        Width="480" SizeToContent="Height" CanResize="False"
-        ShowInTaskbar="False" SystemDecorations="None"
-        TransparencyLevelHint="Transparent" Background="Transparent"
-        WindowStartupLocation="CenterOwner">
+        Width="480" SizeToContent="Height" CanResize="False">
   <!-- "Поддержать автора" — premium-but-restrained: an app-icon header badge, an accent "hero" card
        for the card-payment link, and crypto cards (accent edge · fee chip · inset address pill with an
        icon Copy button). Crypto rows come from Core's DonationDirectory; the hero + chrome are static.
-       Esc / Закрыть dismisses (Esc from ModalWindow). -->
-  <Border Background="{DynamicResource EditorSurfaceBrush}" CornerRadius="14"
-          BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="1"
-          BoxShadow="{DynamicResource ChromeShadow}" Margin="14">
+       Esc / Закрыть dismisses. Chrome = ModalWindow + Border.modalcard. -->
+  <Border Classes="modalcard">
     <Border.Styles>
       <!-- Hero (card-payment) — a filled accent CTA with a soft accent glow; lightens on hover. -->
       <Style Selector="Button.hero">
