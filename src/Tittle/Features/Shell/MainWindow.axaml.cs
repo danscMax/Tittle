@@ -187,6 +187,7 @@ public partial class MainWindow : AppWindow
             (true, false, false, Key.OemPipe or Key.OemBackslash) => vm.SelectedTab?.ToggleSplitCommand, // split (markdown; CanExecute gates)
             (false, false, false, Key.F1) => vm.ShowHelpCommand,
             (false, false, true, Key.Z) => vm.ToggleWordWrapCommand,
+            (true, true, false, Key.T) => vm.ToggleThemeCommand, // cycle through all themes (F8)
             _ => (System.Windows.Input.ICommand?)null,
         };
 

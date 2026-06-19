@@ -977,12 +977,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             new("Масштаб: больше", ZoomInCommand, "Ctrl++"),
             new("Масштаб: меньше", ZoomOutCommand, "Ctrl+−"),
             new("Масштаб: сбросить", ZoomResetCommand, "Ctrl+0"),
-            new("Тема: тёмная", SetThemeCommand, parameter: ThemeMode.Dark),
-            new("Тема: полночь", SetThemeCommand, parameter: ThemeMode.Midnight),
-            new("Тема: океан", SetThemeCommand, parameter: ThemeMode.Ocean),
-            new("Тема: глубокий синий", SetThemeCommand, parameter: ThemeMode.DeepBlue),
-            new("Тема: светлая", SetThemeCommand, parameter: ThemeMode.Light),
-            new("Тема: авто", SetThemeCommand, parameter: ThemeMode.Auto),
             new("Настройки: раскладка…", OpenLayoutSettingsCommand),
             new("Настройки: экспорт…", ExportSettingsCommand),
             new("Настройки: импорт…", ImportSettingsCommand),
@@ -990,6 +984,12 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             new("Проверить обновления", CheckForUpdatesCommand),
             new("Поддержать автора…", ShowDonateCommand),
         };
+
+        // Themes are generated from the single source of truth (ThemeCatalog.All) so every theme is
+        // reachable here — not just a hardcoded subset — and adding a theme needs no palette edit.
+        foreach (var theme in ThemeCatalog.All)
+            items.Add(new PaletteItem($"Тема: {theme.DisplayName}", SetThemeCommand, parameter: theme.Mode));
+        items.Add(new PaletteItem("Тема: следующая (цикл)", ToggleThemeCommand, "Ctrl+Shift+T"));
 
         if (SelectedTab is { IsMarkdown: true } tab)
         {
@@ -1024,20 +1024,17 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
             items.Add(new PaletteItem("Конец строк: CRLF (Windows)", eol, parameter: Eol.CrLf));
             items.Add(new PaletteItem("Конец строк: CR (Mac)", eol, parameter: Eol.Cr));
             var enc = editorTab.SetSaveEncodingCommand;
-            items.Add(new PaletteItem("Кодировка: UTF-8", enc, parameter: SaveEncoding.Utf8));
-            items.Add(new PaletteItem("Кодировка: UTF-8 BOM", enc, parameter: SaveEncoding.Utf8Bom));
-            items.Add(new PaletteItem("Кодировка: UTF-16 LE", enc, parameter: SaveEncoding.Utf16Le));
-            items.Add(new PaletteItem("Кодировка: UTF-16 BE", enc, parameter: SaveEncoding.Utf16Be));
-            items.Add(new PaletteItem("Кодировка: Windows-1251", enc, parameter: SaveEncoding.Windows1251));
+            // Save-as encodings generated from the single source (SaveEncoding.Names).
+            foreach (var name in SaveEncoding.Names)
+                items.Add(new PaletteItem($"Кодировка: {name}", enc, parameter: name));
         }
 
         if (SelectedTab is { FilePath: not null } fileTab)
         {
             items.Add(new PaletteItem("Перезагрузить с диска", ReloadTabCommand, parameter: fileTab));
-            items.Add(new PaletteItem("Переинтерпретировать как Windows-1251", ReinterpretEncodingCommand,
-                parameter: SaveEncoding.Windows1251));
-            items.Add(new PaletteItem("Переинтерпретировать как UTF-8", ReinterpretEncodingCommand,
-                parameter: SaveEncoding.Utf8));
+            // Reinterpret offered for every encoding (was a 2-of-5 subset that drifted from the menu).
+            foreach (var name in SaveEncoding.Names)
+                items.Add(new PaletteItem($"Переинтерпретировать как {name}", ReinterpretEncodingCommand, parameter: name));
         }
 
         if (SelectedTab is { IsPrettyPrintable: true } prettyTab)
