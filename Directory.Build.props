@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Product version (drives Assembly/File/InformationalVersion + the build manifest). Bump per release. -->
-    <Version>0.2.1</Version>
+    <Version>0.2.2</Version>
 
     <!-- Dependency hygiene: warn (NU1901-NU1904) on any direct OR transitive package with a known
          vulnerability at restore time. -->
