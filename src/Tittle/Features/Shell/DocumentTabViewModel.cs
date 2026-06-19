@@ -860,6 +860,10 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     /// doc whose scroll-spy still nudges the ordinal).</summary>
     public IReadOnlyList<HeadingOutline> Breadcrumbs => _breadcrumbs;
 
+    /// <summary>True only when the active-heading chain is non-empty — the breadcrumbs strip is
+    /// hidden above the first heading (and for headingless docs) so it never shows as an empty band.</summary>
+    public bool HasBreadcrumbs => _breadcrumbs.Count > 0;
+
     partial void OnActiveHeadingOrdinalChanged(int value)
     {
         var chain = MarkdownOutline.AncestorChain(Outline, value);
@@ -867,6 +871,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         {
             _breadcrumbs = chain;
             OnPropertyChanged(nameof(Breadcrumbs));
+            OnPropertyChanged(nameof(HasBreadcrumbs));
         }
 
         // Reading a heading marks it visited (ported md-visited-*): the TOC unread dot fades.

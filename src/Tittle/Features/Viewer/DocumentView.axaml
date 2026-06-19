@@ -41,6 +41,26 @@
     <Style Selector=".CodeBlock:pointerover Button.code-copy">
       <Setter Property="Opacity" Value="0.9"/>
     </Style>
+    <!-- Flat ghost chrome: FluentAvalonia's default Button paints a heavy background on its template
+         ContentPresenter (it lit up as a dark box on hover). Override through /template/ — transparent
+         at rest, a subtle ChromeOverlay tint on hover/press — so it reads as a clean icon button. -->
+    <Style Selector="Button.code-copy /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+    <Style Selector="Button.code-copy:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}"/>
+    </Style>
+    <Style Selector="Button.code-copy:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ChromeOverlayBrush}"/>
+    </Style>
+    <!-- Markdown.Avalonia.SyntaxHigh ships its OWN built-in copy button (Button.CopyButton) on every code
+         block — a semi-transparent vertical pill that DUPLICATES our themed `code-copy` ghost button and,
+         with no recognisable glyph, just read as a stray control hanging by the badge. Hide the library's
+         one; ours (the PathIcon ghost button above) is the copy affordance. -->
+    <Style Selector="Button.CopyButton">
+      <Setter Property="IsVisible" Value="False"/>
+    </Style>
     <!-- Preview table header/border restyle is applied in code (PreviewTableSorter) as a local resource
          binding: the library's table styles sit in a closer scope and beat an app/UserControl style, so
          a Setter here wouldn't win. The TableHeaderBgBrush/TableBorderBrush tokens live in Light/Dark. -->
@@ -189,9 +209,8 @@
          has an outline (stable height; the chain merely empties above the first heading).
          Segments navigate via the same command as the outline. -->
     <Border x:Name="BreadcrumbBar" DockPanel.Dock="Top" MinHeight="26"
-            IsVisible="{Binding HasOutline, FallbackValue=False}"
-            Background="{DynamicResource ChromeBackgroundBrush}"
-            BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,0,0,1" Padding="12,0">
+            IsVisible="{Binding HasBreadcrumbs, FallbackValue=False}"
+            Background="{DynamicResource EditorSurfaceBrush}" Padding="40,2,40,0">
       <ItemsControl x:Name="BreadcrumbsList" ItemsSource="{Binding Breadcrumbs}"
                     VerticalAlignment="Center" AutomationProperties.Name="Путь заголовков">
         <ItemsControl.ItemsPanel>

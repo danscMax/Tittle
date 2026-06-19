@@ -1075,7 +1075,14 @@ public class DocumentViewTests
     [AvaloniaFact]
     public async Task PerformCodeCopy_Success_FlashesConfirmation_OnlyWhileAttached()
     {
-        var attached = new Button { Content = "⧉" };
+        // The copy button now carries a vector PathIcon (not the "⧉" text glyph, which the bundled
+        // Inter font lacks); the confirmation flash swaps the icon's geometry to the check icon.
+        var copyGeo = new RectangleGeometry(new Rect(0, 0, 1, 1));
+        var checkGeo = new EllipseGeometry(new Rect(0, 0, 1, 1));
+        var icon = new PathIcon { Data = copyGeo };
+        var attached = new Button { Content = icon };
+        attached.Resources.Add("IconCopy", copyGeo);
+        attached.Resources.Add("IconCheck", checkGeo);
         var window = new Window { Content = attached };
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -1083,12 +1090,13 @@ public class DocumentViewTests
         string? copied = null;
         await DocumentView.PerformCodeCopy(attached, t => { copied = t; return Task.CompletedTask; }, "code");
         Assert.Equal("code", copied);
-        Assert.Equal("✓", attached.Content); // attached → confirmation shown
+        Assert.Same(checkGeo, icon.Data); // attached → flashed to the check geometry
 
         // A detached button (tab closed) must skip the confirmation swap without throwing.
-        var detached = new Button { Content = "⧉" };
+        var detachedGeo = new RectangleGeometry(new Rect(0, 0, 1, 1));
+        var detached = new Button { Content = new PathIcon { Data = detachedGeo } };
         await DocumentView.PerformCodeCopy(detached, _ => Task.CompletedTask, "code");
-        Assert.Equal("⧉", detached.Content);
+        Assert.Same(detachedGeo, ((PathIcon)detached.Content!).Data); // unchanged
         window.Close();
     }
 

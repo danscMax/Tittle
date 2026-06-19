@@ -33,12 +33,19 @@ public static class PreviewTableSorter
         {
             table.Classes.Add(AttachedClass);
 
-            // Restyle (the user disliked the library's pale-grey header): tint the header and calm the
-            // grid lines via our tokens. The library's table styles sit in a closer scope than our
-            // app/UserControl styles, so a Setter can't win — set it as a local resource binding, which
-            // beats styles AND still follows the theme (the observable refires on theme change).
+            // Restyle (the user wanted a calmer table): horizontal dividers only — drop the full grid
+            // box and every vertical line, keep a thin bottom rule per row + a slightly stronger one
+            // under the header, with more cell padding for air. The library's table styles sit in a
+            // closer scope than our app/UserControl styles, so a Setter can't win — set the brush as a
+            // local resource binding (beats styles, still follows the theme) and the thickness/padding
+            // as direct local values (also beat styles).
             foreach (var cell in table.Children.OfType<Border>())
+            {
                 cell.Bind(Border.BorderBrushProperty, cell.GetResourceObservable("TableBorderBrush"));
+                var isHeader = cell.Classes.Contains("TableHeader");
+                cell.BorderThickness = new Thickness(0, 0, 0, isHeader ? 2 : 1);
+                cell.Padding = new Thickness(12, 7, 12, 7);
+            }
 
             foreach (var header in table.Children.OfType<Border>()
                          .Where(b => b.Classes.Contains("TableHeader")))

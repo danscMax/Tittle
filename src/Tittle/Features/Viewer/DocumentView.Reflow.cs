@@ -346,11 +346,17 @@ public partial class DocumentView
         if (content is Grid wrapped && wrapped.Classes.Contains("code-copy-host"))
             return; // already wrapped
 
+        // Vector copy glyph, NOT a text character: the bundled static Inter font has no glyph for the
+        // old "⧉" (U+29C9), so it rendered as a .notdef box — a mystery dark square once the button's
+        // pointer-over chrome lit up. PathIcon is geometry, immune to font coverage (the project's rule
+        // for chrome icons — see Themes/Icons.axaml).
+        var icon = new Avalonia.Controls.PathIcon { Width = 15, Height = 15 };
+        if (this.TryFindResource("IconCopy", out var copyGeo) && copyGeo is Geometry copyGeometry)
+            icon.Data = copyGeometry;
         var button = new Button
         {
-            Content = "⧉",
-            FontSize = 13,
-            Padding = new Thickness(7, 3),
+            Content = icon,
+            Padding = new Thickness(6, 5),
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
             Margin = new Thickness(0, 4, 22, 0), // clear of the editor's scrollbar lane
@@ -399,11 +405,18 @@ public partial class DocumentView
 
         if (button.GetVisualRoot() is null)
             return; // detached between click and now
-        button.Content = "✓";
-        DispatcherTimer.RunOnce(() =>
+        // Flash a ✓ by swapping the PathIcon's geometry (both are vector — no font-glyph dependency),
+        // then restore the copy icon. Falls back to text only if the content isn't the expected icon.
+        if (button.Content is Avalonia.Controls.PathIcon pathIcon)
         {
-            if (button.GetVisualRoot() is not null)
-                button.Content = "⧉";
-        }, TimeSpan.FromSeconds(1.2));
+            if (button.TryFindResource("IconCheck", out var checkGeo) && checkGeo is Geometry check)
+                pathIcon.Data = check;
+            DispatcherTimer.RunOnce(() =>
+            {
+                if (button.GetVisualRoot() is not null
+                    && button.TryFindResource("IconCopy", out var copyGeo) && copyGeo is Geometry copy)
+                    pathIcon.Data = copy;
+            }, TimeSpan.FromSeconds(1.2));
+        }
     }
 }
