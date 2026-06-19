@@ -11,6 +11,16 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <TieredCompilation>true</TieredCompilation>
+    <!-- Publish trimming (inert unless build.ps1 passes PublishTrimmed=true). PARTIAL mode trims ONLY
+         assemblies marked IsTrimmable — the .NET runtime + Avalonia, which are the bulk (~50MB saved,
+         171→121MB) — and keeps every other assembly WHOLE: our own Tittle/Tittle.Core (so the
+         x:CompileBindings="False" reflection bindings and reflection-based settings JSON stay intact)
+         and the reflection-heavy viewer libs (Markdown.Avalonia, CSharpMath, FluentAvalonia). Validated:
+         a partial-trimmed build renders the full preview — bold/italic, LaTeX math, syntax-highlighted
+         code, tables (see plans/trim-qa). FULL trim would save only ~17MB more but strips those
+         reflection paths — not worth the regression risk. Trim analysis warnings surface only during the
+         trimmed publish (not dev build/test) and are moot for the kept assemblies. -->
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>
