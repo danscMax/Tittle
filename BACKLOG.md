@@ -455,16 +455,23 @@ binaries (win-x64 + win-arm64, `build_all.ps1`); README has a download badge. **
 additional file formats (XML/NDJSON/TOML text, **PDF viewer**, **image viewer** raster+SVG) and **M12
 diagrams via Kroki (opt-in)** — all DONE. **Preview-fidelity pass DONE (2026-06-18)**: bold/italic render
 fix (static Inter, Avalonia #18875), bare-URL autolinks, real TextMate highlighting for preview code blocks
-+ language autodetect (see CLAUDE.md). **Genuinely open now**: **(a) release CI workflow** — build + attach
-Linux/macOS (and Windows) binaries automatically on a `v*` tag (the v0.1.0 release ships Windows only; CI
-proves Linux/mac build green); **(b) a v0.2.0 release** — ⚠️ the **published** GitHub release is still
-**"SeriousView v0.1.0"** (pre-rename, 2026-06-13); v0.2.0 should cut all since: the **Tittle rename**, the
-new formats+diagrams, the preview-fidelity + visual-restyle passes, and the **build perf/size tuning**
-(2026-06-19: 2× faster cold start + 121 MB partial-trimmed — `22d4d58`/`c187b6c`). `<Version>` in
-`Directory.Build.props` is still `0.1.0` → bump on release. **(c) Visual restyle** of the preview — DONE
-2026-06-18 (copy-button/badge overlap fix, filled • bullets, tinted table header, configurable text density);
-**H1/H2 divider lines also DONE** (`ebcb54e`, GitHub-style rule via a Border insert).
++ language autodetect (see CLAUDE.md). **(a) release CI workflow DONE** (`a9f8b4d`, `.github/workflows/release.yml`)
+— a `v*` tag publishes a GitHub Release with self-contained single-file binaries for **win-x64 · win-arm64 ·
+linux-x64** + auto-generated notes. **(b) v0.2.0 release DONE** (`<Version>` bumped to `0.2.0`; tag `v0.2.0`
+pushed; release **published as "v0.2.0" (Latest)** 2026-06-19, CI run green, 3 binaries attached). **(c) Visual
+restyle** of the preview — DONE 2026-06-18 (copy-button/badge overlap fix, filled • bullets, tinted table header,
+configurable text density); **H1/H2 divider lines also DONE** (`ebcb54e`, GitHub-style rule via a Border insert).
 **(d) HTML-export of diagrams DONE** (Kroki GET-URL `<img>` in the self-contained export).
+
+**⚠ Genuinely open after v0.2.0:**
+- **macOS not built** — the release matrix is win-x64/win-arm64/linux-x64 only; no `osx-*` RID despite the
+  README's cross-platform claim. Add `osx-arm64` (+ `osx-x64`) to the `release.yml` matrix when a mac deliverable
+  is wanted.
+- **Velopack auto-update channel never exercised** — the `velopack` job + the in-app `IUpdateService`/InfoBar
+  updater were added in `3617176`, **after** the `v0.2.0` tag (cut at `a9f8b4d`), so they did NOT run for v0.2.0;
+  the published release carries no `Setup.exe`/`RELEASES-win-x64`/`.nupkg`. The next tag (v0.2.1/v0.3.0) will be
+  the FIRST to run the untested Velopack pipeline and ship the updater. De-risk with a local `vpk pack` dry-run
+  first (see project memory `velopack-update-channel`).
 The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason
 + `BuildRevealStartInfo` seam · `bb18c0a` ExpandUnit sign-parse), and the **2026-06-13 global audit is DONE**
