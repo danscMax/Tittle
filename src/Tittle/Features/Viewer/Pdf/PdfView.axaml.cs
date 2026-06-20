@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using Tittle.Features.Shell;
 using Tittle.Shared;
@@ -31,7 +32,7 @@ public partial class PdfView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _boundsSub = PageScroll.GetObservable(BoundsProperty).Subscribe(new AnonymousObserver(UpdatePageWidths));
+        _boundsSub = PageScroll.GetObservable(BoundsProperty).Subscribe(new AnonymousObserver<Rect>(_ => UpdatePageWidths()));
         UpdatePageWidths();
     }
 
@@ -147,13 +148,5 @@ public partial class PdfView : UserControl
 
         // Scroll exactly to the page top so the counter (UpdatePageText, same accumulation) agrees.
         PageScroll.Offset = PageScroll.Offset.WithY(Math.Max(0, y));
-    }
-
-    // Minimal IObserver for the Bounds observable — fires the resize re-fit (no Rx dependency).
-    private sealed class AnonymousObserver(Action onNext) : IObserver<Rect>
-    {
-        public void OnCompleted() { }
-        public void OnError(Exception error) { }
-        public void OnNext(Rect value) => onNext();
     }
 }

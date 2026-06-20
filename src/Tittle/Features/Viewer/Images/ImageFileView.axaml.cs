@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using Tittle.Features.Shell;
 
@@ -36,7 +37,7 @@ public partial class ImageFileView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _boundsSub = ImageScroll.GetObservable(BoundsProperty).Subscribe(new BoundsObserver(UpdateTransform));
+        _boundsSub = ImageScroll.GetObservable(BoundsProperty).Subscribe(new AnonymousObserver<Rect>(_ => UpdateTransform()));
         UpdateTransform();
     }
 
@@ -160,12 +161,5 @@ public partial class ImageFileView : UserControl
             DestinationRect = new RelativeRect(0, 0, 24, 24, RelativeUnit.Absolute),
             Stretch = Stretch.None,
         };
-    }
-
-    private sealed class BoundsObserver(Action onNext) : IObserver<Rect>
-    {
-        public void OnCompleted() { }
-        public void OnError(Exception error) { }
-        public void OnNext(Rect value) => onNext();
     }
 }

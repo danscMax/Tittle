@@ -116,14 +116,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         if (target is null)
             return;
 
-        try
-        {
-            StatusText = await _export.ExportHtmlAsync(tab, target);
-        }
-        catch (Exception ex)
-        {
-            ShowError(DescribeError(ex, target));
-        }
+        await GuardedStatusAsync(() => _export.ExportHtmlAsync(tab, target), target);
     }
 
     /// <summary>Checkbox click-to-toggle (M15): flips the N-th task box in the RAW file and
@@ -214,14 +207,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         if (SelectedTab is not { IsMarkdown: true } tab)
             return;
 
-        try
-        {
-            StatusText = await _export.PrintViaBrowserAsync(tab);
-        }
-        catch (Exception ex)
-        {
-            ShowError(DescribeError(ex, tab.Header));
-        }
+        await GuardedStatusAsync(() => _export.PrintViaBrowserAsync(tab), tab.Header);
     }
 
     /// <summary>Copy-as-rich-text (ported, M13): the themed HTML export goes onto the
@@ -232,14 +218,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         if (SelectedTab is not { IsMarkdown: true } tab)
             return;
 
-        try
-        {
-            StatusText = await _export.CopyAsRichTextAsync(tab);
-        }
-        catch (Exception ex)
-        {
-            ShowError(DescribeError(ex, tab.Header));
-        }
+        await GuardedStatusAsync(() => _export.CopyAsRichTextAsync(tab), tab.Header);
     }
 
     [RelayCommand]
@@ -471,6 +450,21 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         ErrorBarMessage = message;
         IsErrorBarOpen = true;
         ErrorBarDismissal = AutoDismissErrorBarAsync(cts.Token);
+    }
+
+    /// <summary>Run a status-returning action, surfacing any failure as an error bar — the shared
+    /// envelope behind the export / print / copy-as-rich-text commands, which differ only in the
+    /// call and the error context (the path or tab header to name in the message).</summary>
+    private async Task GuardedStatusAsync(Func<Task<string>> action, string context)
+    {
+        try
+        {
+            StatusText = await action();
+        }
+        catch (Exception ex)
+        {
+            ShowError(DescribeError(ex, context));
+        }
     }
 
     private async Task AutoDismissErrorBarAsync(CancellationToken token)
