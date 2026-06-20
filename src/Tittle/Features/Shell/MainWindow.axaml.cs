@@ -140,7 +140,7 @@ public partial class MainWindow : AppWindow
         // Ctrl+Shift+1..9 play the Nth saved macro (positional quick-slots; custom assignment is a follow-up).
         if (ctrl && shift && !alt && MacroSlotForKey(e.Key) is { } slot)
         {
-            vm.PlayMacroBySlot(slot);
+            vm.Macros.PlayMacroBySlot(slot);
             e.Handled = true;
             return;
         }
@@ -163,10 +163,10 @@ public partial class MainWindow : AppWindow
         // While recording a macro, capture caret navigation + deletion flowing to the editor (the 3rd
         // recording source; typing → TextEntered, line/EOL → their VM dispatch). Record the intent but
         // do NOT handle the key — the editor still performs the real move/delete.
-        if (vm.IsRecordingMacro
+        if (vm.Macros.IsRecordingMacro
             && MacroKeyIntent(ctrl, shift, alt, e.Key, vm.SelectedTab?.EditorActions?.Selection.Length ?? 0)
                 is { } macroIntent)
-            vm.RecordIntent(macroIntent);
+            vm.Macros.RecordIntent(macroIntent);
 
         var command = (ctrl, shift, alt, e.Key) switch
         {
@@ -196,7 +196,7 @@ public partial class MainWindow : AppWindow
             // No built-in shortcut matched — try a user-assigned macro shortcut. Require a Ctrl/Alt
             // modifier so a binding can't shadow plain typing; built-ins and the Ctrl+Shift+1..9 slots
             // are handled above, so they always win over a custom binding.
-            if ((ctrl || alt) && vm.PlayMacroByGesture(new KeyGesture(e.Key, e.KeyModifiers).ToString()))
+            if ((ctrl || alt) && vm.Macros.PlayMacroByGesture(new KeyGesture(e.Key, e.KeyModifiers).ToString()))
                 e.Handled = true;
             return;
         }
@@ -318,7 +318,7 @@ public partial class MainWindow : AppWindow
         if (DataContext is MainWindowViewModel vm)
             new Features.Macros.MacroManagerWindow
             {
-                DataContext = new Features.Macros.MacroManagerViewModel(vm),
+                DataContext = new Features.Macros.MacroManagerViewModel(vm.Macros),
             }.ShowDialog(this);
     }
 
@@ -483,7 +483,7 @@ public partial class MainWindow : AppWindow
         viewModel.StatsRequested += OnStatsRequested;
         viewModel.HelpRequested += OnHelpRequested;
         viewModel.DonateRequested += OnDonateRequested;
-        viewModel.MacroManagerRequested += OnMacroManagerRequested;
+        viewModel.Macros.MacroManagerRequested += OnMacroManagerRequested;
         viewModel.RestartToUpdateRequested += OnRestartToUpdate;
         // The tab strip lays out horizontally; translate a vertical wheel into sideways scroll so
         // overflowing tabs are reachable by the wheel (Avalonia doesn't flip the wheel axis itself).
@@ -720,7 +720,7 @@ public partial class MainWindow : AppWindow
             vm.StatsRequested -= OnStatsRequested;
             vm.HelpRequested -= OnHelpRequested;
             vm.DonateRequested -= OnDonateRequested;
-            vm.MacroManagerRequested -= OnMacroManagerRequested;
+            vm.Macros.MacroManagerRequested -= OnMacroManagerRequested;
             vm.RestartToUpdateRequested -= OnRestartToUpdate;
         }
 

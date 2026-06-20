@@ -204,16 +204,16 @@
               </MenuItem>
             </MenuItem>
             <MenuItem Header="Инструменты">
-              <MenuItem Header="Записать макрос" Command="{Binding ToggleMacroRecordingCommand}"
-                        IsVisible="{Binding !IsRecordingMacro}"/>
-              <MenuItem Header="Остановить запись" Command="{Binding ToggleMacroRecordingCommand}"
-                        IsVisible="{Binding IsRecordingMacro}"/>
-              <MenuItem Header="Воспроизвести макрос" Command="{Binding PlayMacroCommand}"
-                        IsEnabled="{Binding HasMacro}"/>
-              <MenuItem Header="Воспроизвести до конца файла" Command="{Binding PlayMacroToEndCommand}"
-                        IsEnabled="{Binding HasMacro}"/>
+              <MenuItem Header="Записать макрос" Command="{Binding Macros.ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding !Macros.IsRecordingMacro}"/>
+              <MenuItem Header="Остановить запись" Command="{Binding Macros.ToggleMacroRecordingCommand}"
+                        IsVisible="{Binding Macros.IsRecordingMacro}"/>
+              <MenuItem Header="Воспроизвести макрос" Command="{Binding Macros.PlayMacroCommand}"
+                        IsEnabled="{Binding Macros.HasMacro}"/>
+              <MenuItem Header="Воспроизвести до конца файла" Command="{Binding Macros.PlayMacroToEndCommand}"
+                        IsEnabled="{Binding Macros.HasMacro}"/>
               <Separator/>
-              <MenuItem Header="Управление макросами…" Command="{Binding ShowMacroManagerCommand}"/>
+              <MenuItem Header="Управление макросами…" Command="{Binding Macros.ShowMacroManagerCommand}"/>
             </MenuItem>
             <MenuItem Header="Вид">
               <MenuItem Header="Тема">

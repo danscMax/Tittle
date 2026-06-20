@@ -265,8 +265,8 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     {
         // Record a FindNext intent while a macro is recording, so find-driven edits replay (the intent
         // is non-wrapping on replay → it ends an until-EOF run at the last match).
-        if (Shell?.IsRecordingMacro == true && SearchQuery.Length > 0)
-            Shell.RecordIntent(new FindNextIntent(SearchQuery, SearchRegex, SearchCaseSensitive));
+        if (Shell?.Macros.IsRecordingMacro == true && SearchQuery.Length > 0)
+            Shell.Macros.RecordIntent(new FindNextIntent(SearchQuery, SearchRegex, SearchCaseSensitive));
         StepSearch(forward: true);
     }
 
@@ -326,8 +326,8 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
         // Record a ReplaceSelection intent while recording. For a regex replace, carry the pattern + flags
         // so replay re-runs the group substitution ($1, $2 …) against each match instead of inserting the
         // literal template; a literal replace records just the text (Pattern stays null → unchanged behavior).
-        if (Shell?.IsRecordingMacro == true)
-            Shell.RecordIntent(SearchRegex
+        if (Shell?.Macros.IsRecordingMacro == true)
+            Shell.Macros.RecordIntent(SearchRegex
                 ? new ReplaceSelectionIntent(ReplaceText, SearchQuery, Regex: true, SearchCaseSensitive)
                 : new ReplaceSelectionIntent(ReplaceText));
         actions.Replace(match.Offset, match.Length, replacement);
@@ -917,7 +917,7 @@ public partial class DocumentTabViewModel : ViewModelBase, IDisposable
     // Record the intent into the shell's macro recorder (a no-op unless recording), then apply it.
     private void DispatchRecorded(IEditorActions actions, IEditorIntent intent)
     {
-        Shell?.RecordIntent(intent);
+        Shell?.Macros.RecordIntent(intent);
         EditorCommandDispatcher.Apply(actions, intent);
     }
 

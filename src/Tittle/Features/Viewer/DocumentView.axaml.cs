@@ -112,7 +112,7 @@ public partial class DocumentView : UserControl
     private void OnEditorTextEntered(object? sender, Avalonia.Input.TextInputEventArgs e)
     {
         if (!string.IsNullOrEmpty(e.Text))
-            _vm?.Shell?.RecordIntent(new Tittle.Core.Editing.InsertTextIntent(e.Text));
+            _vm?.Shell?.Macros.RecordIntent(new Tittle.Core.Editing.InsertTextIntent(e.Text));
     }
 
     private void OnThemeVariantChangedRefresh(object? sender, EventArgs e)
