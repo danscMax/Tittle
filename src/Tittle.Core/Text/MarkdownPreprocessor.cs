@@ -237,7 +237,7 @@ public static partial class MarkdownPreprocessor
                 continue;
             }
 
-            if (DiagramTypes.ToKrokiType(MarkdownCodeRegions.FenceLang(fence.Info) ?? string.Empty) is { } krokiType)
+            if (DiagramTypes.ToKrokiType(MarkdownCodeRegions.FenceLang(fence.Info)) is { } krokiType)
             {
                 result.Add(string.Empty);
                 result.AddRange(renderDiagram(krokiType, string.Join("\n", body)));
