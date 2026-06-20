@@ -60,6 +60,15 @@ optional editing**. `★` = audit priority. Effort: S / M / L / XL.
   `ThemeCatalog.All` (all 15 reachable, was a hardcoded 6) and encodings from `SaveEncoding.Names` (reinterpret
   5, was 2), and the dead theme-cycle is wired (Ctrl+Shift+T). The ☰ menu stays a curated subset by decision
   (flyout-popup items can't bind up to the VM). 1109 tests green; modals visually verified.
+- **Code-health audit (2026-06-20, `7c4ac11`…`ae9518b`)** — a 4-finding pass, each validated from raw
+  grep/read before acting (not from agent summaries), then fixed one commit at a time. **#1** dead config:
+  deleted the never-wired `ViewTogglePlacement` + `ShowRail` layout knobs (`7c4ac11`). **#2** one fence
+  primitive: consolidated the preprocessor's divergent fence scanners onto `MarkdownCodeRegions` and **fixed a
+  latent bug** — attribute-info fences (` ```python {.attr} `) were mis-parsed (`aec63ce`/`cd95160`). **#4**
+  small dedups: use Avalonia's built-in `AnonymousObserver<T>` (dropped two hand-rolled copies) + a shared
+  export error envelope (`aa57597`). **#3** `MacroController` extracted out of the 1385-line `MainWindowViewModel`
+  god-VM into `Features/Macros/MacroController` (`ae9518b`) — coupling back is two closures; macro wiring is now
+  unit-tested (was only exercised through the live VM + key tunnel). 1132 tests green.
 
 ---
 
@@ -74,14 +83,14 @@ Etalon title row: `brand · ☰ menu · omnibar (path · 📂 · ⌘) · native 
 
 | # | Phase | Notes |
 |---|---|---|
-| 1 ✅ | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ViewTogglePlacement{Tabs,StatusBar,Omnibar}`, `ShowOmnibar`, `ShowRail`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. **Done `e21931b` (+ `LayoutOptions` seam `d2ee4d9`).** |
+| 1 ✅ | Core `AppSettings.Layout` | `MenuPlacement{Bar,TitleBar,Hidden}` (default Hidden), `ToolbarMode{Off,Contextual,Fixed}`, `ShowOmnibar`. **Modernize (audit 2026-06-08): `JsonSerializerContext` source-gen + `"schemaVersion"` field → versioned migrations** (no silent data loss as fields grow each milestone; also AOT-friendly). Pure Core + test. **Done `e21931b` (+ `LayoutOptions` seam `d2ee4d9`).** *(`ViewTogglePlacement` + `ShowRail` were later DELETED — `7c4ac11`, code-health audit — never wired to chrome; source-gen JSON ignores the dropped fields, so old `settings.json` loads clean.)* |
 | 2 ◐ | Chrome render by Layout | Rewrite `MainWindow.axaml` into conditional sections that read `Layout`. **Started: ☰ visibility binds `MenuPlacement==Hidden` via `EnumToBoolConverter` — first real consumer of `Layout`.** |
 | 3 ✅ | ☰ menu + dropdown | Hamburger default; classic menu-bar + in-title-bar are presets. Sections grow (Файл·Правка·Поиск·Вид·Инструменты·Тема·Справка). **Done (this commit): ☰ replaces the wordmark; standard `MenuFlyout`/`MenuItem` (FA-themed) with Файл (Открыть/Пример/Недавние ▸/Закрыть) and Вид (Тема radio · Перенос/Номера checks · Перейти к строке); shortcut hints via `InputGesture`. Bar/TitleBar presets deferred to phase 8.** |
 | 4 ✅ | Omnibar | File path + 📂 Open + ⌘ palette entry, toggled by `ShowOmnibar`. **Done: centred inset field in the caption row (path · 📂 · ⌘); ☰ + tab strip reflowed below the caption; ⌘ shares the Ctrl+K palette seam.** |
 | 5 ✅ | **Command palette Ctrl+K** | Action hub (Open, Theme, View, Outline, Search, Export, Settings…). **Done `653ef20`: top-level `CommandPaletteWindow` (NOT Popup/OverlayLayer — overlay over AvaloniaEdit won't repaint) + `FuzzyMatcher` (fzf-lite: `opfil`→`Open File`), with tests.** |
 | 6 ✅ | Contextual toolbar | Thin icon row under the tabs, driven by `ToolbarMode` (Off/Contextual/Fixed). **Done `83f2ef3`: Find + wrap + numbers; wrap/numbers relocated from the status bar with a fallback when Off (pure `ToolbarVisibilityConverter` keeps them in one place); zoom stays in the status bar. Replace/undo/redo/indent → M15 (editing).** |
 | 7 ◐ | View toggle + theme access | Предпросмотр/Исходник segmented toggle by the tabs; **Theme moves into the ☰ menu + palette** (no standalone button). Keep Light/Dark/Auto. **Done: theme is now ☰ Вид ▸ Тема (radio Тёмная/Светлая/Авто), standalone Тема button removed; Предпросмотр/Исходник already by the tabs. Palette entry pending phase 5.** |
-| 8 ✅ | Settings → Раскладка panel | **Done `42404ab`: ☰ ▸ Раскладка (+ palette) opens a top-level window bound to the shared `LayoutOptions` — ShowOmnibar/ReadingMode/ToolbarMode toggle the chrome live and persist; two-way `EnumRadioConverter`. Not-yet-built knobs (MenuPlacement Bar/TitleBar, ViewTogglePlacement, ShowRail) omitted until their chrome exists.** |
+| 8 ✅ | Settings → Раскладка panel | **Done `42404ab`: ☰ ▸ Раскладка (+ palette) opens a top-level window bound to the shared `LayoutOptions` — ShowOmnibar/ReadingMode/ToolbarMode toggle the chrome live and persist; two-way `EnumRadioConverter`. Not-yet-built knobs (MenuPlacement Bar/TitleBar) omitted until their chrome exists; the speculative ViewTogglePlacement/ShowRail knobs were later removed entirely (`7c4ac11`).** |
 
 **Fixes folded into M7.5 (found during the visual audit):**
 
@@ -463,15 +472,16 @@ restyle** of the preview — DONE 2026-06-18 (copy-button/badge overlap fix, fil
 configurable text density); **H1/H2 divider lines also DONE** (`ebcb54e`, GitHub-style rule via a Border insert).
 **(d) HTML-export of diagrams DONE** (Kroki GET-URL `<img>` in the self-contained export).
 
-**⚠ Genuinely open after v0.2.0:**
+**⚠ Genuinely open after v0.2.2:**
 - **macOS not built** — the release matrix is win-x64/win-arm64/linux-x64 only; no `osx-*` RID despite the
   README's cross-platform claim. Add `osx-arm64` (+ `osx-x64`) to the `release.yml` matrix when a mac deliverable
   is wanted.
-- **Velopack auto-update channel never exercised** — the `velopack` job + the in-app `IUpdateService`/InfoBar
-  updater were added in `3617176`, **after** the `v0.2.0` tag (cut at `a9f8b4d`), so they did NOT run for v0.2.0;
-  the published release carries no `Setup.exe`/`RELEASES-win-x64`/`.nupkg`. The next tag (v0.2.1/v0.3.0) will be
-  the FIRST to run the untested Velopack pipeline and ship the updater. De-risk with a local `vpk pack` dry-run
-  first (see project memory `velopack-update-channel`).
+- **Velopack auto-update — pipeline PROVEN, live in-app apply still manual-only.** v0.2.1 ran the `velopack` job
+  for the first time (full package); **v0.2.2 produced the first DELTA** (`Tittle-0.2.2-win-x64-delta.nupkg`
+  1.28 MB vs 50.24 MB full) — Setup.exe + RELEASES + .nupkg are attached and an installed v0.2.1 client was
+  verified to self-update to v0.2.2 end-to-end (code, not just version, swapped). Still unverified by automation:
+  the in-app GitHub fetch+apply on a *live installed* client (only manually exercised) — see project memory
+  `velopack-update-channel`.
 The four minor tech-debt items are now **CLOSED**
 (`9a1ba52` reflow-walk merge · P9 indent-column memo · `377a04e` RevealInExplorer kept-as-string-with-reason
 + `BuildRevealStartInfo` seam · `bb18c0a` ExpandUnit sign-parse), and the **2026-06-13 global audit is DONE**
