@@ -68,6 +68,36 @@ public class MarkdownPreprocessorTests
         Assert.Equal(md, result);
     }
 
+    [Fact]
+    public void Transform_DiagramFenceInsideAttributeInfoOuterFence_NotConverted()
+    {
+        // Regression: an outer fence whose info string carries attributes (````text {.x}) is STILL a
+        // fence — its body must not be peeked into. The diagram pass's old stricter regex didn't match
+        // the attribute-info opener, so the inner ```dot used to be mis-rendered as a diagram.
+        const string md = "````text {.line-numbers}\n```dot\ndigraph{}\n```\n````";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+        Assert.DoesNotContain("::: diagram", result);
+        Assert.Equal(md, result); // inner fence stays literal inside the attr-info outer fence
+    }
+
+    [Fact]
+    public void Transform_TabIndentedDiagramFence_NotConverted()
+    {
+        // A tab-indented fence is 4 columns of indent → not a CommonMark code fence, hence not a diagram.
+        const string md = "\t```mermaid\ngraph TD;A-->B\n\t```";
+        var result = MarkdownPreprocessor.Transform(md, null, diagramsEnabled: true);
+        Assert.DoesNotContain("::: diagram", result);
+    }
+
+    [Fact]
+    public void Transform_AttributeInfoFence_KeepsItsInfo_NoLanguageGuessed()
+    {
+        // A fence with an attribute info string already "has info" → the bare-fence language autodetect
+        // must not overwrite it with a guessed language.
+        const string md = "```python {.line-numbers}\nprint(1)\n```";
+        Assert.Contains("```python {.line-numbers}", MarkdownPreprocessor.Transform(md));
+    }
+
     // --- Admonitions ---
 
     [Fact]

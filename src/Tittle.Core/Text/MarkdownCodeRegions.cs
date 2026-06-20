@@ -30,10 +30,7 @@ public sealed partial class MarkdownCodeRegions
             if (inFence)
             {
                 fenced[i] = true;
-                var close = FenceClose().Match(lines[i]);
-                if (close.Success
-                    && close.Groups["fence"].Value[0] == fenceChar
-                    && close.Groups["fence"].Length >= openLength)
+                if (IsFenceClose(lines[i], fenceChar, openLength))
                     inFence = false;
                 continue;
             }
@@ -53,17 +50,12 @@ public sealed partial class MarkdownCodeRegions
                 continue;
             }
 
-            var open = FenceOpen().Match(lines[i]);
-            if (!open.Success)
+            if (!TryMatchFenceOpen(lines[i], out var marker))
                 continue;
 
-            var run = open.Groups["fence"].Value;
-            if (run[0] == '`' && open.Groups["info"].Value.Contains('`'))
-                continue; // not a fence: backtick info strings may not contain backticks
-
             inFence = true;
-            fenceChar = run[0];
-            openLength = run.Length;
+            fenceChar = marker.Char;
+            openLength = marker.Length;
             fenced[i] = true;
         }
 
@@ -105,6 +97,57 @@ public sealed partial class MarkdownCodeRegions
 
         return false;
     }
+
+    /// <summary>An opening fence delimiter: its run character, run length, and raw info string.</summary>
+    public readonly record struct FenceMarker(char Char, int Length, string Info);
+
+    /// <summary>Match a CommonMark code-fence OPENER on <paramref name="line"/> — ``` or ~~~ (3+), up
+    /// to 3 leading spaces, an arbitrary info string — applying the rule that a backtick fence's info
+    /// string may not contain a backtick (then it isn't a fence). The single source of "is this a
+    /// fence opener" for masking AND for the diagram / language preprocessor passes; permissive on the
+    /// info string by design (an info string with attributes is still a fence — just not a clean lang).</summary>
+    public static bool TryMatchFenceOpen(string line, out FenceMarker marker)
+    {
+        var m = FenceOpen().Match(line);
+        if (m.Success)
+        {
+            var run = m.Groups["fence"].Value;
+            var info = m.Groups["info"].Value;
+            if (!(run[0] == '`' && info.Contains('`')))
+            {
+                marker = new FenceMarker(run[0], run.Length, info);
+                return true;
+            }
+        }
+
+        marker = default;
+        return false;
+    }
+
+    /// <summary>True when <paramref name="line"/> CLOSES a fence opened with <paramref name="openChar"/>
+    /// repeated at least <paramref name="minLength"/> times — a bare run of the same char (no info),
+    /// up to 3 leading spaces, only whitespace after.</summary>
+    public static bool IsFenceClose(string line, char openChar, int minLength)
+    {
+        var m = FenceClose().Match(line);
+        return m.Success
+            && m.Groups["fence"].Value[0] == openChar
+            && m.Groups["fence"].Length >= minLength;
+    }
+
+    /// <summary>The clean single-token language of a fence info string — the info trimmed, IF it is one
+    /// <c>[A-Za-z0-9+#_-]</c> token (possibly empty) and nothing else; otherwise <c>null</c> (the info
+    /// carries attributes / spaces / multiple words, so there is no clean language). Mirrors the lang
+    /// the diagram + autodetect passes used to extract with their own regex.</summary>
+    public static string? FenceLang(string info)
+    {
+        var t = info.Trim();
+        return FenceLangToken().IsMatch(t) ? t : null;
+    }
+
+    // A clean fence language token (the whole trimmed info must be just this), else there's no lang.
+    [GeneratedRegex(@"^[A-Za-z0-9+#_-]*$")]
+    private static partial Regex FenceLangToken();
 
     // Fence opener: ``` or ~~~ (3+), up to 3 leading spaces, optional info string.
     [GeneratedRegex(@"^ {0,3}(?<fence>`{3,}|~{3,})(?<info>.*)$")]

@@ -145,4 +145,49 @@ public class MarkdownCodeRegionsTests
 
         Assert.Equal("BAR [skip foo skip] BAR", ReplaceFoo("foo [skip foo skip] foo", bracket));
     }
+
+    // --- Fence primitive (the single source shared with the preprocessor diagram/language passes) ---
+
+    [Fact]
+    public void TryMatchFenceOpen_CapturesCharLengthAndRawInfo()
+    {
+        Assert.True(MarkdownCodeRegions.TryMatchFenceOpen("```python {.line-numbers}", out var m));
+        Assert.Equal('`', m.Char);
+        Assert.Equal(3, m.Length);
+        Assert.Equal("python {.line-numbers}", m.Info); // permissive: an attribute info string is still a fence
+    }
+
+    [Fact]
+    public void TryMatchFenceOpen_TabIndent_IsNotAFence()
+    {
+        // CommonMark: a leading tab is 4 columns of indent → not a code fence (spaces-only, ≤3).
+        Assert.False(MarkdownCodeRegions.TryMatchFenceOpen("\t```mermaid", out _));
+    }
+
+    [Fact]
+    public void TryMatchFenceOpen_BacktickInfoWithBacktick_IsNotAFence()
+    {
+        Assert.False(MarkdownCodeRegions.TryMatchFenceOpen("``` a`b", out _));
+    }
+
+    [Theory]
+    [InlineData("```", '`', 3, true)]        // bare closer, exact length
+    [InlineData("````", '`', 3, true)]       // a longer run closes a shorter opener
+    [InlineData("   ```  ", '`', 3, true)]   // ≤3 spaces + trailing whitespace
+    [InlineData("``", '`', 3, false)]        // too short
+    [InlineData("```json", '`', 3, false)]   // a closer carries no info
+    [InlineData("~~~", '`', 3, false)]       // wrong fence char
+    [InlineData("    ```", '`', 3, false)]   // 4 spaces is over-indented
+    public void IsFenceClose_MatchesCharLengthAndBareness(string line, char ch, int min, bool expected)
+        => Assert.Equal(expected, MarkdownCodeRegions.IsFenceClose(line, ch, min));
+
+    [Theory]
+    [InlineData("python", "python")]
+    [InlineData("  dot  ", "dot")]
+    [InlineData("c++", "c++")]
+    [InlineData("", "")]                          // a bare fence has an empty (but clean) lang
+    [InlineData("python {.line-numbers}", null)]  // attributes → no clean language
+    [InlineData("two words", null)]
+    public void FenceLang_ReturnsCleanTokenOrNull(string info, string? expected)
+        => Assert.Equal(expected, MarkdownCodeRegions.FenceLang(info));
 }

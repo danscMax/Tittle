@@ -212,20 +212,18 @@ public static partial class MarkdownPreprocessor
         var result = new List<string>(lines.Count);
         for (var i = 0; i < lines.Count; i++)
         {
-            var open = FenceOpen().Match(lines[i]);
-            if (!open.Success)
+            if (!MarkdownCodeRegions.TryMatchFenceOpen(lines[i], out var fence))
             {
                 result.Add(lines[i]);
                 continue;
             }
 
-            var fence = open.Groups["fence"].Value;
             var body = new List<string>();
             var j = i + 1;
             var closed = false;
             for (; j < lines.Count; j++)
             {
-                if (IsFenceClose(lines[j], fence[0], fence.Length))
+                if (MarkdownCodeRegions.IsFenceClose(lines[j], fence.Char, fence.Length))
                 {
                     closed = true;
                     break;
@@ -239,7 +237,7 @@ public static partial class MarkdownPreprocessor
                 continue;
             }
 
-            if (DiagramTypes.ToKrokiType(open.Groups["lang"].Value) is { } krokiType)
+            if (DiagramTypes.ToKrokiType(MarkdownCodeRegions.FenceLang(fence.Info) ?? string.Empty) is { } krokiType)
             {
                 result.Add(string.Empty);
                 result.AddRange(renderDiagram(krokiType, string.Join("\n", body)));
@@ -256,16 +254,6 @@ public static partial class MarkdownPreprocessor
         }
 
         return result;
-    }
-
-    // A closing fence: the same char as the opener, run length >= the opener's, nothing but space.
-    private static bool IsFenceClose(string line, char fenceChar, int minLength)
-    {
-        var t = line.TrimStart();
-        var n = 0;
-        while (n < t.Length && t[n] == fenceChar)
-            n++;
-        return n >= minLength && t[n..].Trim().Length == 0;
     }
 
     private static void AppendMathContainer(List<string> result, IReadOnlyList<string> body)
@@ -322,45 +310,36 @@ public static partial class MarkdownPreprocessor
     }
 
     // Code-language autodetect (1.3): walk fenced blocks; for one whose opener carries NO language,
-    // guess it from the body and write it into the opener (``` → ```json). FenceOpen matches both the
-    // opener and a (language-less) closer, so a close is the next fence of the same char and >= length.
+    // guess it from the body and write it into the opener (``` → ```json). The fence primitive lives in
+    // MarkdownCodeRegions: TryMatchFenceOpen recognises the opener (an info string with attributes is a
+    // fence too — we must not overwrite it), IsFenceClose finds the bare closer of the same char/length.
     private static void ConvertBareCodeFencesInPlace(List<string> lines)
     {
         var i = 0;
         while (i < lines.Count)
         {
-            var open = FenceOpen().Match(lines[i]);
-            if (!open.Success)
+            if (!MarkdownCodeRegions.TryMatchFenceOpen(lines[i], out var fence))
             {
                 i++;
                 continue;
             }
 
-            var run = open.Groups["fence"].Value;
-            var fenceChar = run[0];
-            var hasLanguage = open.Groups["lang"].Value.Length > 0;
+            // Anything after the fence (a clean lang OR an attribute info string) means "don't guess".
+            var hasInfo = fence.Info.Trim().Length > 0;
 
             // Scan forward to the matching close (a bare fence of the same char, length >= the opener).
             var bodyStart = i + 1;
             var end = bodyStart;
-            while (end < lines.Count)
-            {
-                var maybeClose = FenceOpen().Match(lines[end]);
-                if (maybeClose.Success
-                    && maybeClose.Groups["lang"].Value.Length == 0
-                    && maybeClose.Groups["fence"].Value[0] == fenceChar
-                    && maybeClose.Groups["fence"].Value.Length >= run.Length)
-                    break;
+            while (end < lines.Count && !MarkdownCodeRegions.IsFenceClose(lines[end], fence.Char, fence.Length))
                 end++;
-            }
 
-            if (!hasLanguage && end > bodyStart)
+            if (!hasInfo && end > bodyStart)
             {
                 var language = CodeLanguageGuess.Guess(lines.GetRange(bodyStart, end - bodyStart));
                 if (language is not null)
                 {
-                    var indent = lines[i][..lines[i].IndexOf(fenceChar)];
-                    lines[i] = $"{indent}{run}{language}";
+                    var indent = lines[i][..lines[i].IndexOf(fence.Char)];
+                    lines[i] = $"{indent}{new string(fence.Char, fence.Length)}{language}";
                 }
             }
 
@@ -699,11 +678,6 @@ public static partial class MarkdownPreprocessor
     // A multi-line math opener: a line that is exactly $$ or \[. Capture (1) = the delimiter.
     [GeneratedRegex(@"^\s*(\$\$|\\\[)\s*$")]
     private static partial Regex MathBlockOpen();
-
-    // A fenced-code line: ≤3 spaces, 3+ backticks/tildes, then an OPTIONAL single info word (the
-    // language; empty for a bare ``` opener/closer). Used to walk and skip whole fenced blocks.
-    [GeneratedRegex(@"^\s{0,3}(?<fence>`{3,}|~{3,})\s*(?<lang>[A-Za-z0-9+#_-]*)\s*$")]
-    private static partial Regex FenceOpen();
 
     [GeneratedRegex(@"^\s*\$\$\s*$")]
     private static partial Regex DollarMathClose();
