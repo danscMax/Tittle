@@ -47,6 +47,14 @@ public static class PreviewTableSorter
                 cell.Padding = new Thickness(12, 7, 12, 7);
             }
 
+            // The library wraps the Grid in an outer `Border.Table` carrying a default white right+bottom
+            // box (#b2ffffff, thickness 0,0,1,1) that our cell loop never reached — it showed as a stray
+            // white "⌐" against the page. Drop it: the per-row bottom rules already give the intended
+            // "horizontal dividers only" look, so the outer box is both redundant and un-themed.
+            if (table.GetVisualAncestors().OfType<Border>().FirstOrDefault(b => b.Classes.Contains("Table"))
+                is { } outerBox)
+                outerBox.BorderThickness = new Thickness(0);
+
             foreach (var header in table.Children.OfType<Border>()
                          .Where(b => b.Classes.Contains("TableHeader")))
             {

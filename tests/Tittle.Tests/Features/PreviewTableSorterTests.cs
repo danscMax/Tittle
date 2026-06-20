@@ -68,6 +68,18 @@ public class PreviewTableSorterTests
     }
 
     [AvaloniaFact]
+    public void AttachAll_DropsTheOuterWhiteTableBox()
+    {
+        var (window, table) = RenderTable();
+
+        // The library wraps the Grid in an outer Border.Table with a white right+bottom box;
+        // AttachAll zeroes it so only the per-row horizontal dividers remain.
+        var box = table.GetVisualAncestors().OfType<Border>().First(b => b.Classes.Contains("Table"));
+        Assert.Equal(new Avalonia.Thickness(0), box.BorderThickness);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Sort_RedealsTheZebraClasses()
     {
         var (window, table) = RenderTable();
