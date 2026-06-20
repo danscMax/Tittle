@@ -26,19 +26,6 @@ public enum ToolbarMode
     Fixed,
 }
 
-/// <summary>Where the Preview/Source view switch is surfaced.</summary>
-public enum ViewTogglePlacement
-{
-    /// <summary>A segmented toggle beside the tabs (the default).</summary>
-    Tabs,
-
-    /// <summary>In the status bar.</summary>
-    StatusBar,
-
-    /// <summary>Inside the omnibar.</summary>
-    Omnibar,
-}
-
 /// <summary>Reading-column width preset for the markdown preview (ported reading presets).</summary>
 public enum ReadingWidth
 {
@@ -77,28 +64,23 @@ public enum SplitOrientation
 }
 
 /// <summary>
-/// Shell layout / chrome customization. The whole chrome is driven by these knobs rather than being
-/// hard-coded, so presets (hamburger, classic menu-bar, in-title-bar) are just different values.
+/// Shell layout / chrome customization. Most chrome is driven by these knobs rather than being
+/// hard-coded. NB: <see cref="MenuPlacement"/>'s <c>Bar</c>/<c>TitleBar</c> values are reserved for a
+/// future menu-placement preset and are NOT yet rendered — only <c>Hidden</c> is wired (the ☰ default).
 /// Null on <see cref="AppSettings"/> means "all defaults" (the etalon layout). Init-properties (not
 /// positional) so new knobs can be added in later milestones without breaking call sites or the
 /// persisted JSON shape.
 /// </summary>
 public sealed record LayoutSettings
 {
-    /// <summary>Where the menu lives. Default: hidden behind ☰.</summary>
+    /// <summary>Where the menu lives. Default: hidden behind ☰. (Bar/TitleBar reserved, not yet built.)</summary>
     public MenuPlacement MenuPlacement { get; init; } = MenuPlacement.Hidden;
 
     /// <summary>Editor toolbar mode. Default: contextual (Source mode only).</summary>
     public ToolbarMode ToolbarMode { get; init; } = ToolbarMode.Contextual;
 
-    /// <summary>Where the Preview/Source toggle sits. Default: beside the tabs.</summary>
-    public ViewTogglePlacement ViewTogglePlacement { get; init; } = ViewTogglePlacement.Tabs;
-
     /// <summary>Show the omnibar (path · 📂 · ⌘). Default: on.</summary>
     public bool ShowOmnibar { get; init; } = true;
-
-    /// <summary>Show the left tool rail. Default: off.</summary>
-    public bool ShowRail { get; init; }
 
     /// <summary>Width of the outline/TOC sidebar in pixels (user-resizable via a splitter).
     /// Default: 240.</summary>

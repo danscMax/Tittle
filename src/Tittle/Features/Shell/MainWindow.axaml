@@ -291,8 +291,7 @@
                   VerticalAlignment="Center" Margin="10,0"
                   wnd:AppWindow.AllowInteractionInTitleBar="True">
         <!-- Per-document quick toggles kept next to the tabs. Open / Theme live in the ☰ menu;
-             the preview/source toggle now lives in the status bar (ViewTogglePlacement.Tabs/Omnibar
-             remain future presets); wrap / numbers / zoom are in the status bar too. -->
+             the preview/source toggle lives in the status bar; wrap / numbers / zoom are there too. -->
         <!-- Outline (TOC) sidebar toggle — shown only for markdown tabs. -->
         <Button AutomationProperties.AutomationId="OutlineButton" ToolTip.Tip="Оглавление"
                 IsVisible="{Binding SelectedTab.IsMarkdown, FallbackValue=False}"

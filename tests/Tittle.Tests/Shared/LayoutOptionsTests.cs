@@ -13,9 +13,7 @@ public class LayoutOptionsTests
 
         Assert.Equal(MenuPlacement.Hidden, o.MenuPlacement);       // menu behind ☰
         Assert.Equal(ToolbarMode.Contextual, o.ToolbarMode);
-        Assert.Equal(ViewTogglePlacement.Tabs, o.ViewTogglePlacement);
         Assert.True(o.ShowOmnibar);
-        Assert.False(o.ShowRail);
         Assert.Equal(240, o.OutlineWidth); // etalon outline sidebar width
         Assert.Equal(ReadingWidth.Comfort, o.ReadingWidth); // comfortable centered column by default
         Assert.Equal(SplitOrientation.Horizontal, o.SplitOrientation); // side-by-side by default
@@ -29,9 +27,7 @@ public class LayoutOptionsTests
         {
             MenuPlacement = MenuPlacement.Bar,
             ToolbarMode = ToolbarMode.Fixed,
-            ViewTogglePlacement = ViewTogglePlacement.StatusBar,
             ShowOmnibar = false,
-            ShowRail = true,
             OutlineWidth = 320,
             ReadingWidth = ReadingWidth.Narrow,
             SplitOrientation = SplitOrientation.Vertical,

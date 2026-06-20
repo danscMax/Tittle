@@ -325,9 +325,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable, IMacroLib
         var layout = LayoutOptions.FromSettings(parsed.Layout);
         Layout.MenuPlacement = layout.MenuPlacement;
         Layout.ToolbarMode = layout.ToolbarMode;
-        Layout.ViewTogglePlacement = layout.ViewTogglePlacement;
         Layout.ShowOmnibar = layout.ShowOmnibar;
-        Layout.ShowRail = layout.ShowRail;
         Layout.OutlineWidth = layout.OutlineWidth;
         Layout.ReadingWidth = layout.ReadingWidth;
         Layout.ReadingDensity = layout.ReadingDensity;

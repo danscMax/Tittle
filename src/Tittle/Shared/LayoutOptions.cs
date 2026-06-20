@@ -5,10 +5,10 @@ using Tittle.Core.Settings;
 namespace Tittle.Shared;
 
 /// <summary>
-/// Shell layout options driving the chrome — where the menu lives, the toolbar mode, where the
-/// Preview/Source toggle sits, and omnibar/rail visibility. Observable so the chrome re-renders live;
-/// mirrored to and from the persisted <see cref="LayoutSettings"/>. One instance per window, mirroring
-/// <see cref="EditorOptions"/>. Defaults are the M7.5 etalon (menu hidden behind ☰).
+/// Shell layout options driving the chrome — where the menu lives, the toolbar mode, and omnibar
+/// visibility. Observable so the chrome re-renders live; mirrored to and from the persisted
+/// <see cref="LayoutSettings"/>. One instance per window, mirroring <see cref="EditorOptions"/>.
+/// Defaults are the M7.5 etalon (menu hidden behind ☰).
 /// </summary>
 public partial class LayoutOptions : ObservableObject
 {
@@ -19,13 +19,7 @@ public partial class LayoutOptions : ObservableObject
     private ToolbarMode _toolbarMode = ToolbarMode.Contextual;
 
     [ObservableProperty]
-    private ViewTogglePlacement _viewTogglePlacement = ViewTogglePlacement.Tabs;
-
-    [ObservableProperty]
     private bool _showOmnibar = true;
-
-    [ObservableProperty]
-    private bool _showRail;
 
     [ObservableProperty]
     private ReadingWidth _readingWidth = ReadingWidth.Comfort;
@@ -76,9 +70,7 @@ public partial class LayoutOptions : ObservableObject
     {
         MenuPlacement = MenuPlacement,
         ToolbarMode = ToolbarMode,
-        ViewTogglePlacement = ViewTogglePlacement,
         ShowOmnibar = ShowOmnibar,
-        ShowRail = ShowRail,
         OutlineWidth = OutlineWidth,
         ReadingWidth = ReadingWidth,
         ReadingDensity = ReadingDensity,
@@ -93,9 +85,7 @@ public partial class LayoutOptions : ObservableObject
         {
             MenuPlacement = s.MenuPlacement,
             ToolbarMode = s.ToolbarMode,
-            ViewTogglePlacement = s.ViewTogglePlacement,
             ShowOmnibar = s.ShowOmnibar,
-            ShowRail = s.ShowRail,
             OutlineWidth = s.OutlineWidth,
             ReadingWidth = s.ReadingWidth,
             ReadingDensity = s.ReadingDensity,

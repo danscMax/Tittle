@@ -58,11 +58,11 @@ public class AppSettingsServiceTests
     {
         var svc = new AppSettingsService(new FakeSettingsStore());
 
-        svc.Update(svc.Current with { Layout = new LayoutSettings { ShowRail = true } });
+        svc.Update(svc.Current with { Layout = new LayoutSettings { ShowOmnibar = false } });
         svc.Update(svc.Current with { Theme = ThemeMode.Light });
 
         Assert.NotNull(svc.Current.Layout);
-        Assert.True(svc.Current.Layout!.ShowRail);
+        Assert.False(svc.Current.Layout!.ShowOmnibar);
         Assert.Equal(ThemeMode.Light, svc.Current.Theme);
     }
 

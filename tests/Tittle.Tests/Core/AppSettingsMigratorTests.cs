@@ -26,12 +26,12 @@ public class AppSettingsMigratorTests
     {
         // v1→v2 added LayoutSettings.SplitOrientation/SplitRatio — a pure stamp bump. An old Layout
         // section keeps its data and the new fields default to Horizontal/0.5.
-        var v1 = new AppSettings { SchemaVersion = 1, Layout = new LayoutSettings { ShowRail = true } };
+        var v1 = new AppSettings { SchemaVersion = 1, Layout = new LayoutSettings { ShowOmnibar = false } };
 
         var migrated = AppSettingsMigrator.Migrate(v1)!;
 
         Assert.Equal(2, migrated.SchemaVersion);
-        Assert.True(migrated.Layout!.ShowRail); // nothing dropped
+        Assert.False(migrated.Layout!.ShowOmnibar); // a non-default field is preserved, nothing dropped
         Assert.Equal(SplitOrientation.Horizontal, migrated.Layout.SplitOrientation);
         Assert.Equal(0.5, migrated.Layout.SplitRatio);
     }
@@ -39,12 +39,12 @@ public class AppSettingsMigratorTests
     [Fact]
     public void Migrate_AlreadyCurrent_IsUnchanged()
     {
-        var current = new AppSettings { Layout = new LayoutSettings { ShowRail = true } };
+        var current = new AppSettings { Layout = new LayoutSettings { ShowOmnibar = false } };
 
         var migrated = AppSettingsMigrator.Migrate(current)!;
 
         Assert.Equal(AppSettingsMigrator.CurrentSchemaVersion, migrated.SchemaVersion);
-        Assert.True(migrated.Layout!.ShowRail);
+        Assert.False(migrated.Layout!.ShowOmnibar);
     }
 
     [Fact]

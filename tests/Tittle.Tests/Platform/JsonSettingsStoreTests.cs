@@ -74,9 +74,7 @@ public class JsonSettingsStoreTests
                 {
                     MenuPlacement = MenuPlacement.TitleBar,
                     ToolbarMode = ToolbarMode.Fixed,
-                    ViewTogglePlacement = ViewTogglePlacement.Omnibar,
                     ShowOmnibar = false,
-                    ShowRail = true,
                 },
             };
 
@@ -85,9 +83,7 @@ public class JsonSettingsStoreTests
 
             Assert.Equal(MenuPlacement.TitleBar, loaded.Layout!.MenuPlacement);
             Assert.Equal(ToolbarMode.Fixed, loaded.Layout.ToolbarMode);
-            Assert.Equal(ViewTogglePlacement.Omnibar, loaded.Layout.ViewTogglePlacement);
             Assert.False(loaded.Layout.ShowOmnibar);
-            Assert.True(loaded.Layout.ShowRail);
             Assert.Equal(AppSettingsMigrator.CurrentSchemaVersion, loaded.SchemaVersion);
         }
         finally
