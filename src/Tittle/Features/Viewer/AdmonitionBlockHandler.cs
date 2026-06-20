@@ -78,11 +78,26 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
 
         var type = NormalizeType(blockName);
 
-        var title = new TextBlock { Text = TitleFor(type) };
+        // Obsidian-style callout: an icon leads the coloured title; the box gets a faint type-tinted
+        // fill (Admonition*BgBrush). Icon + title colour come from the per-type styles in Admonitions.axaml.
+        var titleRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 7,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        if (Application.Current?.TryFindResource(IconKeyFor(type), out var geo) == true && geo is Geometry g)
+        {
+            var icon = new PathIcon { Data = g, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center };
+            icon.Classes.Add("admonition-icon");
+            titleRow.Children.Add(icon);
+        }
+        var title = new TextBlock { Text = TitleFor(type), VerticalAlignment = VerticalAlignment.Center };
         title.Classes.Add("admonition-title");
+        titleRow.Children.Add(title);
 
         var body = new StackPanel { Spacing = 6 };
-        body.Children.Add(title);
+        body.Children.Add(titleRow);
         body.Children.Add(_engine.Transform(lines));
 
         var border = new Border { Child = body };
@@ -106,6 +121,15 @@ public sealed class AdmonitionBlockHandler : IContainerBlockHandler
         "warning" => "Предупреждение",
         "caution" => "Осторожно",
         _ => "Примечание",
+    };
+
+    private static string IconKeyFor(string type) => type switch
+    {
+        "tip" => "IconAdmTip",
+        "important" => "IconAdmImportant",
+        "warning" => "IconAdmWarning",
+        "caution" => "IconAdmCaution",
+        _ => "IconAdmNote",
     };
 
     private static Border BuildFrontMatterPanel(string yaml)

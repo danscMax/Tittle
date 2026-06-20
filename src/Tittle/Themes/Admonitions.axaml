@@ -1,42 +1,84 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <!-- GitHub-style alert callouts. AdmonitionBlockHandler builds a Border with classes
-       `admonition` + `admonition-<type>`; colours come from theme tokens so they follow
-       Light/Dark. Flat look (2026-06-19): NO left stripe, NO tinted block — only the coloured
-       title sets these apart from body prose. The `::: frontmatter` «Метаданные» card uses the
-       note class, so it goes flat too. -->
+  <!-- GitHub-style alert callouts, Obsidian rendering (2026-06-20): AdmonitionBlockHandler builds a
+       Border with classes `admonition` + `admonition-<type>`, a title row of an icon (PathIcon, from
+       Icons.axaml) + a coloured title, then the body. Each callout gets a faint type-tinted fill
+       (Admonition*BgBrush) + rounded box — the icon + colour are what make it read as an alert, more
+       prominent than a plain `>` blockquote. Colours come from theme tokens, so it follows Light/Dark.
+       The `::: frontmatter` «Метаданные» card reuses the note class but is neutralised below. -->
 
   <Style Selector="Border.admonition">
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="0,2" />
-    <Setter Property="Margin" Value="0,8" />
+    <Setter Property="Padding" Value="13,10" />
+    <Setter Property="Margin" Value="0,10" />
+    <Setter Property="CornerRadius" Value="8" />
   </Style>
 
-  <Style Selector="Border.admonition > StackPanel > TextBlock.admonition-title">
+  <!-- Faint per-type background fill (the existing *BgBrush tokens, ~10–12% of the accent). -->
+  <Style Selector="Border.admonition-note">
+    <Setter Property="Background" Value="{DynamicResource AdmonitionNoteBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-tip">
+    <Setter Property="Background" Value="{DynamicResource AdmonitionTipBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-important">
+    <Setter Property="Background" Value="{DynamicResource AdmonitionImportantBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-warning">
+    <Setter Property="Background" Value="{DynamicResource AdmonitionWarningBgBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-caution">
+    <Setter Property="Background" Value="{DynamicResource AdmonitionCautionBgBrush}" />
+  </Style>
+
+  <!-- Title: SemiBold; the 16px icon sits beside it (icon spacing handled in code). -->
+  <Style Selector="Border.admonition TextBlock.admonition-title">
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Margin" Value="0,0,0,4" />
   </Style>
 
-  <Style Selector="Border.admonition-note > StackPanel > TextBlock.admonition-title">
+  <!-- Icon + title colour, per type. -->
+  <Style Selector="Border.admonition-note TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionNoteBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-note PathIcon.admonition-icon">
     <Setter Property="Foreground" Value="{DynamicResource AdmonitionNoteBrush}" />
   </Style>
 
-  <Style Selector="Border.admonition-tip > StackPanel > TextBlock.admonition-title">
+  <Style Selector="Border.admonition-tip TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionTipBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-tip PathIcon.admonition-icon">
     <Setter Property="Foreground" Value="{DynamicResource AdmonitionTipBrush}" />
   </Style>
 
-  <Style Selector="Border.admonition-important > StackPanel > TextBlock.admonition-title">
+  <Style Selector="Border.admonition-important TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionImportantBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-important PathIcon.admonition-icon">
     <Setter Property="Foreground" Value="{DynamicResource AdmonitionImportantBrush}" />
   </Style>
 
-  <Style Selector="Border.admonition-warning > StackPanel > TextBlock.admonition-title">
+  <Style Selector="Border.admonition-warning TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionWarningBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-warning PathIcon.admonition-icon">
     <Setter Property="Foreground" Value="{DynamicResource AdmonitionWarningBrush}" />
   </Style>
 
-  <Style Selector="Border.admonition-caution > StackPanel > TextBlock.admonition-title">
+  <Style Selector="Border.admonition-caution TextBlock.admonition-title">
     <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}" />
+  </Style>
+  <Style Selector="Border.admonition-caution PathIcon.admonition-icon">
+    <Setter Property="Foreground" Value="{DynamicResource AdmonitionCautionBrush}" />
+  </Style>
+
+  <!-- Frontmatter «Метаданные»: a NEUTRAL card, not a blue alert — override the note fill + title colour.
+       (Placed last so it beats the equal-specificity admonition-note setters above.) -->
+  <Style Selector="Border.frontmatter-block">
+    <Setter Property="Background" Value="{DynamicResource InlineCodeBgBrush}" />
+  </Style>
+  <Style Selector="Border.frontmatter-block TextBlock.admonition-title">
+    <Setter Property="Foreground" Value="{DynamicResource ChromeForegroundBrush}" />
   </Style>
 
 </Styles>

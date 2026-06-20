@@ -932,6 +932,23 @@ public class DocumentViewTests
     }
 
     [AvaloniaFact]
+    public void AdmonitionCallout_LeadsTitleWithAnIcon()
+    {
+        var handler = new AdmonitionBlockHandler(new Markdown.Avalonia.Markdown());
+
+        var border = handler.ProvideControl("", "warning", "Body text");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("admonition", border.Classes);
+        Assert.Contains("admonition-warning", border.Classes);
+        // Obsidian rendering: a type icon leads the coloured title (what makes it read as an alert).
+        Assert.Contains(border.GetLogicalDescendants().OfType<PathIcon>(),
+            p => p.Classes.Contains("admonition-icon"));
+        Assert.Contains("Предупреждение",
+            border.GetLogicalDescendants().OfType<TextBlock>().Select(t => t.Text));
+    }
+
+    [AvaloniaFact]
     public void FrontMatterPanel_EndToEnd_ShowsInThePreview()
     {
         var vm = DocumentTabViewModel.FromFile("---\nauthor: Иван\n---\n# Doc", "/docs/readme.md");

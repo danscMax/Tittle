@@ -101,6 +101,52 @@
     <RectangleGeometry Rect="3,8.6,18,2.6"/>
   </GeometryGroup>
 
+  <!-- Admonition / callout type glyphs (Obsidian-style: icon leads the title; tinted by the per-type
+       Foreground in Admonitions.axaml). Each is an EvenOdd frame (outer minus inner) with the inner
+       mark sitting in the hole, so it fills back in — the established ring/outline pattern above. -->
+
+  <!-- Note → "info": a ring with an i (dot + stem). -->
+  <GeometryGroup x:Key="IconAdmNote" FillRule="EvenOdd">
+    <EllipseGeometry Center="12,12" RadiusX="9.3" RadiusY="9.3"/>
+    <EllipseGeometry Center="12,12" RadiusX="7.4" RadiusY="7.4"/>
+    <EllipseGeometry Center="12,7.9" RadiusX="1.25" RadiusY="1.25"/>
+    <RectangleGeometry Rect="10.75,10.2,2.5,7" RadiusX="1.1" RadiusY="1.1"/>
+  </GeometryGroup>
+
+  <!-- Tip → "lightbulb": a glass ring with a filament line and a solid base. -->
+  <GeometryGroup x:Key="IconAdmTip" FillRule="EvenOdd">
+    <EllipseGeometry Center="12,9.5" RadiusX="6.2" RadiusY="6.2"/>
+    <EllipseGeometry Center="12,9.5" RadiusX="4.4" RadiusY="4.4"/>
+    <RectangleGeometry Rect="11.2,8,1.6,4.2" RadiusX="0.7" RadiusY="0.7"/>
+    <RectangleGeometry Rect="9.6,15.4,4.8,1.7" RadiusX="0.8" RadiusY="0.8"/>
+    <RectangleGeometry Rect="10.4,17.5,3.2,1.5" RadiusX="0.7" RadiusY="0.7"/>
+  </GeometryGroup>
+
+  <!-- Important → "message": a rounded speech bubble with a tail and a ! inside. -->
+  <GeometryGroup x:Key="IconAdmImportant" FillRule="EvenOdd">
+    <RectangleGeometry Rect="3,3.5,18,13" RadiusX="3" RadiusY="3"/>
+    <RectangleGeometry Rect="5.2,5.7,13.6,8.6" RadiusX="1.6" RadiusY="1.6"/>
+    <PathGeometry Figures="M8,15.5 L8,20.5 L13,15.5 Z"/>
+    <RectangleGeometry Rect="11.1,7.4,1.8,4.2" RadiusX="0.8" RadiusY="0.8"/>
+    <EllipseGeometry Center="12,13.2" RadiusX="1.05" RadiusY="1.05"/>
+  </GeometryGroup>
+
+  <!-- Warning → "alert": a triangle frame with a ! inside. -->
+  <GeometryGroup x:Key="IconAdmWarning" FillRule="EvenOdd">
+    <PathGeometry Figures="M12,2.8 L22.2,20.2 L1.8,20.2 Z"/>
+    <PathGeometry Figures="M12,7.2 L18.4,18.2 L5.6,18.2 Z"/>
+    <RectangleGeometry Rect="10.9,10,2.2,4.8" RadiusX="1" RadiusY="1"/>
+    <EllipseGeometry Center="12,16.7" RadiusX="1.15" RadiusY="1.15"/>
+  </GeometryGroup>
+
+  <!-- Caution → "stop": an octagon frame with a ! inside (distinct from the warning triangle). -->
+  <GeometryGroup x:Key="IconAdmCaution" FillRule="EvenOdd">
+    <PathGeometry Figures="M8.5,3 L15.5,3 L21,8.5 L21,15.5 L15.5,21 L8.5,21 L3,15.5 L3,8.5 Z"/>
+    <PathGeometry Figures="M9.5,5.3 L14.5,5.3 L18.7,9.5 L18.7,14.5 L14.5,18.7 L9.5,18.7 L5.3,14.5 L5.3,9.5 Z"/>
+    <RectangleGeometry Rect="10.9,7.6,2.2,5" RadiusX="1" RadiusY="1"/>
+    <EllipseGeometry Center="12,15.4" RadiusX="1.15" RadiusY="1.15"/>
+  </GeometryGroup>
+
   <!-- Image / "picture": a frame (EvenOdd outer minus inner rect) with a sun and a mountain inside
        (each adds one more crossing inside the frame's hole, so EvenOdd fills them). -->
   <GeometryGroup x:Key="IconImage" FillRule="EvenOdd">
