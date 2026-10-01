@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5  # SDK band comes from global.json
+        uses: actions/setup-dotnet@v6  # SDK band comes from global.json
 
       # No lockfiles (RID-native packages don't play with RestorePackagesWithLockFile), so cache the
       # global package folder keyed on the single CPM manifest instead of setup-dotnet's lockfile cache.
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5  # SDK band comes from global.json
+        uses: actions/setup-dotnet@v6  # SDK band comes from global.json
 
       - name: Cache NuGet
         uses: actions/cache@v5
