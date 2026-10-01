@@ -6,11 +6,11 @@
 
   <!-- Single source of truth for every package version (CPM, no floating). -->
   <ItemGroup Label="Avalonia (11.x maintenance line)">
-    <PackageVersion Include="Avalonia" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Desktop" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.18" />
+    <PackageVersion Include="Avalonia" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.22" />
   </ItemGroup>
 
   <ItemGroup Label="UI toolkit (WinUI controls, Fluent v2 theme, TabView)">
@@ -48,7 +48,7 @@
          Av11 native (same trap as PDFtoImage 5.x). Avalonia floor 11.2.0 ≤ our 11.3.17. Raster
          images need no package — Avalonia decodes PNG/JPEG/WebP/BMP/GIF via Skia natively;
          SvgImage/SvgSource render .svg as an IImage. Do NOT bump past 2.88.x until the Av12 migration. -->
-    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="PDF rendering (PDFium via SkiaSharp)">
@@ -61,13 +61,13 @@
 
   <ItemGroup Label="Export (M13)">
     <!-- CommonMark+GFM to HTML for the self-contained export. Zero dependencies. -->
-    <PackageVersion Include="Markdig" Version="1.3.2" />
+    <PackageVersion Include="Markdig" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup Label="HTML → markdown (block HTML in the preview)">
     <!-- ReverseMarkdown converts an HTML fragment (tables / div / lists) to markdown, so Markdown.Avalonia
          (which drops raw HTML) can render it. Pure managed (HtmlAgilityPack) — no SkiaSharp, no Av11 clash. -->
-    <PackageVersion Include="ReverseMarkdown" Version="6.1.0" />
+    <PackageVersion Include="ReverseMarkdown" Version="6.2.1" />
   </ItemGroup>
 
   <ItemGroup Label="Data charts (```chart)">
@@ -83,27 +83,27 @@
          files (~MBs), not the whole 121MB self-contained bundle. No SkiaSharp dependency → no clash
          with the Av11 2.88.x pin. The matching `vpk` CLI (same 1.2.0 version) packs/uploads in CI.
          VelopackApp.Build().Run() in Program.Main is a no-op for the portable single-file build. -->
-    <PackageVersion Include="Velopack" Version="1.2.0" />
+    <PackageVersion Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
   <ItemGroup Label="MVVM + DI">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- .NET 9 servicing stream (9.0.0 RTM → 9.0.17 cumulative patches; no API change, same major). -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.17" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.20" />
   </ItemGroup>
 
   <ItemGroup Label="BCL (legacy code pages for encoding detection)">
     <!-- Enables Encoding.GetEncoding(1251) etc. via CodePagesEncodingProvider. Works under
          InvariantGlobalization (that affects cultures, not encodings). -->
-    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.17" />
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.20" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Avalonia.Headless" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Headless.XUnit" Version="11.3.18" />
+    <PackageVersion Include="Avalonia.Headless.XUnit" Version="11.3.22" />
   </ItemGroup>
 
 </Project>
