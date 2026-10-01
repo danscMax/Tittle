@@ -6,11 +6,11 @@
 
   <!-- Single source of truth for every package version (CPM, no floating). -->
   <ItemGroup Label="Avalonia (11.x maintenance line)">
-    <PackageVersion Include="Avalonia" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Desktop" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.18" />
+    <PackageVersion Include="Avalonia" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.22" />
   </ItemGroup>
 
   <ItemGroup Label="UI toolkit (WinUI controls, Fluent v2 theme, TabView)">
@@ -48,7 +48,7 @@
          Av11 native (same trap as PDFtoImage 5.x). Avalonia floor 11.2.0 ≤ our 11.3.17. Raster
          images need no package — Avalonia decodes PNG/JPEG/WebP/BMP/GIF via Skia natively;
          SvgImage/SvgSource render .svg as an IImage. Do NOT bump past 2.88.x until the Av12 migration. -->
-    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
+    <PackageVersion Include="Avalonia.Svg.Skia" Version="11.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="PDF rendering (PDFium via SkiaSharp)">
@@ -99,11 +99,11 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Avalonia.Headless" Version="11.3.18" />
-    <PackageVersion Include="Avalonia.Headless.XUnit" Version="11.3.18" />
+    <PackageVersion Include="Avalonia.Headless.XUnit" Version="11.3.22" />
   </ItemGroup>
 
 </Project>
